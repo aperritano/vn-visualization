@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <head>
+
     <script src="./bower_components/d3/d3.js"></script>
     <script src="./bower_components/topojson/topojson.js"></script>
     <script src="./bower_components/moment/moment.js"></script>
-    <script src="./node_modules/predicate/dist/predicate.js"></script>
-    <script src="./slider/d3.slider.js"></script>
     <script src="./bower_components/firebase/firebase.js"></script>
 
-    <link rel="stylesheet" href="./slider/d3.slider.css"/>
+    <script src="./node_components/predicate.js"></script>
 
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="./slider/d3.slider.js"></script>
+    <link rel="stylesheet" href="./slider/d3.slider.css"/>
 
     <style>
 
@@ -75,225 +77,194 @@
 
 
     </style>
+
 </head>
 <body>
-<div id="container"></div>
-<div class="wrapper">
-    <div id="timelineSlider"></div>
-</div>
-<div class="timeBox"><span id="sliderValue">0</span></div>
-<script>
 
-    var fbase = new Firebase('https://visualizingnetworks.firebaseio.com/timestamps');
-    var tooltip;
-    var svg;
-    var colors;
-    var projection;
-    var path;
-    var features;
-    var zoom;
+    <div id="container"></div>
+    <div id="slider"></div>
+    <div>
+        <h2>
+            <span id="sliderText">0</span>
+        </h2>
+    </div>
 
-    initViz();
+    <script>
 
-    fbase.on("value", function (snapshot) {
-        //console.log(JSON.stringify(snapshot.val()));
-        updateViz(snapshot.val());
-    }, function (errorObject) {
-        console.log("The read failed: " + errorObject.code);
-    });
+        /**
+         * Call the function to get the data.
+         */
+        getData();
+
+        /**
+         * Initialize the visualization.
+         */
+        initViz();
 
 
-    function initViz() {
 
-        var width = window.innerWidth;
-        var height = window.innerHeight - 100;
+        /*#########################################################################
+         *              FUNCTION USED TO RETRIEVE THE DATA
+         *#########################################################################*/
+        function getData(){
 
-        colors = ['#00000', '#d32f2f', '#1976D2'];
-        //Map projection
-        projection = d3.geo.mercator()
-                .scale(10000)
-                .center([36.922895, 0.3508943]) //projection center
-                .translate([width / 2, height / 2]) //translate to center the map in view
+            var fbase = new Firebase('https://visualizingnetworks.firebaseio.com/timestamps');
 
-        //Generate paths based on projection
-        path = d3.geo.path()
-                .projection(projection);
+            // Retrieving data from the DB
+            fbase.on("value", function (snapshot) {
 
-        //Create an SVG
-        svg = d3.select("#container").append("svg")
-                .attr("width", width)
-                .attr("height", height);
+                createSlider(snapshot.val());
 
-        //Group for the map features
-        features = svg.append("g")
-                .attr("class", "features");
+            }, function (errorObject) {
+                console.log("The read failed: " + errorObject.code);
+            });
 
-        //Create zoom/pan listener
-        //Change [1,Infinity] to adjust the min/max zoom scale
-        zoom = d3.behavior.zoom()
-                .scaleExtent([1, Infinity])
-                .on("zoom", zoomed);
+        }
 
-        svg.call(zoom);
+        /*#########################################################################
+         *              FUNCTION USED TO INITIALIZE THE VISUALIZATION
+         *#########################################################################*/
+        function initViz() {
+
+            /**********************
+             * Map creation.
+             *********************/
+
+            var width = window.innerWidth;
+            var height = window.innerHeight - 100;
+
+            colors = ['#00000', '#d32f2f', '#1976D2'];
+            //Map projection
+            projection = d3.geo.mercator()
+                    .scale(10000)
+                    .center([36.922895, 0.3508943]) //projection center
+                    .translate([width / 2, height / 2]) //translate to center the map in view
+
+            //Generate paths based on projection
+            path = d3.geo.path()
+                    .projection(projection);
+
+            //Create an SVG
+            svg = d3.select("#container").append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+
+            //Group for the map features
+            features = svg.append("g")
+                    .attr("class", "features");
+
+            //Create zoom/pan listener
+            //Change [1,Infinity] to adjust the min/max zoom scale
+            zoom = d3.behavior.zoom()
+                    .scaleExtent([1, Infinity])
+                    .on("zoom", zoomed);
+
+            svg.call(zoom);
+
+            //Create a tooltip, hidden at the start
+            tooltip = d3.select("body").append("div").attr("class", "tooltip");
+
+            d3.json("kenya.topojson", function (error, geodata) {
+                if (error) return console.log(error); //unknown error, check the console
+
+                //Create a path for each map feature in the data
+                features.selectAll("path")
+                        .append('g')
+                        .data(topojson.feature(geodata, geodata.objects.KEN).features) //generate features from TopoJSON
+                        .enter()
+                        .append("path")
+                        .attr("d", path)
+                        .on("mouseover", showTooltip)
+                        .on("mousemove", moveTooltip)
+                        .on("mouseout", hideTooltip)
+                        .on("click", clicked);
+            });
+
+        }
+
+        // Add optional onClick events for features here
+        // d.properties contains the attributes (e.g. d.properties.name, d.properties.population)
+        function clicked(d, i) {
+
+        }
+
+        //Update map on zoom/pan
+        function zoomed() {
+            features.attr("transform", "translate(" + zoom.translate() + ")scale(" + zoom.scale() + ")")
+                    .selectAll("path").style("stroke-width", 1 / zoom.scale() + "px");
+        }
+
+        //Position of the tooltip relative to the cursor
+        var tooltipOffset = {x: 5, y: -25};
 
         //Create a tooltip, hidden at the start
-        tooltip = d3.select("body").append("div").attr("class", "tooltip");
+        function showTooltip(d) {
+            moveTooltip();
 
-        var sortTimestamp = [];
-
-        var dataset;
-
-//        d3.json("KEN.topojson", function (error, geodata) {
-//            if (error) return console.log(error); //unknown error, check the console
-//
-//            //Create a path for each map feature in the data
-//            features.selectAll("path")
-//                    .append('g')
-//                    .data(topojson.feature(geodata, geodata.objects.KEN).features) //generate features from TopoJSON
-//                    .enter()
-//                    .append("path")
-//                    .attr("d", path)
-//                    .on("mouseover", showTooltip)
-//                    .on("mousemove", moveTooltip)
-//                    .on("mouseout", hideTooltip)
-//                    .on("click", clicked);
-//        });
-    }
-
-    var dataset = [];
-    function updateViz(items) {
-
-            var format = 'YYYY-MM-DD HH:mm:ss';
-
-//            items.forEach(function(entry) {
-//
-//                var m = moment(entry.timestamp,format).utc();
-//                m.valueOf();
-//                dataset.push({ 'timestamp': m.valueOf(), items: entry.items});
-//            });
-
-
-
-        //        example: 2009-10-01 12:00:00.000
-        //format: yyyy-MM-dd HH:mm:ss.sss
-        //units: UTC (Coordinated Universal Time) or GPS time, which is a few leap seconds different from UTC
-
-
-
-            var format = d3.time.format('%Y-%m-%d %H:%M:%S');
-
-            dataset = items;
-
-            var firstTS = dataset[0].timestamp;
-            var fm = moment().utc(firstTS);
-
-            var lastTS = dataset[dataset.length - 1].timestamp;
-            var lm = moment().utc(lastTS);
-
-//        var timeFormat = d3.time.format('%Y-%m-%d T%H:%M:%S');
-
-
-        d3.select('#timelineSlider').call(d3.slider().scale(d3.time.scale().utc().domain([timeFormat.parse(firstTS), timeFormat.parse(lastTS)])).axis(d3.svg.axis()).step(10000).on("slide", function (evt, value) {
-            d3.select('#sliderValue').text(value);
-           // updatePointPosition(value);
-        }));
-
-
-//            var t1 = dataset[0].items;
-//
-//            svg.selectAll('circle').data(t1).enter()
-//                    .append("circle")
-//                    .attr("id", function (d) {
-//                        return d.id;
-//                    })
-//                    .attr("r", "10px")
-//                    .attr("fill", function (d) {
-//                        var c = colors[parseInt(d.id)];
-//                        //console.log('color', c);
-//                        return c;
-//                    })
-////                    .attr("cx", function (d) {
-////                        return projection([d.long, d.lat])[0];
-////                    })
-////                    .attr("cy", function (d) {
-////                        return projection([d.long, d.lat])[1];
-////                    })
-//                    .attr('transform', function (d) {
-//                        // console.log('transform', d.lat, d.long);
-//                        return 'translate(' + projection([d.lon, d.lat]) + ')'; //plus sign converts to ints
-//                    });
-
-    }
-
-    function updatePointPosition(selectedTimestamp) {
-        var currentlySelectedTime = selectedTimestamp;
-        console.log('selected timestamp', selectedTimestamp);
-        var circles = svg.selectAll('circle');
-
-        var results = dataset.filter(function (entry) {
-            return entry.timestamp === selectedTimestamp;
-        });
-
-        circles.remove();
-        if (results.length > 0) {
-            svg.selectAll('circle').data(results[0].items).enter()
-                    .append("circle")
-                    .attr("r", function (d) {
-                        return '10px';
-                    })
-                    .attr("fill", function (d) {
-                        var c = colors[parseInt(d.id)];
-                        //console.log('color', c);
-                        return c;
-                    })
-//                    .attr("cx", function (d) {
-//                        return projection([d.long, d.lat])[0];
-//                    })
-//                    .attr("cy", function (d) {
-//                        return projection([d.long, d.lat])[1];
-//                    })
-                    .attr('transform', function (d) {
-                        // console.log('transform', d.lat, d.long);
-                        return 'translate(' + projection([d.lon, d.lat]) + ')'; //plus sign converts to ints
-                    });
-            console.log('slider update', JSON.stringify(results));
+            tooltip.style("display", "block")
+                    .text(d.properties.ID);
         }
-    }
 
+        //Move the tooltip to track the mouse
+        function moveTooltip() {
+            tooltip.style("top", (d3.event.pageY + tooltipOffset.y) + "px")
+                    .style("left", (d3.event.pageX + tooltipOffset.x) + "px");
+        }
 
-    // Add optional onClick events for features here
-    // d.properties contains the attributes (e.g. d.properties.name, d.properties.population)
-    function clicked(d, i) {
+        //Create a tooltip, hidden at the start
+        function hideTooltip() {
+            tooltip.style("display", "none");
+        }
 
-    }
+        /*#########################################################################
+         *              FUNCTION USED TO CREATE THE SLIDER
+         *#########################################################################*/
+        function createSlider(dataset) {
 
+            /**********************
+             * Slider creation.
+             *********************/
 
-    //Update map on zoom/pan
-    function zoomed() {
-        features.attr("transform", "translate(" + zoom.translate() + ")scale(" + zoom.scale() + ")")
-                .selectAll("path").style("stroke-width", 1 / zoom.scale() + "px");
-    }
+            min = dataset[0].millisec;
+            max = dataset[dataset.length - 1].millisec;
 
+            console.log(min);
+            console.log(max);
 
-    //Position of the tooltip relative to the cursor
-    var tooltipOffset = {x: 5, y: -25};
+            slider = d3.slider().min(min).max(max).axis(true).step(60);
+            slider.on("slide", function(evt, value) {
 
-    //Create a tooltip, hidden at the start
-    function showTooltip(d) {
-        moveTooltip();
+                d3.select('#sliderText').text(value);
 
-        tooltip.style("display", "block")
-                .text(d.properties.ID);
-    }
+                // Update the position of the points of this timestamp
+                selectedItem = value - min;
+                updatePointPosition(selectedItem, dataset);
 
-    //Move the tooltip to track the mouse
-    function moveTooltip() {
-        tooltip.style("top", (d3.event.pageY + tooltipOffset.y) + "px")
-                .style("left", (d3.event.pageX + tooltipOffset.x) + "px");
-    }
+            });
 
-    //Create a tooltip, hidden at the start
-    function hideTooltip() {
-        tooltip.style("display", "none");
-    }
-</script>
+            d3.select('#slider').call(slider);
+
+        }
+
+        /*#########################################################################
+         *              FUNCTION USED TO UPDATE THE POINTS POSITION
+         *#########################################################################*/
+
+        function updatePointPosition(selectedItem, datasets) {
+
+            item = datasets[selectedItem];
+
+            circles = svg.selectAll('circle');
+            circles.remove();
+            if (item.items.length > 0) {
+                svg.selectAll('circle').data(item.items).enter()
+                        .append("circle")
+                        .attr("r", '10px')
+                        .attr("cx", function(d) { return projection([d.lon, d.lat])[0]; } )
+                        .attr("cy", function(d) { return projection([d.lon, d.lat])[1]; } );
+            }
+        }
+
+    </script>
+
+</body>
