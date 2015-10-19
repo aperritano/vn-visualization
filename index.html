@@ -73,15 +73,29 @@
             shape-rendering: crispEdges;
         }
 
+        .axis text {
+            font: 10px sans-serif;
+        }
+
+        .axis line,
+        .axis path {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
 
     </style>
 </head>
 <body>
+<div id="timeliner"></div>
 <div id="container"></div>
 <div class="wrapper">
     <div id="timelineSlider"></div>
 </div>
-<div class="timeBox"><span id="sliderValue">0</span></div>
+<!--<div class="timeBox"><span id="sliderValue">0</span></div>-->
+
+
 <script>
 
     var fbase = new Firebase('https://visualizingnetworks.firebaseio.com/timestamps');
@@ -158,12 +172,164 @@
 //                    .on("mouseout", hideTooltip)
 //                    .on("click", clicked);
 //        });
+
     }
 
+
+
+
     var dataset = [];
+
+    function createTimeLine(items) {
+
+
+
+        var margin = {top: 100, right: 100, bottom: 100, left: 100};
+        var width = window.innerWidth - margin.left - margin.right;
+        var height = window.innerHeight - margin.top - margin.bottom;
+
+        var x = d3.time.scale()
+                .domain([new Date, new Date])
+                .nice(d3.time.week)
+                .range([0, width]);
+
+        var svg = d3.select("body").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        svg.append("g")
+                .attr("class", "x axis")
+                .call(d3.svg.axis().scale(x).orient("bottom"));
+
+//        var margin = {top: 40, right: 40, bottom: 40, left:40},
+//                width = 600,
+//                height = 500;
+//
+//            var width = window.innerWidth;
+//
+//            var timeDomain = d3.extent(items, function(d) { return d.timestamp; });
+//
+//
+//            var timeScale = d3.time.scale.utc().range([0, width]).domain(timeDomain).clamp(true);
+//
+//            d3.select("#timeliner").append("svg")
+//                .attr("width", width)
+//                .attr("height", 10)
+//                .append("g")
+//                .call(timeScale);
+
+
+
+
+// axis/scale domain is set [0ms, 8hrs]
+// which should appear in the axis as:
+// [1/1/1970 12:00am, 1/1/1970 8:00am]
+
+//    “%a - abbreviated weekday name.
+//        %A - full weekday name.
+//        %b - abbreviated month name.
+//        %B - full month name.
+//        %c - date and time, as “%a %b %e %H:%M:%S %Y”.
+//    %d - zero-padded day of the month as a decimal number [01,31].
+//        %e - space-padded day of the month as a decimal number [ 1,31].
+//        %H - hour (24-hour clock) as a decimal number [00,23].
+//        %I - hour (12-hour clock) as a decimal number [01,12].
+//        %j - day of the year as a decimal number [001,366].
+//        %m - month as a decimal number [01,12].
+//        %M - minute as a decimal number [00,59].
+//        %p - either AM or PM.
+//        %S - second as a decimal number [00,61]”
+
+//
+            //var dayNameFormat = d3.time.utc.format("%A");
+        //example: 2009-10-01 12:00:00.000
+
+        //var timeStamper = d3.time.format("%Y-%m-%d %H:%M:%S.%L").parse;
+
+//        var tl = d3.select("#timeliner").append("svg")
+//                .attr("width", width + margin.left + margin.right)
+//                .attr("height", height + margin.top + margin.bottom)
+//                .append("g")
+//                .call(xTicks);
+
+//        tl.append("g")
+//                .attr("class", "x axis")
+//                .attr("transform", "translate(0," + height + ")")
+//                .call(xAxis);var tl = d3.select("#timeliner").append("svg")
+//                .attr("width", width + margin.left + margin.right)
+//                .attr("height", height + margin.top + margin.bottom)
+//                .append("g")
+//                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+//
+//        tl.append("g")
+//                .attr("class", "x axis")
+//                .attr("transform", "translate(0," + height + ")")
+//                .call(xTicks);
+    }
+
     function updateViz(items) {
 
-            var format = 'YYYY-MM-DD HH:mm:ss';
+        var dataset = items;
+        createTimeLine(dataset);
+
+//           var firstTS = dataset[0].timestamp;
+//            var fm = moment().utc(firstTS).toDate();
+//
+//            var lastTS = dataset[dataset.length - 1].timestamp;
+//            var lm = moment().utc(lastTS).toDate();
+//
+//        var customTimeFormat = d3.time.format.utc.multi([
+//            [".%L", function(d) { return d.getMilliseconds(); }],
+//            [":%S", function(d) { return d.getSeconds(); }],
+//            ["%I:%M", function(d) { return d.getMinutes(); }],
+//            ["%I %p", function(d) { return d.getHours(); }],
+//            ["%a %d", function(d) { return d.getDay() && d.getDate() != 1; }],
+//            ["%b %d", function(d) { return d.getDate() != 1; }],
+//            ["%B", function(d) { return d.getMonth(); }],
+//            ["%Y", function() { return true; }]
+//        ]);
+
+//        var firstTLDate = customTimeFormat(fm);
+
+//        var margin = {top: 250, right: 40, bottom: 250, left: 40},
+//                width = 960 - margin.left - margin.right,
+//                height = 500 - margin.top - margin.bottom;
+//
+//        var x = d3.time.scale().utc().domain([new Date('2014-03-08T12:00:00.000Z'), new Date('2014-03-10T00:00:00.000Z')])
+//                .range([0, width]);
+//
+//        var xAxis = d3.svg.axis()
+//                .scale(x)
+//                .orient('bottom')
+//                .ticks(d3.time.hours.utc, 1)
+//                .tickFormat(d3.time.format('%I %p'));
+//
+//        console.log(xAxis);
+
+
+//        var tl = d3.select("#timeliner").append("svg")
+//                .attr("width", width + margin.left + margin.right)
+//                .attr("height", height + margin.top + margin.bottom)
+//                .append("g")
+//                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+//
+//        tl.append("g")
+//                .attr("class", "x axis")
+//                .attr("transform", "translate(0," + height + ")")
+//                .call(xAxis);var tl = d3.select("#timeliner").append("svg")
+//                .attr("width", width + margin.left + margin.right)
+//                .attr("height", height + margin.top + margin.bottom)
+//                .append("g")
+//                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+//
+//        tl.append("g")
+//                .attr("class", "x axis")
+//                .attr("transform", "translate(0," + height + ")")
+//                .call(xAxis);
+//
+//            var format = 'YYYY-MM-DD HH:mm:ss';
 
 //            items.forEach(function(entry) {
 //
@@ -180,23 +346,24 @@
 
 
 
-            var format = d3.time.format('%Y-%m-%d %H:%M:%S');
-
-            dataset = items;
-
-            var firstTS = dataset[0].timestamp;
-            var fm = moment().utc(firstTS);
-
-            var lastTS = dataset[dataset.length - 1].timestamp;
-            var lm = moment().utc(lastTS);
-
-//        var timeFormat = d3.time.format('%Y-%m-%d T%H:%M:%S');
 
 
-        d3.select('#timelineSlider').call(d3.slider().scale(d3.time.scale().utc().domain([timeFormat.parse(firstTS), timeFormat.parse(lastTS)])).axis(d3.svg.axis()).step(10000).on("slide", function (evt, value) {
-            d3.select('#sliderValue').text(value);
-           // updatePointPosition(value);
-        }));
+
+//            dataset = items;
+//
+//            var firstTS = dataset[0].timestamp;
+//            var fm = moment().utc(firstTS);
+//
+//            var lastTS = dataset[dataset.length - 1].timestamp;
+//            var lm = moment().utc(lastTS);
+//
+////        var timeFormat = d3.time.format('%Y-%m-%d T%H:%M:%S');
+//
+//
+//        d3.select('#timelineSlider').call(d3.slider().scale(d3.time.scale().utc().domain([timeFormat.parse(firstTS), timeFormat.parse(lastTS)])).axis(d3.svg.axis()).step(10000).on("slide", function (evt, value) {
+//            d3.select('#sliderValue').text(value);
+//           // updatePointPosition(value);
+//        }));
 
 
 //            var t1 = dataset[0].items;

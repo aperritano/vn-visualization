@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+    <script src="./bower_components/d3/d3.js"></script>
+    <script src="./bower_components/topojson/topojson.js"></script>
+    <script src="./bower_components/moment/moment.js"></script>
+    <script src="./node_modules/predicate/dist/predicate.js"></script>
+    <script src="./bower_components/firebase/firebase.js"></script>
+
+    <link rel="stylesheet" href="./slider/d3.slider.css"/>
+
+
+    <style>
+
+        .axis text {
+            font: 11px sans-serif;
+        }
+        .axis path {
+            fill: none;
+            stroke: green;
+            shape-rendering: crispEdges;
+        }
+
+        .axis line {
+            fill: none;
+            stroke: yellow;
+            shape-rendering: crispEdges;
+        }
+
+        .brush .extent {
+            stroke: #fff;
+            fill-opacity: .125;
+            shape-rendering: crispEdges;
+        }
+
+        .axis text {
+            font: 10px sans-serif;
+        }
+
+        .axis path {
+            fill: none;
+            stroke: blue;
+            shape-rendering: crispEdges;
+        }
+
+        .axis line {
+            fill: none;
+            stroke: red;
+            shape-rendering: crispEdges;
+        }
+
+        .grid-background {
+            fill: #ddd;
+        }
+
+        .grid line {
+            fill: none;
+            stroke: orange;
+            shape-rendering: crispEdges;
+        }
+        .grid path {
+            fill: none;
+            stroke: #fff;
+            shape-rendering: crispEdges;
+        }
+
+        .grid .minor.tick line {
+            stroke-opacity: .5;
+            stroke: #fff;
+
+        }
+
+        .brush .extent {
+            stroke: #000;
+            fill-opacity: .125;
+            shape-rendering: crispEdges;
+        }
+
+    </style>
+</head>
+<body>
+<div id="timeliner"></div>
+<div id="container"></div>
+
+<script>
+
+    var fbase = new Firebase('https://visualizingnetworks.firebaseio.com/timestamps');
+    var tooltip;
+    var svg;
+    var colors;
+    var projection;
+    var path;
+    var features;
+    var zoom;
+
+    var dataset = [];
+    var brush;
+    var mainDataset;
+
+    initViz();
+
+    fbase.on("value", function (snapshot) {
+        //console.log(JSON.stringify(snapshot.val()));
+        updateViz(snapshot.val());
+    }, function (errorObject) {
+        console.log("The read failed: " + errorObject.code);
+    });
+
+
+    function initViz() {
+    }
+
+
+
+
+
+
+
+
+    function updateViz(items) {
+
+        mainDataset = items;
+        createTimeLine(mainDataset);
+
+    }
+
+    /**
+     * Create the main time line
+     *
+     * @param items - that complete dataset
+     */
+    function createTimeLine(items) {
+
+        var margin = {top: 100, right: 50, bottom: 100, left: 50};
+        var width = window.innerWidth - margin.left - margin.right;
+        var height = 500 - margin.top - margin.bottom;
+
+        var barHeight = 75;
+
+
+        var timeDomain = d3.extent(items, function (d) {
+            return d.timestamp;
+        });
+
+
+        console.log('timedomain', JSON.stringify(timeDomain));
+        var x = d3.time.scale()
+                .domain([moment(timeDomain[0]).toDate(), moment(timeDomain[1]).toDate()])
+                .range([0, width]);
+
+        brush = d3.svg.brush()
+                .x(x)
+                .extent([moment(timeDomain[0]).toDate(), moment(timeDomain[0]).add(15,'m').toDate()])
+                .on("brushend", brushended);
+
+
+        //create  main area
+        var svg = d3.select("#timeliner").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+
+        //create grid background
+        svg.append("rect")
+                .attr("class", "grid-background")
+                .attr("width", width)
+                .attr("height", barHeight);
+
+        var ga = d3.svg.axis()
+                        .scale(x)
+                        .orient("bottom")
+                        .ticks(d3.time.day.utc, 1)
+                        .tickSize(-barHeight);
+        //create grid axis
+        svg.append("g")
+                .attr("class", "x grid")
+                .attr("transform", "translate(0," + height + ")")
+                .call(ga)
+                .selectAll(".tick")
+                .classed("minor", function(d) { return d.getUTCMinutes(); });
+
+
+
+        var xa = d3.svg.axis()
+                .scale(x)
+                .orient("bottom")
+                .ticks(d3.time.minutes.utc, 10)
+                .tickPadding(5);
+
+        svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + barHeight + ")")
+                .call(xa)
+                .selectAll("text")
+                .attr("x", -8)
+                .style("text-anchor", null);
+
+        var gBrush = svg.append("g")
+                .attr("class", "brush")
+                .call(brush)
+                .call(brush.event);
+
+        gBrush.selectAll("rect")
+                .attr("height", barHeight);
+    }
+
+    function brushended() {
+        if (!d3.event.sourceEvent) return; // only transition after input
+        var extent0 = brush.extent();
+        var extent1 = extent0.map(d3.time.minute.utc.round);
+
+        // if empty when rounded, use floor & ceil instead
+        if (extent1[0] >= extent1[1]) {
+            extent1[0] = d3.time.d3.time.minute.utc.floor(extent0[0]);
+            extent1[1] = d3.time.d3.time.minute.utc.ceil(extent0[1]);
+        }
+
+        d3.select(this).transition()
+                .call(brush.extent(extent1))
+                .call(brush.event);
+        console.log('brush dates', JSON.stringify(extent1), moment(extent1[0]).toDate(),moment(extent1[1]).toDate());
+
+        if( extent1[0] !==  undefined && extent1[1] !== undefined) {
+            findDatesInRange(moment(extent1[0]),moment(extent1[1]));
+        }
+
+    }
+
+    function findDatesInRange(date1, date2) {
+
+        var foundDates = [];
+
+        for (var i = 0; i < mainDataset.length; i++) {
+            var dataItem = mainDataset[i];
+            var lookup = dataItem.timestamp;
+            if( moment(dataItem.timestamp).isBetween(date1, date2, 'minute') ) {
+                foundDates.push(dataItem);
+            }
+        }
+
+        if( foundDates[0] !== undefined ) {
+            for (var i = 0; i < foundDates.length; i++) {
+                console.log('found date: ', JSON.stringify(foundDates[i]));
+            }
+        }
+    }
+
+    function updatePointPosition(selectedTimestamp) {
+        var currentlySelectedTime = selectedTimestamp;
+        console.log('selected timestamp', selectedTimestamp);
+        var circles = svg.selectAll('circle');
+
+        var results = dataset.filter(function (entry) {
+            return entry.timestamp === selectedTimestamp;
+        });
+
+        circles.remove();
+        if (results.length > 0) {
+            svg.selectAll('circle').data(results[0].items).enter()
+                    .append("circle")
+                    .attr("r", function (d) {
+                        return '10px';
+                    })
+                    .attr("fill", function (d) {
+                        var c = colors[parseInt(d.id)];
+                        //console.log('color', c);
+                        return c;
+                    })
+//                    .attr("cx", function (d) {
+//                        return projection([d.long, d.lat])[0];
+//                    })
+//                    .attr("cy", function (d) {
+//                        return projection([d.long, d.lat])[1];
+//                    })
+                    .attr('transform', function (d) {
+                        // console.log('transform', d.lat, d.long);
+                        return 'translate(' + projection([d.lon, d.lat]) + ')'; //plus sign converts to ints
+                    });
+            console.log('slider update', JSON.stringify(results));
+        }
+    }
+
+
+    // Add optional onClick events for features here
+    // d.properties contains the attributes (e.g. d.properties.name, d.properties.population)
+    function clicked(d, i) {
+
+    }
+
+
+    //Update map on zoom/pan
+    function zoomed() {
+        features.attr("transform", "translate(" + zoom.translate() + ")scale(" + zoom.scale() + ")")
+                .selectAll("path").style("stroke-width", 1 / zoom.scale() + "px");
+    }
+
+
+    //Position of the tooltip relative to the cursor
+    var tooltipOffset = {x: 5, y: -25};
+
+    //Create a tooltip, hidden at the start
+    function showTooltip(d) {
+        moveTooltip();
+
+        tooltip.style("display", "block")
+                .text(d.properties.ID);
+    }
+
+    //Move the tooltip to track the mouse
+    function moveTooltip() {
+        tooltip.style("top", (d3.event.pageY + tooltipOffset.y) + "px")
+                .style("left", (d3.event.pageX + tooltipOffset.x) + "px");
+    }
+
+    //Create a tooltip, hidden at the start
+    function hideTooltip() {
+        tooltip.style("display", "none");
+    }
+</script>
