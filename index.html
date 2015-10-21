@@ -512,25 +512,10 @@
     }
 
 
-    function zoomTo() {
-
-        var point = gpsDataset[1].items[0];
-        var p = projection([+point.lon, +point.lat]);
-
-        mapContainer.transition()
-                .duration(750)
-                .attr('transform', 'translate(' + p + ')scale(' + 22 + ')');
-
-
-    }
 
 
 
-
-
-
-
-        // Add optional onClick events for mapContainer here
+    // Add optional onClick events for mapContainer here
     // d.properties contains the attributes (e.g. d.properties.name, d.properties.population)
     var active = d3.select(null);
     function clicked(d, i) {
@@ -599,4 +584,16 @@
     ////        mainTimeLineRect.attr('width', x);
     //        console.log('we resized width/height', window.innerWidth, window.innerHeight);
     //    }
+
+//    function zoomTo() {
+//
+//        var point = gpsDataset[1].items[0];
+//        var p = projection([+point.lon, +point.lat]);
+//
+//        mapContainer.transition()
+//                .duration(750)
+//                .attr('transform', 'translate(' + p + ')scale(' + 22 + ')');
+//
+//
+//    }
 </script>
