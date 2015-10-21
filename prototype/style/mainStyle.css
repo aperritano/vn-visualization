@@ -1,0 +1,130 @@
+html, body{
+    height: 100%;
+    padding: 0px;
+    margin: 0px;
+    overflow: hidden;
+}
+
+/****************
+ * HEADER STYLE
+ ****************/
+#headerPanel{
+    height: 5%;
+    width: 100%;
+    border: 1px #000000 solid;
+    background: #999999;
+    float: left;
+}
+
+#headerTitle{
+    height: 100%;
+    width: 20%;
+    border: 1px #000000 solid;
+    float: left;
+}
+
+#headerMenu{
+    height: 100%;
+    width: 5%;
+    border: 1px #000000 solid;
+    float: right;
+}
+
+/****************
+ * CONTENT STYLE
+ ****************/
+#contentPanel{
+    height: 95%;
+    width: 100%;
+    border: 1px #000000 solid;
+    float: left;
+}
+
+/****************
+ * MENU STYLE
+ ****************/
+#menuPanel{
+    height: 100%;
+    width: 25%;
+    border: 1px #000000 solid;
+    background: #999999;
+    display: none;
+    position: absolute;
+    top: 5%;
+    right: 0;
+}
+
+#menuIcon{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    height: 100%;
+}
+
+.menuItem{
+    width: 33.3%;
+    float: left;
+    height: 5%;
+}
+.menuItem:hover{
+    width: 33.3%;
+    float: left;
+    height: 5%;
+    background: #ffffff;
+    -webkit-transition: opacity 1s linear;
+}
+
+.menuItem img{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    height: 100%;
+}
+
+#menuContentHome{
+    display: block;
+    height: 100%;
+    width: 100%;
+}
+
+#menuContentSettings{
+    display: none;
+    height: 100%;
+    width: 100%;
+}
+
+#menuContentSave{
+    display: none;
+    height: 100%;
+    width: 100%;
+}
+
+/****************
+ * MAP STYLE
+ ****************/
+#mapPanel{
+    height: 45%;
+    width: 100%;
+    border: 1px #000000 solid;
+    display: block;
+}
+
+/****************
+ * TIMELINE STYLE
+ ****************/
+#timelinePanel{
+    height: 10%;
+    width: 100%;
+    border: 1px #000000 solid;
+    display: block;
+}
+
+/****************
+ * LABEL STYLE
+ ****************/
+#labelPanel{
+    height: 45%;
+    width: 100%;
+    border: 1px #000000 solid;
+    display: block;
+}
