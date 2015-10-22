@@ -14,6 +14,7 @@
             font-family: "Roboto";
             font-style: normal;
             font-weight: 400;
+            overflow-x:hidden;
         }
 
 
@@ -70,69 +71,50 @@
             font-family: "Roboto";
             font-style: normal;
             font-weight: 400;
+            fill: #000;
         }
         .axis path {
             fill: none;
-            stroke: #0c0c0c;
+            stroke: #000;
             shape-rendering: crispEdges;
         }
 
         .axis line {
             fill: none;
-            stroke: #0c0c0c;
-            shape-rendering: crispEdges;
-        }
-
-        .brush .extent {
-            stroke: #fff;
-            fill-opacity: .125;
-            shape-rendering: crispEdges;
-        }
-
-        .axis text {
-            font-size: 10px;
-            font-family: "Roboto";
-            font-style: normal;
-            font-weight: 400;
-        }
-
-        .axis path {
-            fill: none;
-            stroke: #0c0c0c;
-            shape-rendering: crispEdges;
-        }
-
-        .axis line {
-            fill: none;
-            stroke: #0c0c0c;
+            stroke: #1924ff;
             shape-rendering: crispEdges;
         }
 
         .grid-background {
-            /*fill: #5aff61;*/
-            border: 5px solid #0c0c0c;
-            stroke: #0c0c0c;
+            fill: #ddd;
+            /*stroke-width: .5px;*/
+            stroke: #000;
+            shape-rendering: crispEdges;
 
 
         }
 
         .grid line {
             fill: none;
-            stroke: #0c0c0c;
+            stroke: #000;
             shape-rendering: crispEdges;
-
         }
         .grid path {
             fill: none;
-            stroke: #0c0c0c;
+            stroke: #000;
             shape-rendering: crispEdges;
         }
 
         .grid .minor.tick line {
-            stroke-opacity: 1;
-            stroke: #0c0c0c;
-
+            stroke-opacity: .5;
         }
+
+        .brush .extent {
+            stroke: #000;
+            fill-opacity: .125;
+            shape-rendering: crispEdges;
+        }
+
 
         .brush .extent {
             stroke: #000;
@@ -144,6 +126,12 @@
             background-color: #e8e8e8;
         }
 
+        svg {
+            border-style: solid;
+            border-width: 1px;
+            border-color: #ccc;
+        }
+
     </style>
 </head>
 <body>
@@ -151,6 +139,9 @@
        type="button"
        value="play"
        onclick="zoomTo()" />
+<div id="map"></div>
+<div id="timeline"></div>
+<div id="labels"></div>
 <script>
 
     var fbase = new Firebase('https://visualizingnetworks.firebaseio.com/timestamps');
@@ -209,9 +200,9 @@
 
     function initSVG() {
         //create the entire window area
-        svgContainer = d3.select('body').append('svg')
-                .attr('width',mainTimelineInnerWidth  + margin.left + margin.right+ margin.right)
-                .attr('height', wHeight)
+        svgContainer = d3.select('#map').append('svg')
+                .attr('width',mainTimelineInnerWidth  + margin.left)
+                .attr('height', wHeight / 2)
                 .style('background-color','lightgray');
     }
 
@@ -219,6 +210,14 @@
      * Setup the map
      **/
     function createMap(dataPoint) {
+
+//        var margin = {top: 10, left: 10, bottom: 10, right: 10}
+//                , width = parseInt(d3.select('#map').style('width'))
+//                , width = width - margin.left - margin.right
+//                , mapRatio = .5
+//                , height = width * mapRatio;
+
+
         //Map projection
         var subjects = dataPoint.items;
 
@@ -373,16 +372,24 @@
                 .on('brushend', brushended);
 
 
+        var tlContainer = d3.select('#timeline').append('svg')
+                .attr('fill', 'blue')
+                .attr('width',mainTimelineInnerWidth  + margin.left)
+                .attr('height', mainTimelineHeight);
 
+
+
+        var brushAreaHeight = 75;
 
         //create the mainTimeLine area and position it on screen
-        var mainTimeLineGroup = svgContainer
+        var mainTimeLineGroup = tlContainer
                 .append('g')
-                .attr('transform', 'translate(' + 0 + ',' + mainTimelinePostionY + ')');
+                .attr('transform', 'translate(' + 0 + ',' + 0 + ')');
 
         //draw its overall rect
         mainTimeLineRect = mainTimeLineGroup.append('rect');
-        mainTimeLineRect.attr('fill', 'yellow')
+        mainTimeLineRect
+                .attr('fill', 'none')
                 .attr('width', '100%')
                 .attr('height', mainTimelineHeight);
 
@@ -392,9 +399,8 @@
                 .append('g')
                 .append('rect')
                 .attr('class', 'grid-background')
-                .attr('fill', 'lightblue')
                 .attr('width', '100%')
-                .attr('height', mainTimelineInnerHeight)
+                .attr('height', brushAreaHeight)
                 .attr('transform', 'translate(' + 0 + ',' + 0 + ')');
 
         var ga = d3.svg.axis()
@@ -408,8 +414,7 @@
         mainTimeLineGroup
                 .append('g')
                 .attr('class', 'x grid')
-                .style('background-color', 'red')
-                .attr('height', 75)
+                .attr('height', 5)
                 .attr('transform', 'translate(15,' + 0 + ')')
                 .call(ga)
                 .selectAll('.tick')
@@ -423,7 +428,7 @@
 //
         mainTimeLineGroup.append('g')
                 .attr('class', 'x axis')
-                .attr('transform', 'translate(15,' + 75 + ')')
+                .attr('transform', 'translate(15,' + brushAreaHeight + ')')
                 .call(xa)
                 .selectAll('text')
                 .attr('x', -12)
@@ -512,10 +517,25 @@
     }
 
 
+    function zoomTo() {
+
+        var point = gpsDataset[1].items[0];
+        var p = projection([+point.lon, +point.lat]);
+
+        mapContainer.transition()
+                .duration(750)
+                .attr('transform', 'translate(' + p + ')scale(' + 22 + ')');
+
+
+    }
 
 
 
-    // Add optional onClick events for mapContainer here
+
+
+
+
+        // Add optional onClick events for mapContainer here
     // d.properties contains the attributes (e.g. d.properties.name, d.properties.population)
     var active = d3.select(null);
     function clicked(d, i) {
@@ -584,16 +604,4 @@
     ////        mainTimeLineRect.attr('width', x);
     //        console.log('we resized width/height', window.innerWidth, window.innerHeight);
     //    }
-
-//    function zoomTo() {
-//
-//        var point = gpsDataset[1].items[0];
-//        var p = projection([+point.lon, +point.lat]);
-//
-//        mapContainer.transition()
-//                .duration(750)
-//                .attr('transform', 'translate(' + p + ')scale(' + 22 + ')');
-//
-//
-//    }
 </script>
