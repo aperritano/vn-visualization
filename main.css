@@ -1,0 +1,130 @@
+body {
+    font-size: 13px;
+    font-family: "Roboto";
+    font-style: normal;
+    font-weight: 400;
+    overflow-x:hidden;
+}
+
+
+/*map css*/
+
+path {
+    stroke-width: 1px;
+    stroke: #8e8e8e;
+    fill: none;
+    cursor: pointer;
+}
+
+path:hover, path.highlighted {
+    fill: tomato;
+}
+
+div.tooltip {
+    position: absolute;
+    background-color: white;
+    border: 1px solid black;
+    color: black;
+    font-weight: bold;
+    padding: 4px 8px;
+    display: none;
+}
+
+.bubble {
+    fill-opacity: .5;
+}
+
+.bubble :hover {
+    stroke: #000;
+}
+
+.wrapper {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.timeBox {
+    margin-top: 30px;
+}
+
+.area {
+    fill: steelblue;
+    clip-path: url(#clip);
+}
+
+/*main timeline css*/
+
+.axis text {
+    font-size: 11px;
+    font-family: "Roboto";
+    font-style: normal;
+    font-weight: 400;
+    fill: #000;
+}
+.axis path {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+.axis line {
+    fill: none;
+    stroke: #1924ff;
+    shape-rendering: crispEdges;
+}
+
+.grid-background {
+    fill: #ddd;
+    /*stroke-width: .5px;*/
+    stroke: #000;
+    shape-rendering: crispEdges;
+
+
+}
+
+.grid line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+.grid path {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+.grid .minor.tick line {
+    stroke-opacity: .5;
+}
+
+.brush .extent {
+    stroke: #000;
+    fill-opacity: .125;
+    shape-rendering: crispEdges;
+}
+
+
+.brush .extent {
+    stroke: #000;
+    fill-opacity: .125;
+    shape-rendering: crispEdges;
+}
+
+#timeliner {
+    background-color: #e8e8e8;
+}
+
+/*svg {*/
+/*border-style: solid;*/
+/*border-width: 1px;*/
+/*border-color: #ccc;*/
+/*}*/
+
+.leaflet-container {
+    cursor: default !important;
+}
+
+#map {
+    margin-bottom: 1px;
+    padding: 0px;
+}
