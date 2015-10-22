@@ -286,7 +286,7 @@
         //Create zoom/pan listener
         //Change [1,Infinity] to adjust the min/max zoom scale
         // zoom and pan
-        var zoom = d3.behavior.zoom()
+        zoom = d3.behavior.zoom()
                 .on("zoom",function() {
                     mapContainer.attr("transform","translate("+
                             d3.event.translate.join(",")+")scale("+d3.event.scale+")");
@@ -519,21 +519,27 @@
 
 
     function zoomTo() {
-
+        console.log('zoomTo');
         var point = gpsDataset[1].items[0];
-        var p = projection([+point.lon, +point.lat]);
+        var p = projection([-point.lon, -point.lat]);
 
+        zoom.scale(20000);
+        zoom.translate(p);
+
+        //mapContainer.call(zoom);
+
+//        mapContainer.transition().duration(750).call(zoomTo(point, 4));
         mapContainer.transition()
                 .duration(750)
+            .attr("transform","translate("+
+                d3.event.translate.join(",")+")scale("+4+")")
+                .selectAll("circle")
+                .selectAll("path")
+                .attr("d", path.projection(projection))
                 .attr('transform', 'translate(' + p + ')scale(' + 22 + ')');
 
 
     }
-
-
-
-
-
 
 
         // Add optional onClick events for mapContainer here
