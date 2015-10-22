@@ -180,8 +180,9 @@
 
 
 
-    var svgContainer;
-    var mainTimeLineRect;
+    var mapSVG;
+    var timelineSVG;
+    var mainTimelineRect;
 
     fbase.on("value", function (snapshot) {
         updateDataFromDB(snapshot.val());
@@ -189,7 +190,7 @@
         console.log("The read failed: " + errorObject.code);
     });
 
-    initSVG();
+    initMapSVG();
 
     //setup resize
     //d3.select(window).on('resize', resize);
@@ -198,9 +199,9 @@
     /*** functions ******/
 
 
-    function initSVG() {
+    function initMapSVG() {
         //create the entire window area
-        svgContainer = d3.select('#map').append('svg')
+        mapSVG = d3.select('#map').append('svg')
                 .attr('width',mainTimelineInnerWidth  + margin.left)
                 .attr('height', wHeight / 2)
                 .style('background-color','lightgray');
@@ -247,7 +248,7 @@
 
 
         //Group for the map mapContainer
-        mapContainer = svgContainer.append('g');
+        mapContainer = mapSVG.append('g');
 
         //Create a tooltip, hidden at the start
 //        tooltip = d3.select('body').append('div').attr('class', 'tooltip');
@@ -296,7 +297,7 @@
 
                 });
 
-        svgContainer.call(zoom);
+        mapSVG.call(zoom);
 
         //plot the first point from the inital position on the brush
         //updatePointsPosition(dataPoint);
@@ -372,7 +373,7 @@
                 .on('brushend', brushended);
 
 
-        var tlContainer = d3.select('#timeline').append('svg')
+        timelineSVG = d3.select('#timeline').append('svg')
                 .attr('fill', 'blue')
                 .attr('width',mainTimelineInnerWidth  + margin.left)
                 .attr('height', mainTimelineHeight);
@@ -382,20 +383,20 @@
         var brushAreaHeight = 75;
 
         //create the mainTimeLine area and position it on screen
-        var mainTimeLineGroup = tlContainer
+        var mainTimelineContainer = timelineSVG
                 .append('g')
                 .attr('transform', 'translate(' + 0 + ',' + 0 + ')');
 
         //draw its overall rect
-        mainTimeLineRect = mainTimeLineGroup.append('rect');
-        mainTimeLineRect
+        mainTimelineRect = mainTimelineContainer.append('rect');
+        mainTimelineRect
                 .attr('fill', 'none')
                 .attr('width', '100%')
                 .attr('height', mainTimelineHeight);
 
 
         //draw the grid background
-        mainTimeLineGroup
+        mainTimelineContainer
                 .append('g')
                 .append('rect')
                 .attr('class', 'grid-background')
@@ -411,7 +412,7 @@
                         .tickFormat('');
 
 //        //create grid axis
-        mainTimeLineGroup
+        mainTimelineContainer
                 .append('g')
                 .attr('class', 'x grid')
                 .attr('height', 5)
@@ -426,7 +427,7 @@
                 .ticks(d3.time.minutes.utc, 15)
                 .tickPadding(0);
 //
-        mainTimeLineGroup.append('g')
+        mainTimelineContainer.append('g')
                 .attr('class', 'x axis')
                 .attr('transform', 'translate(15,' + brushAreaHeight + ')')
                 .call(xa)
@@ -435,7 +436,7 @@
                 .style('text-anchor', null)
 
 
-        var gBrush = mainTimeLineGroup.append('g')
+        var gBrush = mainTimelineContainer.append('g')
                 .attr('class', 'brush')
                 .call(brush)
                 .call(brush.event);
