@@ -1,27 +1,16 @@
 {
-  "name": "d3-kenya",
-  "version": "0.0.1",
-  "homepage": "https://github.com/aperritano",
-  "authors": [
-    "Anthony Perritano <aperritano@gmail.com>"
-  ],
-  "description": "visualizing networks - kenya",
-  "main": "index.html",
-  "moduleType": [],
-  "license": "MIT",
+  "name": "polymer-starter-kit",
   "private": true,
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "test",
-    "tests"
-  ],
   "dependencies": {
-    "d3": "~3.5.6",
-    "topojson": "~1.6.19",
-    "moment": "momentjs#~2.10.6",
-    "firebase": "~2.3.1",
-    "roboto-fontface": "~0.4.3"
+    "polymer": "Polymer/polymer",
+    "iron-elements": "PolymerElements/iron-elements",
+    "paper-elements": "PolymerElements/paper-elements",
+    "platinum-elements": "PolymerElements/platinum-elements",
+    "neon-elements": "PolymerElements/neon-elements",
+    "page": "visionmedia/page.js"
+  },
+  "devDependencies": {
+    "web-component-tester": "*",
+    "test-fixture": "PolymerElements/test-fixture#^1.0.0"
   }
 }
