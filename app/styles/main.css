@@ -128,3 +128,10 @@ div.tooltip {
     margin-bottom: 1px;
     padding: 0px;
 }
+
+/*node css*/
+
+.node {
+    shape-rendering: crispEdges;
+    stroke: #000;
+}
