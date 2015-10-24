@@ -40,7 +40,7 @@ var ref = new Firebase('https://gpsdatababoons.firebaseio.com/timestamps');
 
 
 
-ref.limit(500).on('child_added', function (snapshot) {
+ref.orderByKey().startAt('0').endAt('100').on('value', function (snapshot) {
     var v = snapshot.val();
     updateDataFromDB(v);
 }, function (errorObject) {
