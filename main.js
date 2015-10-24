@@ -1,4 +1,4 @@
-var fbase = new Firebase('https://visualizingnetworks.firebaseio.com/timestamps');
+
 
 var tooltip;
 var svg;
@@ -22,16 +22,13 @@ var mainOffset = 15;
 
 var margin = {top: 100, right: 10, bottom: 150, left: 10};
 var mainTimelineWidth = window.innerWidth - margin.left - margin.right;
-var mainTimelineInnerWidth = window.innerWidth  - margin.left - margin.right - 10;
+var mainTimelineInnerWidth = window.innerWidth - margin.left - margin.right - 10;
 var mainTimelineHeight = 45;
 var mainTimelineInnerHeight = mainTimelineHeight - 15;
-var mainTimelinePostionY = window.innerHeight -(mainTimelineHeight + mainOffset);
+var mainTimelinePostionY = window.innerHeight - (mainTimelineHeight + mainOffset);
 
 var mapWidth = mainTimelineWidth;
 var mapHeight = mainTimelinePostionY;
-
-
-
 
 
 var mapSVG;
@@ -39,10 +36,15 @@ var timelineSVG;
 var mainTimelineRect;
 var map;
 
-fbase.on("value", function (snapshot) {
-    updateDataFromDB(snapshot.val());
+var ref = new Firebase('https://gpsdatababoons.firebaseio.com/timestamps');
+
+
+
+ref.limit(500).on('child_added', function (snapshot) {
+    var v = snapshot.val();
+    updateDataFromDB(v);
 }, function (errorObject) {
-    console.log("The read failed: " + errorObject.code);
+    console.log('The read failed: ' + errorObject.code);
 });
 
 initMapLeaflet();
@@ -59,10 +61,13 @@ function initMapLeaflet() {
 
     var m = document.getElementById('map');
 
-    m.style.width = mainTimelineInnerWidth  + (margin.left +1 )+ 'px';
-    m.style.height = wHeight / 2 + 'px';
+    var mapLeafletWidth = mainTimelineInnerWidth + (margin.left + 1 );
+    var mapLeafletHeight = wHeight / 2;
 
-    map = L.map('map', {zoomControl: false, attributionControl: false}).setView([0.3509073, 36.9229031], 5);
+    m.style.width = mapLeafletWidth + 'px';
+    m.style.height = mapLeafletHeight + 'px';
+
+    map = L.map('map', {zoomControl: true, attributionControl: false}).setView([0.3509073, 36.9229031], 5);
     map.touchZoom.disable();
     map.doubleClickZoom.disable();
     map.scrollWheelZoom.disable();
@@ -84,39 +89,45 @@ function initMapLeaflet() {
     countryOverlayControl.addTo(map);
 
 
-    document.getElementById("countryOverlayControl").addEventListener ("click", handleCountryOverlayControl, false);
+    document.getElementById("countryOverlayControl").addEventListener("click", handleCountryOverlayControl, false);
 
     var Esri_WorldGrayCanvas = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
 //            attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
         maxZoom: 16
     }).addTo(map);
 
-    // Add an SVG element to Leaflet’s overlay pane
-    mapSVG = d3.select(map.getPanes().overlayPane).append('svg');
+    // Initialize the SVG layer
+    map._initPathRoot();
+
+
+        // Add an SVG element to Leaflet’s overlay pane
+//    mapSVG = d3.select('#map').select('svg");
+
+    //mapSVG = d3.select(map.getPanes().overlayPane)
+    mapSVG = d3.select('#map').select('svg')
+        //.attr('width', mapLeafletWidth)
+        //.attr('height', mapLeafletHeight)
+        //.style('background-color', 'red');
+
     mapContainer = mapSVG.append('g');
 
 }
 
 function handleCountryOverlayControl() {
 
-    if( this.checked ) {
+    if (this.checked) {
         addCountryOverlay();
     } else {
         mapSVG.selectAll("path").remove();
     }
-
-
-
-
 }
 
-function addCountryOverlay(){
+function addCountryOverlay() {
+
+
     d3.json('KEN.topojson', function (error, collection) {
 
-        //            if (error) return console.log(error); //unknown error, check the console
-
-
-        //                    .data(topojson.feature(geodata, geodata.objects.KEN).features) //generate mapContainer from TopoJSON
+        if (error) return console.log(error); //unknown error, check the console
 
 
         var bounds = d3.geo.bounds(topojson.feature(collection, collection.objects.KEN));
@@ -124,8 +135,10 @@ function addCountryOverlay(){
         var path = d3.geo.path().projection(projectPoint);
 
 
+        //generate mapContainer from TopoJSON
+
         var feature = mapContainer.selectAll('path')
-            .data(topojson.feature(collection, collection.objects.KEN).features) //generate mapContainer from TopoJSON
+            .data(topojson.feature(collection, collection.objects.KEN).features)
             .enter()
             .append('path')
             .attr('d', path);
@@ -148,16 +161,7 @@ function addCountryOverlay(){
             mapContainer.attr('transform', 'translate(' + -bottomLeft[0] + ',' + -topRight[1] + ')');
 
             feature.attr('d', path);
-
-//                label.attr('id', function (d) { return d.id; })
-//                        .attr('class', 'entity-label')
-//                        .attr('transform', function (d) { return 'translate(' + path.centroid(d) + ')'; })
-//                        .attr('x', -20)
-//                        .attr('dy', '.35em')
-//                        .text(function (d) { return toProperCase(d.id); })
-
         }
-
 
 
         // Use Leaflet to implement a D3 geographic projection.
@@ -168,22 +172,51 @@ function addCountryOverlay(){
     });
 }
 
-function createLeafletMapOverlay(dataPoint) {
-
-
+function addDataPoints(dataPoint) {
     var subjects = dataPoint.items;
 
+    subjects.forEach(function(d) {
+        d.LatLng = new L.LatLng(d.lat, d.lon);
+    });
 
-    addCountryOverlay();
+    var circles = mapContainer.selectAll("circle")
+        .data(subjects)
+        .enter().append("circle")
+        .style("fill", "orange")
+        .style("fill-opacity",0.7)
+        .attr("r", 10)
+        .on("click", function(d){
+            alert(d)
+        });
+
+    map.on("viewreset", update);
+
+    update();
+
+    function update(){
+        circles.attr("transform",
+            function(d) {
+                return "translate("+
+                    map.latLngToLayerPoint(d.LatLng).x +","+
+                    map.latLngToLayerPoint(d.LatLng).y +")";
+            }
+        )
+    }
+
+}
+
+function createLeafletMapOverlay(dataPoint) {
+    //addCountryOverlay();
+    addDataPoints(dataPoint);
 }
 
 
 function initMapSVG() {
     //create the entire window area
     mapSVG = d3.select('#map').append('svg')
-        .attr('width',mainTimelineInnerWidth  + margin.left)
+        .attr('width', mainTimelineInnerWidth + margin.left)
         .attr('height', wHeight / 2)
-        .style('background-color','lightgray');
+        .style('background-color', 'lightgray');
 }
 
 /**
@@ -206,7 +239,7 @@ function createMap(dataPoint) {
 //                .scale(1000)
 //                .center([36.922895, 0.3508943]) //projection center
 //                .translate([mapWidth, mapHeight]) //translate to center the map in view
-    if( dataPoint === undefined ) {
+    if (dataPoint === undefined) {
         projection = d3.geo.mercator()
             .scale(1000)
             .center([36.922895, 0.3508943]) //projection center
@@ -222,8 +255,6 @@ function createMap(dataPoint) {
     //Generate paths based on projection
     path = d3.geo.path()
         .projection(projection);
-
-
 
 
     //Group for the map mapContainer
@@ -258,7 +289,7 @@ function createMap(dataPoint) {
 //                        return projection([+d.lon, +d.lat])[1];
 //                    });
             .attr('transform', function (d) {
-                return 'translate('+projection([+d.lon, +d.lat]) + ')'; //plus sign converts to ints
+                return 'translate(' + projection([+d.lon, +d.lat]) + ')'; //plus sign converts to ints
             });
     });
 
@@ -266,9 +297,9 @@ function createMap(dataPoint) {
     //Change [1,Infinity] to adjust the min/max zoom scale
     // zoom and pan
     zoom = d3.behavior.zoom()
-        .on("zoom",function() {
-            mapContainer.attr("transform","translate("+
-                d3.event.translate.join(",")+")scale("+d3.event.scale+")");
+        .on("zoom", function () {
+            mapContainer.attr("transform", "translate(" +
+                d3.event.translate.join(",") + ")scale(" + d3.event.scale + ")");
             mapContainer.selectAll("circle")
                 .attr("d", path.projection(projection));
             mapContainer.selectAll("path")
@@ -308,11 +339,13 @@ function updatePointsPosition(dataPoints) {
 function updateDataFromDB(items) {
 
     //there is no timeline available create one
-    if( gpsDataset === undefined || gpsDataset[0] == undefined) {
+    if (gpsDataset === undefined || gpsDataset[0] == undefined) {
 
         gpsDataset = items;
+
+        var first = gpsDataset[0];
         //create map
-        createLeafletMapOverlay(gpsDataset[0]);
+        createLeafletMapOverlay(first);
         //create timeline
         createTimeLine();
     } else {
@@ -341,11 +374,11 @@ function createTimeLine() {
         .range([0, mainTimelineInnerWidth]);
 
     var t1 = moment(timeDomain[0]).toDate();
-    var t2 = moment(timeDomain[0]).add(15,'m').toDate();
+    var t2 = moment(timeDomain[0]).add(15, 'm').toDate();
 
     currentTimeRange = findDatesInRange(t1, t2);
 
-    currentTimeRange.push(t1,t2);
+    currentTimeRange.push(t1, t2);
     brush = d3.svg.brush()
         .x(x)
         .extent([t1, t2])
@@ -354,14 +387,13 @@ function createTimeLine() {
 
     timelineSVG = d3.select('#timeline').append('svg')
         .attr('fill', 'blue')
-        .attr('width',mainTimelineInnerWidth  + margin.left)
+        .attr('width', mainTimelineInnerWidth + margin.left)
         .attr('height', mainTimelineHeight)
         .attr('transform', 'translate(' + 0 + ',' + 0 + ')');
 
 
-
     //80% of the total svg height
-    mainTimelineInnerHeight = .7*mainTimelineHeight;
+    mainTimelineInnerHeight = .7 * mainTimelineHeight;
     var brushAreaHeight = mainTimelineInnerHeight;
 
     //create the mainTimeLine area and position it on screen
@@ -389,7 +421,7 @@ function createTimeLine() {
     var ga = d3.svg.axis()
         .scale(x)
         .orient('bottom')
-        .ticks(d3.time.minutes.utc,15)
+        .ticks(d3.time.minutes.utc, 15)
         .tickSize(mainTimelineInnerHeight)
         .tickFormat('');
 
@@ -401,7 +433,9 @@ function createTimeLine() {
         .attr('transform', 'translate(15,' + 0 + ')')
         .call(ga)
         .selectAll('.tick')
-        .classed('minor', function(d) { return d.getUTCMinutes(); });
+        .classed('minor', function (d) {
+            return d.getUTCMinutes();
+        });
 
     var xa = d3.svg.axis()
         .scale(x)
@@ -430,7 +464,6 @@ function createTimeLine() {
 }
 
 
-
 function brushended() {
     if (!d3.event.sourceEvent) return; // only transition after input
     var extent0 = brush.extent();
@@ -445,10 +478,10 @@ function brushended() {
     d3.select(this).transition()
         .call(brush.extent(extent1))
         .call(brush.event);
-    console.log('brush dates', JSON.stringify(extent1), moment(extent1[0]).toDate(),moment(extent1[1]).toDate());
+    console.log('brush dates', JSON.stringify(extent1), moment(extent1[0]).toDate(), moment(extent1[1]).toDate());
 
-    if( extent1[0] !==  undefined && extent1[1] !== undefined) {
-        findDatesInRange(moment(extent1[0]),moment(extent1[1]));
+    if (extent1[0] !== undefined && extent1[1] !== undefined) {
+        findDatesInRange(moment(extent1[0]), moment(extent1[1]));
     }
 
 }
@@ -460,12 +493,12 @@ function findDatesInRange(date1, date2) {
     for (var i = 0; i < gpsDataset.length; i++) {
         var dataItem = gpsDataset[i];
         var lookup = dataItem.timestamp;
-        if( moment(dataItem.timestamp).isBetween(date1, date2, 'minute') ) {
+        if (moment(dataItem.timestamp).isBetween(date1, date2, 'minute')) {
             foundDates.push(dataItem);
         }
     }
 
-    if( foundDates !== undefined && foundDates[0] !== undefined ) {
+    if (foundDates !== undefined && foundDates[0] !== undefined) {
         for (var i = 0; i < foundDates.length; i++) {
             console.log('found date: ', JSON.stringify(foundDates[i]));
         }
@@ -487,7 +520,7 @@ function playPointRange() {
 //                .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
 
 
-    if( currentTimeRange !== undefined && currentTimeRange[0] !== undefined ) {
+    if (currentTimeRange !== undefined && currentTimeRange[0] !== undefined) {
 
 
         for (var i = 0; i < currentTimeRange.length; i++) {
@@ -513,8 +546,8 @@ function zoomTo() {
 //        mapContainer.transition().duration(750).call(zoomTo(point, 4));
     mapContainer.transition()
         .duration(750)
-        .attr("transform","translate("+
-        d3.event.translate.join(",")+")scale("+4+")")
+        .attr("transform", "translate(" +
+        d3.event.translate.join(",") + ")scale(" + 4 + ")")
         .selectAll("circle")
         .selectAll("path")
         .attr("d", path.projection(projection))
@@ -546,7 +579,6 @@ function clicked(d, i) {
         .attr('transform', 'translate(' + translate + ')scale(' + scale + ')');
 
 }
-
 
 
 //Update map on zoom/pan
