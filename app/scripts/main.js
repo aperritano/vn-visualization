@@ -67,6 +67,7 @@ function updateDataFromDB(items) {
         initLeafletOverlays();
         //create timeline
         createTimeLine();
+       // createLabelTimeLine();
     } else {
         //update timeline
         //update map
