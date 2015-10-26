@@ -128,3 +128,16 @@ div.tooltip {
     margin-bottom: 1px;
     padding: 0px;
 }
+
+/*node css*/
+
+.node {
+    shape-rendering: crispEdges;
+    stroke: #000;
+}
+
+.lineConnect {
+    fill: none;
+    stroke: black;
+    opacity: 1;
+}

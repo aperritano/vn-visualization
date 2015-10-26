@@ -1,0 +1,36 @@
+{
+  "name": "vn-visualization",
+  "version": "0.0.1",
+  "description": "visualizing networks",
+  "main": "gulp.js",
+  "dependencies": {
+    "gulp-plumber": "^1.0.1"
+  },
+  "devDependencies": {
+    "browser-sync": "^2.9.11",
+    "gulp": "^3.9.0",
+    "gulp-changed": "^1.3.0",
+    "gulp-jshint": "^1.11.2",
+    "gulp-livereload": "^3.8.1",
+    "is-predicate": "^0.10.1",
+    "jshint-stylish": "^2.0.1",
+    "predicate": "^0.12.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aperritano/vn-visualization.git"
+  },
+  "keywords": [
+    "visualization",
+    "networks"
+  ],
+  "author": "Anthony Perritano, Andrea Purgato",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aperritano/vn-visualization/issues"
+  },
+  "homepage": "https://github.com/aperritano/vn-visualization#readme"
+}
