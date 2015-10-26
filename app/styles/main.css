@@ -135,3 +135,9 @@ div.tooltip {
     shape-rendering: crispEdges;
     stroke: #000;
 }
+
+.lineConnect {
+    fill: none;
+    stroke: black;
+    opacity: 1;
+}

@@ -89,7 +89,7 @@ function initDataPointOverlay() {
     var firstPoint = gpsDataset[0];
 
 
-    if( firstPoint.items !== undefined ) {
+    if (firstPoint.items !== undefined) {
         drawDataPointOverlay(firstPoint);
     } else {
         //this point doesn't have subjects
@@ -97,8 +97,9 @@ function initDataPointOverlay() {
 }
 
 function drawDataPointOverlay(dataPoint) {
-    var subjects = dataPoint.items;
 
+
+    var subjects = dataPoint.items;
 
 
     var i = 0;
@@ -106,18 +107,22 @@ function drawDataPointOverlay(dataPoint) {
 
         d.LatLng = new L.LatLng(d.lat, d.lon);
 
-        if( i === 0) {
-            map.panTo(d.LatLng, { animate: true });
-            map.setZoom( 16, { animate: true });
+        if (i === 0) {
+            map.setZoom(19, {animate: true});
+
+           map.panTo(d.LatLng, {animate: true});
         }
 
         i++;
 
     });
 
-    var circles = mapContainer.selectAll('circle')
-        .data(subjects)
-        .enter()
+
+    var circles = mapContainer.selectAll('circle').data(subjects);
+
+    circles.exit().remove();
+
+    circles.enter()
         .append('circle')
         .attr('class', 'node')
         .attr('id', function (d) {
@@ -132,18 +137,24 @@ function drawDataPointOverlay(dataPoint) {
             window.alert(d);
         });
 
+    //remove old ones
     map.on('viewreset', update);
+
 
     update();
 
+
+
+
     function update() {
-        circles.attr('transform',
-            function (d) {
-                return 'translate(' +
-                    map.latLngToLayerPoint(d.LatLng).x + ',' +
-                    map.latLngToLayerPoint(d.LatLng).y + ')';
-            }
-        );
+        d3.transition(circles)
+            .attr('transform',
+                function (d) {
+                    return 'translate(' +
+                        map.latLngToLayerPoint(d.LatLng).x + ',' +
+                        map.latLngToLayerPoint(d.LatLng).y + ')';
+                }
+            );
     }
 }
 
@@ -155,18 +166,23 @@ function initMapLeaflet() {
     var m = document.getElementById('map');
 
     var mapLeafletWidth = mainTimelineInnerWidth + (margin.left + 1 );
-    var mapLeafletHeight = wHeight / 2;
+    var mapLeafletHeight = wHeight * .8;
 
     m.style.width = mapLeafletWidth + 'px';
     m.style.height = mapLeafletHeight + 'px';
 
-    map = L.map('map', {zoomControl: true, attributionControl: false}).setView([0.3509073, 36.9229031], 10);
-    map.touchZoom.disable();
-    map.doubleClickZoom.disable();
+    map = L.map('map', {
+        zoomControl: true,
+        maxNativeZoom: 18,
+        maxZoom: 50,
+        attributionControl: false
+    }).setView([0.3509073, 36.9229031], 5);
+    //map.touchZoom.disable();
+    //map.doubleClickZoom.disable();
     //map.scrollWheelZoom.disable();
-    map.boxZoom.disable();
-    map.keyboard.disable();
-    map.dragging.disable();
+    //map.boxZoom.disable();
+    //map.keyboard.disable();
+    //map.dragging.disable();
 
     L.tileLayer('http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
         maxZoom: 18,
@@ -310,10 +326,9 @@ function createTimeLine() {
         .range([0, mainTimelineInnerWidth]);
 
 
+    //currentTimeRange = findDatesInRange(tStart, t15);
 
-    currentTimeRange = findDatesInRange(tStart, t15);
-
-    currentTimeRange.push(tStart, t15);
+    //currentTimeRange.push(tStart, t15);
     brush = d3.svg.brush()
         .x(x)
         .extent([tStart, t15])
@@ -395,7 +410,7 @@ function createTimeLine() {
     gBrush.selectAll('rect')
         .attr('height', mainTimelineInnerHeight);
 
-
+    zoomToDateRange(tStart, t15);
 }
 
 
@@ -416,7 +431,7 @@ function brushended() {
     d3.select(this).transition()
         .call(brush.extent(extent1))
         .call(brush.event);
-    console.log('brush dates', JSON.stringify(extent1), moment(extent1[0]).toDate(), moment(extent1[1]).toDate());
+    //console.log('brush dates', JSON.stringify(extent1), moment(extent1[0]).toDate(), moment(extent1[1]).toDate());
 
     if (extent1[0] !== undefined && extent1[1] !== undefined) {
         var tStart = moment(extent1[0]);
@@ -430,11 +445,24 @@ function zoomToDateRange(tStart, tEnd) {
     var foundDates = findDatesInRange(tStart, tEnd);
 
     //grab the first one and zoom to that
-    if( foundDates !== undefined || foundDates[0] !== undefined ) {
-        var firstDataPoint = foundDates[0];
-        drawDataPointOverlay(firstDataPoint);
+    if (foundDates !== undefined || foundDates[0] !== undefined) {
+
+        //find the first one with points
+        var found = false;
+        foundDates.some(function (d) {
+
+            if (found === false && d.items !== undefined) {
+                drawDataPointOverlay(d);
+                found = true;
+                return found;
+            }
+
+        });
+        //var firstDataPoint = foundDates[0];
+        //
+        //drawDataPointOverlay(firstDataPoint);
         //map.panTo(new L.LatLng(40.737, -73.923));
-    //
+        //
     }
 
 }
@@ -455,20 +483,49 @@ function findDatesInRange(tStart, tEnd) {
 
     if (foundDates !== undefined && foundDates[0] !== undefined) {
         for (var k = 0; k < foundDates.length; k++) {
-            console.log('found date: ', JSON.stringify(foundDates[k]) +'\n');
+            //console.log('found date: ', JSON.stringify(foundDates[k]) +'\n');
         }
 
         updateDataFromDB(foundDates[0]);
     }
 
+    currentTimeRange = foundDates;
     return foundDates;
+}
+
+function playSelection() {
+    //find the first one with points
+    var found = false;
+
+    for( var i = 0; i < currentTimeRange.length; i++) {
+        var d = currentTimeRange[i];
+        if (d.items !== undefined) {
+            //setInterval(function () {
+                //console.log('playing...', d.items);
+                drawDataPointOverlay(d);
+
+                    //}, 250);
+
+
+        }
+
+    }
+    console.log('done');
+    //currentTimeRange.forEach(function (d) {
+    //
+    //    setInterval(function () {
+    //
+    //
+    //    }, 500);
+    //
+    //});
 }
 
 /**
  * lookup for node colors
  */
 function nodeColorMap(index) {
-    var colors = ['Red', 'Purple', 'Deep Purple','Ingio','Light Blue', 'Cyan', 'Green', 'Teal', 'Lime', 'Yellow', 'Orange', 'Deep Orange', 'Brown', 'Grey','Blue Grey'  ];
+    var colors = ['Red', 'Purple', 'Deep Purple', 'Ingio', 'Light Blue', 'Cyan', 'Green', 'Teal', 'Lime', 'Yellow', 'Orange', 'Deep Orange', 'Brown', 'Grey', 'Blue Grey'];
 
     var c = colors[index];
 
