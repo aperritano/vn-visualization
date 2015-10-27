@@ -89,7 +89,6 @@ function initDataPointOverlay() {
 
     var firstPoint = gpsDataset[0];
 
-
     if (firstPoint.items !== undefined) {
         drawDataPointOverlay(firstPoint);
     } else {
@@ -443,6 +442,16 @@ function brushended() {
 }
 
 function zoomToDateRange(tStart, tEnd) {
+
+    /**
+     * Build the timeline.
+     */
+    var initialTime = moment(gpsDataset[0].timestamp).unix();
+    var startIndex = moment(tStart).unix() - initialTime;
+    var endIndex = moment(tEnd).unix() - initialTime;
+
+    drawLabelTimeline(initialTime, startIndex,endIndex);
+
     var foundDates = findDatesInRange(tStart, tEnd);
 
     //grab the first one and zoom to that

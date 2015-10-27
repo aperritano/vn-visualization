@@ -16,6 +16,10 @@
        onclick="playSelection()" />
 <div id="map"></div>
 <div id="timeline"></div>
+
+Label<input type=file id="label" /><button id=uploadLabel>Upload</button>
+<br>
+LabelName<input type=file id="labelName" /><button id=uploadNameLabel>Upload</button>
 <div id="labels"></div>
 
 <script src="../bower_components/d3/d3.js"></script>
@@ -25,8 +29,11 @@
 <script src="../node_modules/predicate/dist/predicate.js"></script>
 <script src="../bower_components/firebase/firebase.js"></script>
 <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
 <!--our scripts-->
 <script src="scripts/main.js"></script>
+<script src="scripts/label.js"></script>
+
 </body>
 </html>
