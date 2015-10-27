@@ -9,135 +9,78 @@ body {
 
 /*map css*/
 
-path {
-    stroke-width: 1px;
-    stroke: #8e8e8e;
-    fill: none;
-    cursor: pointer;
-}
-
-path:hover, path.highlighted {
-    fill: tomato;
-}
-
-div.tooltip {
-    position: absolute;
-    background-color: white;
-    border: 1px solid black;
-    color: black;
-    font-weight: bold;
-    padding: 4px 8px;
-    display: none;
-}
-
-.bubble {
-    fill-opacity: .5;
-}
-
-.bubble :hover {
-    stroke: #000;
-}
-
-.wrapper {
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.timeBox {
-    margin-top: 30px;
-}
-
-.area {
-    fill: steelblue;
-    clip-path: url(#clip);
-}
 
 /*main timeline css*/
 
 .axis text {
-    font-size: 11px;
+    font-size: 10px;
     font-family: "Roboto";
-    font-style: normal;
-    font-weight: 400;
     fill: #000;
-}
-.axis path {
-    fill: none;
-    stroke: #000;
-    shape-rendering: crispEdges;
 }
 
 .axis line {
+
     fill: none;
-    stroke: #1924ff;
+    stroke: black;
+    stroke-width: 1px;
     shape-rendering: crispEdges;
 }
+
+.axis path {
+    fill: none;
+    stroke: black;
+    stroke-width: 1px;
+    shape-rendering: crispEdges;
+}
+
 
 .grid-background {
-    fill: #ddd;
-    /*stroke-width: .5px;*/
-    stroke: #000;
-    shape-rendering: crispEdges;
-
-
-}
-
-.grid line {
-    fill: none;
-    stroke: #000;
-    shape-rendering: crispEdges;
-}
-.grid path {
-    fill: none;
-    stroke: #000;
-    shape-rendering: crispEdges;
-}
-
-.grid .minor.tick line {
-    stroke-opacity: .5;
+    fill: #ffffff;
+    fill-opacity: 0.2;
 }
 
 .brush .extent {
-    stroke: #000;
-    fill-opacity: .125;
+    stroke: grey;
+    fill-opacity: .1;
+    stroke-width: 1px;
     shape-rendering: crispEdges;
 }
-
-
-.brush .extent {
-    stroke: #000;
-    fill-opacity: .125;
-    shape-rendering: crispEdges;
-}
-
-#timeliner {
-    background-color: #e8e8e8;
-}
-
-/*svg {*/
-/*border-style: solid;*/
-/*border-width: 1px;*/
-/*border-color: #ccc;*/
-/*}*/
 
 .leaflet-container {
     cursor: default !important;
 }
 
 #map {
-    margin-bottom: 1px;
-    padding: 0px;
+    border: 1px solid;
+    stroke: #939393;
+    fill-opacity: .125;
+    /*shape-rendering: crispEdges;*/
 }
 
 /*node css*/
 
 .node {
-    shape-rendering: crispEdges;
+    /*shape-rendering: crispEdges;*/
     stroke: #000;
+    stroke-width: 1px;
 }
 
-.lineConnect {
-    fill: none;
-    stroke: black;
-    opacity: 1;
+.population-background {
+    fill: #ffffff;
+    fill-opacity: 0.1;
 }
+path.line {
+    fill: none;
+    stroke-width: 1px;
+    stroke: #939393;
+    shape-rendering: auto;
+    /*shape-rendering: crispEdges;*/
+}
+
+path.area {
+    fill: lightsteelblue;
+    fill-opacity: 0.5;
+    shape-rendering: auto;
+
+}
+
