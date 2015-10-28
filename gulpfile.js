@@ -29,6 +29,7 @@ gulp.task('watch-jslinter', ['jshint'], function() {
 
 gulp.task('watch', ['server'], function() {
     livereload.listen({ basePath: 'app' });
+    gulp.watch('./app/styles/*.css', ['jshint']);
     gulp.watch('./app/scripts/*.js', ['jshint']);
     gulp.watch('./app/*.html');
 });
