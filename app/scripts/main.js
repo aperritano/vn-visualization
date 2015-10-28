@@ -29,14 +29,17 @@ var map;
 
 var ref = new Firebase('https://gpsdatababoons.firebaseio.com/timestamps');
 var filter;
+var subjects;
+var populationCounts;
+
+var dateFormat = '%Y-%m-%d %H:%M:%S';
+var parseDate =
+    d3.time.format(dateFormat).parse;
 
 
-ref.orderByKey().startAt('0').endAt('80000').on('value', function (snapshot) {
+ref.orderByKey().startAt('0').endAt('1000').on('value', function (snapshot) {
 
     if( snapshot.val() !== undefined ) {
-
-
-
         //remove the last object
         updateDataFromDB(snapshot.val() );
     }
@@ -62,15 +65,88 @@ initMapLeaflet();
  */
 function updateDataFromDB(items) {
 
+    var i = 0;
+
+
+
     //there is no timeline available create one
     if (gpsDataset === undefined || gpsDataset[0] === undefined) {
-
         gpsDataset = items;
+        async.each(gpsDataset, function(d, callback) {
+            try {
+                if(d.timestamp === undefined ) {
+                    debugger;
+                } else {
+                    d.date = parseDate(d.timestamp);
+                }
+                if ( d.items !== null || d.items !== undefined || d.items[0] !== undefined && d.items[0] !== null) {
+                    if( isNaN(+d.items.length) === true ) {
+                        d.items = [];
+                        d.count = 0;
+                    } else {
+                        d.count = +d.items.length;
+                    }
+                } else {
+                    d.items = [];
+                    d.count = 0;
+                    ///d.label
+                }
+            } catch (e) {
+                if (e instanceof TypeError) {
+                    d.items = [];
+                    //console.info('datum TypeError Exception timestamp: ', d.timestamp);
+                    d.count = 0;
+                }
+            }
+            callback();
+        }, function(err){
 
-        //create map
-        initLeafletOverlays();
-        //create timeline
-        createMainTimeline();
+            debugger;
+            // if any of the file processing produced an error, err would equal that error
+            filter = crossfilter(gpsDataset);
+
+            //subjects = filter.groupAll();
+
+            subjects = filter.dimension(function(d) { return d.date; });
+            populationCounts = filter.dimension(function(d) { return d.count; });
+
+
+            //create map
+            initLeafletOverlays();
+            //create timeline
+            createMainTimeline();
+        });
+
+
+
+        //gpsDataset.forEach(function(d) {
+        //    try {
+        //        if(d.timestamp === undefined ) {
+        //            debugger;
+        //        } else {
+        //            d.date = parseDate(d.timestamp);
+        //        }
+        //        if ( d.items !== null || d.items !== undefined || d.items[0] !== undefined && d.items[0] !== null) {
+        //            if( isNaN(+d.items.length) === true ) {
+        //                d.items = [];
+        //                d.count = 0;
+        //            } else {
+        //                d.count = +d.items.length;
+        //            }
+        //        } else {
+        //            d.items = [];
+        //            d.count = 0;
+        //        }
+        //    } catch (e) {
+        //        if (e instanceof TypeError) {
+        //            d.items = [];
+        //            //console.info('datum TypeError Exception timestamp: ', d.timestamp);
+        //            d.count = 0;
+        //        }
+        //    }
+        //});
+
+
         //createCrossFilter();
        // createLabelTimeLine();
     } else {
@@ -107,11 +183,16 @@ function initDataPointOverlay() {
 function drawDataPointOverlay(dataPoint) {
 
 
-    var subjects = dataPoint.items;
+    if( dataPoint.items[0] === undefined) {
+        return;
+    }
+
+
+    var targets = dataPoint.items;
 
 
     var i = 0;
-    subjects.forEach(function (d) {
+    targets.forEach(function (d) {
 
         d.LatLng = new L.LatLng(d.lat, d.lon);
 
@@ -126,7 +207,7 @@ function drawDataPointOverlay(dataPoint) {
     });
 
 
-    var circles = mapContainer.selectAll('circle').data(subjects);
+    var circles = mapContainer.selectAll('circle').data(targets);
 
     circles.exit().remove();
 
@@ -324,7 +405,7 @@ function handleCountryOverlayControl() {
  * Create the main time line
  *
  * @param items - that complete dataset
- */
+3 */
 function createMainTimeline() {
 
     var customTimeFormat = d3.time.format.multi([
@@ -342,37 +423,13 @@ function createMainTimeline() {
         width = wWidth - margin.left - margin.right,
         height = 60 - margin.top - margin.bottom;
 
-    var timeDomain = d3.extent(gpsDataset, function (d) {
-        return d.timestamp;
-    });
 
-    var subjectsDomain = d3.extent(gpsDataset, function (d) {
+    var t2 = subjects.top(1)[0];
+    var t1 = subjects.bottom(1)[0];
 
-        try {
-
-        if ( d.items !== null || d.items !== undefined || d.items[0] !== undefined && d.items[0] !== null) {
-            if( isNaN(+d.items.length) === true ) {
-                return 0;
-            } else {
-                return +d.items.length;
-            }
-        } else {
-            return 0;
-        }
-        } catch (e) {
-            if (e instanceof TypeError) {
-                console.info('datum TypeError Exception timestamp: ', d.timestamp);
-                return 0;
-            }
-        }
-    });
-
-
-    console.log('timedomain', JSON.stringify(timeDomain));
-
-    var tStart = moment(timeDomain[0]).toDate();
-    var tEnd = moment(timeDomain[1]).toDate();
-    var t15 = moment(timeDomain[0]).add(10, 'm').toDate();
+    var tStart = moment(t1.timestamp).toDate();
+    var tEnd = moment(t2.timestamp).toDate();
+    var t15 = moment(t1.timestamp).add(15, 'm').toDate();
 
 
     var x = d3.time.scale()
@@ -397,40 +454,12 @@ function createMainTimeline() {
         .attr('transform', 'translate(0,' + height + ')')
         .call(xAxis);
 
-
-    //create the mini grap
-
-    var parseDate =
-        d3.time.format('%Y-%m-%d %H:%M:%S').parse;
-
-    gpsDataset.forEach(function(d) {
-        try {
-            if(d.timestamp === undefined ) {
-                debugger;
-            } else {
-                d.date = parseDate(d.timestamp);
-            }
-            if ( d.items !== null || d.items !== undefined || d.items[0] !== undefined && d.items[0] !== null) {
-                if( isNaN(+d.items.length) === true ) {
-                    d.count = 0;
-                } else {
-                    d.count = +d.items.length;
-                }
-            } else {
-                d.count = 0;
-            }
-        } catch (e) {
-            if (e instanceof TypeError) {
-                console.info('datum TypeError Exception timestamp: ', d.timestamp);
-                d.count = 0;
-            }
-        }
-    });
-
     //population graph
 
+    var s1 = subjects.top(1)[0];
 
-    var yPadding = subjectsDomain[1] + 3;
+
+    var yPadding = s1.count + 3;
     var y = d3.scale.linear()
         .domain([0, yPadding])
         .range([height, 0]);
@@ -485,9 +514,24 @@ function createMainTimeline() {
 
     //create the brush
 
+    if(moment(t15).isAfter(tEnd)) {
+
+        var vEnd = moment(timeDomain[1]).valueOf();
+        var vStart = moment(timeDomain[0]).valueOf();
+
+        var diff = vEnd - vStart;
+
+        var vEnd = vStart + (diff / 2);
+
+
+        tEnd = moment(vEnd);
+    } else {
+        tEnd = t15;
+    }
+
     brush = d3.svg.brush()
         .x(x)
-        .extent([tStart, t15])
+        .extent([tStart, tEnd])
         .on('brushend', brushended);
 
     var gBrush = timelineSVG.append('g')
@@ -498,16 +542,10 @@ function createMainTimeline() {
     gBrush.selectAll('rect')
         .attr('height', height);
 
-
-
-    if(moment(t15).isAfter(tEnd)) {
-        zoomToDateRange(tStart, tEnd);
-    } else {
-        zoomToDateRange(tStart, t15);
-    }
+    updateDataFromDB(t1);
 }
 
-
+var brushFilteredDates;
 function brushended() {
     // only transition after input
     if (!d3.event.sourceEvent) {
@@ -527,65 +565,31 @@ function brushended() {
         .call(brush.event);
     //console.log('brush dates', JSON.stringify(extent1), moment(extent1[0]).toDate(), moment(extent1[1]).toDate());
 
+
+    //filter range
     if (extent1[0] !== undefined && extent1[1] !== undefined) {
-        var tStart = moment(extent1[0]);
-        var tEnd = moment(extent1[1]);
-        zoomToDateRange(tStart, tEnd);
+
+        brushFilteredDates = subjects.filterRange(extent1);
+
+        var b = brushFilteredDates.bottom(Infinity);
+
+        //console.log(JSON.stringify(b));
+        //grab the first one
+        drawDataPointOverlay(b[0]);
+        /**
+         * call method for label time
+         * ALL I NEED IS B
+         */
+        //var tStart = moment(extent1[0]);
+        //var tEnd = moment(extent1[1]);
+        ////zoomToDateRange(tStart, tEnd);
     }
 
 }
 
-function zoomToDateRange(tStart, tEnd) {
-    var foundDates = findDatesInRange(tStart, tEnd);
-
-    //grab the first one and zoom to that
-    if (foundDates !== undefined || foundDates[0] !== undefined) {
-
-        //find the first one with points
-        var found = false;
-        foundDates.some(function (d) {
-
-            if (found === false && d.items !== undefined) {
-                drawDataPointOverlay(d);
-                found = true;
-                return found;
-            }
-
-        });
-        //var firstDataPoint = foundDates[0];
-        //
-        //drawDataPointOverlay(firstDataPoint);
-        //map.panTo(new L.LatLng(40.737, -73.923));
-        //
-    }
-
-}
-
-function findDatesInRange(tStart, tEnd) {
-
-    var foundDates = [];
-
-    for (var i = 0; i < gpsDataset.length; i++) {
-        var dataItem = gpsDataset[i];
-        //var t1 = tStart.valueOf();
-        //var t2 = tEnd.valueOf();
-        //var tFind = moment(dataItem.timestamp).toDate().valuOf();
-        if (moment(dataItem.timestamp).isBetween(tStart, tEnd, 'minute')) {
-            foundDates.push(dataItem);
-        }
-    }
-
-    if (foundDates !== undefined && foundDates[0] !== undefined) {
-        for (var k = 0; k < foundDates.length; k++) {
-            //console.log('found date: ', JSON.stringify(foundDates[k]) +'\n');
-        }
-
-        updateDataFromDB(foundDates[0]);
-    }
-
-    currentTimeRange = foundDates;
-    return foundDates;
-}
+/***
+ * PUT YOUR CREATE LABEL
+ */
 
 function playSelection() {
     //find the first one with points
