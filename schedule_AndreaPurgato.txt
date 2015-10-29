@@ -1,0 +1,11 @@
+#
+# Baboons Project
+# Andrea Purgato
+#
+
+# NEXT ASPECT TO DEVELOPE
+
+ - Upload labels into the firebase DB (Fri 10-30, 1 hour)
+ - Retrieving labels from firebase (Sat 10-31, 1 hour).
+ - Session managing (Tue 11-3, 3 hour).
+ - Associate the labels to the session (Wed 11-4, 1 hour).
