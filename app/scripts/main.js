@@ -27,7 +27,7 @@ var margin = {top: 10, left: 15, bottom: 20, right: 20};
 var mapSVG;
 var map;
 
-var ref = new Firebase('https://gpsdatababoons.firebaseio.com/timestamps');
+var ref = new Firebase('https://baboons.firebaseio.com/timestamps');
 var filter;
 var subjects;
 var populationCounts;
@@ -37,7 +37,7 @@ var parseDate =
     d3.time.format(dateFormat).parse;
 
 
-ref.orderByKey().startAt('0').endAt('1000').on('value', function (snapshot) {
+ref.orderByKey().startAt('0').endAt('10000').on('value', function (snapshot) {
 
     if( snapshot.val() !== undefined ) {
         //remove the last object
@@ -75,7 +75,6 @@ function updateDataFromDB(items) {
         async.each(gpsDataset, function(d, callback) {
             try {
                 if(d.timestamp === undefined ) {
-                    debugger;
                 } else {
                     d.date = parseDate(d.timestamp);
                 }
@@ -101,7 +100,6 @@ function updateDataFromDB(items) {
             callback();
         }, function(err){
 
-            debugger;
             // if any of the file processing produced an error, err would equal that error
             filter = crossfilter(gpsDataset);
 
@@ -576,10 +574,7 @@ function brushended() {
         //console.log(JSON.stringify(b));
         //grab the first one
         drawDataPointOverlay(b[0]);
-        /**
-         * call method for label time
-         * ALL I NEED IS B
-         */
+        drawLabelTimeline(b);
         //var tStart = moment(extent1[0]);
         //var tEnd = moment(extent1[1]);
         ////zoomToDateRange(tStart, tEnd);

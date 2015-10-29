@@ -14,6 +14,8 @@ var results = null;
  */
 var labelNameMap = {};
 var labelNameColor = {};
+var start = 0;
+var end = 0;
 
 /*************************************************
  *              BUTTON CLICK EVENT
@@ -70,9 +72,9 @@ uploadLabelButton.on('click', function() {
 /**
  * Function caled when the user wnat to the label timelines.
  */
-function drawLabelTimeline(initialTime, tStart,tEnd){
+function drawLabelTimeline(data){
 
-    getData(initialTime, tStart,tEnd);
+    setData(data);
 
 }
 
@@ -134,6 +136,23 @@ var labelMap = {};
  */
 function popolateLabel(labels){
 
+    /**
+     * Set start and end millisec.
+     */
+    var firebase = new Firebase('https://baboons.firebaseio.com//info');
+    firebase.on("value", function (snapshot) {
+
+        var val = snapshot.exportVal();
+        start = val['startMillisec'];
+        end = val['endMillisec'];
+
+    }, function (errorObject) {
+        console.log("The read failed: " + errorObject.code);
+    });
+
+    /**
+     * Set the label data.
+     */
     for(var i = 0; i < labels.length; i++){
 
         // Add to the map the label assigned to the TS i.
@@ -175,19 +194,26 @@ function getData(initialTime, start, end){
  * Function used to extract all the lanes (groups) and the items of each group.
  * @param values, data that come from the DB.
  */
-function setData(values, initialTime, start, end){
+function setData(values){
 
+    /**
+     * Structure used to create the lanes and the items.
+     */
     var lanes = {};
     var lanesList = [];
-    var items = [];
+    var itemsList = [];
+    var items = {};
     var startTime = {};
 
+    /**
+     * Counters.
+     */
     var groupCounter = 0;
     var itemCounter = 0;
 
-    var minMillisec = values[start].millisec;
-
-    // Iterate over each line retrieved
+    /**
+     * Iterate over each timestamp.
+     */
     for (var vKey in values) {
 
         var item = values[vKey];
@@ -196,9 +222,14 @@ function setData(values, initialTime, start, end){
         if (item == undefined)
             return;
 
-        //Skip item without nets
+        /**
+         * If there are nets analyze them.
+         */
         if (item.nets != undefined) {
 
+            /**
+             * Go into all the nets.
+             */
             for (var nKey in item.nets) {
 
                 var net = item.nets[nKey];
@@ -210,7 +241,9 @@ function setData(values, initialTime, start, end){
                 // Compose the key
                 var key = idOne + '' + idTwo;
 
-                // If the group (net) doesn't exist add to the lanes structure.
+                /**
+                 * If the group (net) doesn't exist add to the lanes structure.
+                 */
                 if (!groupAlreadyExist(lanes, idOne, idTwo)) {
 
                     var value = {};
@@ -225,89 +258,115 @@ function setData(values, initialTime, start, end){
 
                 }
 
-                // If the current net doesn't have a starting tme add it.
-                if (!groupAlreadyExist(startTime, idOne, idTwo)) {
+                var nTimestamp = item.millisec - start;
+                var label = labelMap[nTimestamp];
 
-                    startTime[key] = item.millisec;
+                //console.log(label)
+
+                /**
+                 * If the label of the current TS is different from undefined create an item for the current group.
+                 */
+                if (label != undefined){
+
+                    /**
+                     * The group is created if it not exist already.
+                     */
+                    if (!groupAlreadyExist(items, idOne, idTwo)) {
+
+                        var value = {};
+                        value['label'] = labelNameMap[labelMap[nTimestamp]];
+                        value['lanePos'] = lanes[key].id;
+                        value['id'] = itemCounter;
+                        value['lane'] = key;
+                        value['start'] = item.millisec;
+                        value['end'] = 0;
+                        value['class'] = labelMap[nTimestamp].toString();
+
+                        items[key] = value;
+                        itemCounter += 1;
+
+                    }else{
+
+                        /**
+                         * If it already exist check if the label is the same.
+                         */
+                        var oldValue = items[key];
+
+                        if(oldValue['label'] != label.toString()){
+
+                            /**
+                             * If the label is different create a new one with new label.
+                             */
+                            oldValue['end'] = item.millisec - 1;
+                            itemsList.push(oldValue);
+
+                            var value = {};
+                            value['label'] = labelNameMap[labelMap[nTimestamp]];
+                            value['lanePos'] = lanes[key].id;
+                            value['id'] = itemCounter;
+                            value['lane'] = key;
+                            value['start'] = item.millisec;
+                            value['end'] = 0;
+                            value['class'] = labelMap[nTimestamp].toString();
+
+                            items[key] = value;
+                            itemCounter += 1;
+
+                        }
+
+                    }
+
+                }else{
+
+                    /**
+                     * The label is undefined, end all the items.
+                     */
+                    for(var k in items){
+
+                        var value = items[k];
+                        console.log(value['label'])
+                        value['end'] = item.millisec - 1;
+
+                        itemsList.push(value);
+                        itemCounter += 1;
+
+                    }
+
+                    items = {};
 
                 }
 
-            }
-
-            // When all the net are added now I check which ones already started are not in this timestamp anymore.
-            for (var k in startTime) {
-
-                var found = false;
-
-                // Loop on the nets and find the ones that are not present anymore.
-                for (var nKey in item.nets) {
-
-                    var net = item.nets[nKey];
-
-                    // Compose the key
-                    var key = net.idOne + '' + net.idTwo;
-
-                    if (key == k)
-                        found = true;
-                }
-
-                // Delete the one not present anymore from start and create the item.
-                if (!found) {
-
-                    // Skip the ite that don't have a label.
-                    if (labelMap[vKey] == undefined)
-                        continue;
-
-                    var value = {};
-                    value['label'] = labelNameMap[labelMap[vKey]];
-                    value['lanePos'] = lanes[k].id;
-                    value['id'] = itemCounter;
-                    value['lane'] = k;
-                    value['start'] = startTime[k];
-                    value['end'] = item.millisec;
-                    value['class'] = labelMap[vKey].toString();
-
-                    items.push(value);
-                    itemCounter += 1;
-
-                    delete startTime[k];
-
-                }
-
-            }
+            } // End for for each NET
 
         }
 
-    }
+    } // End for on TIMESTAMPS
 
-    // All the label that are still alive are ended with the ent time
-    for (var k in startTime) {
+    /**
+     * All the remaining data in the startTIme should create an item.
+     */
+    nTimestamp = values[values.length - 1].millisec - start;
+    for (var k in items) {
 
         // Skip the ite that don't have a label.
-        if (labelMap[end] == undefined)
+        if (labelMap[nTimestamp] == undefined)
             continue;
 
-        var value = {};
-        value['label'] = labelNameMap[labelMap[end]];
-        value['lanePos'] = lanes[k].id;
-        value['id'] = itemCounter;
-        value['lane'] = k;
-        value['start'] = startTime[k];
-        value['end'] = values[end].millisec;
-        value['class'] = labelMap[end].toString();
+        var value = items[k];
+        value['end'] = values[values.length - 1].millisec;
 
-        items.push(value);
+        itemsList.push(value);
         itemCounter += 1;
 
     }
 
-    var startTimestamp = values[start].millisec;
-    var endTimestamp = values[end].millisec;
+    var startTimestamp = values[0].millisec;
+    var endTimestamp = values[values.length - 1].millisec;
 
     console.log(lanesList);
-    console.log(items);
+    console.log(itemsList);
 
-    setUpTimeline(startTimestamp, endTimestamp, lanesList, items, Object.keys(lanes).length);
+    setUpTimeline(startTimestamp, endTimestamp, lanesList, itemsList, Object.keys(lanes).length);
 
 }
 
@@ -322,7 +381,7 @@ function setUpTimeline(startTimestamp, endTimestamp, lanes, items, laneLength){
 
     var m = [20, 15, 15, 120], //top right bottom left
         w = 1600 - m[1] - m[3],
-        h = 600 - m[0] - m[2],
+        h = (15 * lanes.length) - m[0] - m[2],
         miniHeight = laneLength * 12 + 50,
         mainHeight = h - miniHeight - 50;
 
@@ -392,7 +451,7 @@ function setUpTimeline(startTimestamp, endTimestamp, lanes, items, laneLength){
 
     /**
      * Draw the label name in the item.
-     */
+     *//*
     mini.append("g").selectAll(".miniLabels")
         .data(items)
         .enter().append("text")
@@ -400,7 +459,7 @@ function setUpTimeline(startTimestamp, endTimestamp, lanes, items, laneLength){
         .attr("x", function(d) {return x(d.start);})
         .attr("y", function(d) {return y(d.lanePos + .5);})
         .attr("dy", ".5ex");
-
+    */
 }
 
 
