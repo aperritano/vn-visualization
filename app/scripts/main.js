@@ -36,6 +36,10 @@ var dateFormat = '%Y-%m-%d %H:%M:%S';
 var parseDate =
     d3.time.format(dateFormat).parse;
 
+//k = 1;
+//readStartEndValue();
+//popolateLabel(k)
+//popolateLabelNameMap(k);
 
 ref.orderByKey().startAt('0').endAt('1000').on('value', function (snapshot) {
 
