@@ -1,17 +1,14 @@
 /*************************************************
  *              FILE UPLOAD.
  *************************************************/
-var labelFile = $('#label');
-var labelNameFile = $('#labelName');
-
-var uploadLabelButton = $('#uploadLabel');
-var uploadLabelNameButton = $('#uploadNameLabel');
+var loadSessionButton = $('#loadSession');
 
 var results = null;
 
 /**
  * Label name map.
  */
+var labelMap = {};
 var labelNameMap = {};
 var labelNameColor = {};
 var start = 0;
@@ -24,122 +21,111 @@ var end = 0;
 /**
  * Manage the upload of the label names.
  */
-uploadLabelNameButton.on('click', function() {
 
-    if (!window.FileReader) {
-        alert('Your browser is not supported')
+loadSessionButton.on('click', function() {
+
+    var sessionName = sessionNameText.val();
+    var ref = new Firebase('https://baboons.firebaseio.com/sessions/');
+
+    if (sessionName == '') {
+        alert('Insert a Session Name')
+        return;
     }
 
-    var labelNameInput = labelNameFile.get(0);
+    ref.orderByKey().once('value', function (snapshot) {
 
-    if (labelNameInput.files.length) {
+        var values = snapshot.exportVal();
+        if( values !== undefined ) {
 
-        var labelNameContent = labelNameInput.files[0];
+            /**
+             * Find the session.
+             */
+            for(var k in values){
 
-        var reader = new FileReader();
-        reader.readAsText(labelNameContent);
-        $(reader).on('load', createMapLabelName);
+                /**
+                 * Upload the data.
+                 */
+                if(values[k].name == sessionName){
 
-    } else {
-        alert('Please upload a file before continuing')
-    }
-});
+                    readStartEndValue();
+                    popolateLabel(k)
+                    popolateLabelNameMap(k);
 
-/**
- * Manage the upload of the label for each timestamp.
- */
-uploadLabelButton.on('click', function() {
+                }
 
-    if (!window.FileReader) {
-        alert('Your browser is not supported')
-    }
-
-    var labelInput = labelFile.get(0);
-
-    if (labelInput.files.length) {
-
-        var labelContent = labelInput.files[0];
-
-        var reader = new FileReader();
-        reader.readAsText(labelContent);
-        $(reader).on('load', processFile);
-
-    } else {
-        alert('Please upload a file before continuing')
-    }
-});
-
-/**
- * Function caled when the user wnat to the label timelines.
- */
-function drawLabelTimeline(data){
-
-    setData(data);
-
-}
-
-/*************************************************
- *              FILE READERS.
- *************************************************/
-
-/**
- * Function that popolate the map with label and name.
- * @param e, the file content.
- */
-function createMapLabelName(e){
-
-    var file = e.target.result;
-    if (file && file.length) {
-
-        results = file.split("\n");
-        for(var i = 0; i < results.length; i++){
-
-            // Add to the map the label assigned to the TS i.
-            var value = results[i].split(",");
-            labelNameMap[parseInt(value[0])] = value[1];
-            labelNameColor[parseInt(value[0])] = value[2];
+            }
 
         }
 
-    }
+    }, function (errorObject) {
+        console.log('The read failed: ' + errorObject.code);
+    });
 
-    console.log(labelNameMap);
-    console.log(labelNameColor);
-
-}
-
-/**
- * Function that process the file.
- * @param e, the file content.
- */
-function processFile(e) {
-
-    var file = e.target.result;
-    if (file && file.length) {
-
-        results = file.split("\n");
-        popolateLabel(results);
-
-    }
-}
-
-
+});
 
 /*************************************************
- *              LABEL CONSTRUCTION.
+ *              POPOLATE LEBEL MAPS
  *************************************************/
-var labelMap = {};
+/**
+ * Function used to popolate the label map.
+ */
+function popolateLabel(sessionId){
+
+    var firebase = new Firebase('https://baboons.firebaseio.com/sessions/' + sessionId + '/labels');
+    firebase.once("value", function (snapshot) {
+
+        var values = snapshot.exportVal();
+        console.log(values)
+        for(var k in values){
+
+            labelMap[values[k].timestampNumber] = values[k].label;
+
+        }
+
+        console.log(labelMap);
+       $('#loadSessionLabels').append('Labels Loaded');
+
+    }, function (errorObject) {
+        console.log("The read failed: " + errorObject.code);
+    });
+
+}
 
 /**
- * Function that create the structure with the labels.
- * @param labels, the content of the file with the labels.
+ * Function used to popolate the label name map.
  */
-function popolateLabel(labels){
+function popolateLabelNameMap(sessionId){
+
+    var firebase = new Firebase('https://baboons.firebaseio.com/sessions/' + sessionId + '/labelDictionary');
+    firebase.once("value", function (snapshot) {
+
+        var values = snapshot.exportVal();
+        for(var k in values){
+
+            labelNameMap[values[k].code] = values[k].label;
+            labelNameColor[values[k].code] = values[k].color;
+
+        }
+
+        console.log(labelNameMap);
+        console.log(labelNameColor);
+        $('#loadSessionName').append('Dictionary Loaded');
+
+    }, function (errorObject) {
+        console.log("The read failed: " + errorObject.code);
+    });
+
+}
+
+/**
+ * Read start and end value.
+ */
+function readStartEndValue(){
 
     /**
      * Set start and end millisec.
      */
-    var firebase = new Firebase('https://baboons.firebaseio.com//info');
+    var firebase = new Firebase('https://baboons.firebaseio.com/info');
     firebase.on("value", function (snapshot) {
 
         var val = snapshot.exportVal();
@@ -150,19 +136,16 @@ function popolateLabel(labels){
         console.log("The read failed: " + errorObject.code);
     });
 
-    /**
-     * Set the label data.
-     */
-    for(var i = 0; i < labels.length; i++){
+}
 
-        // Add to the map the label assigned to the TS i.
-        var value = labels[i].split(",");
-        labelMap[parseInt(value[0])] = parseInt(value[1]);
-
-    }
-
-    console.log(labelMap);
-
+/*************************************************
+ *              DRAW TIMELINE
+ *************************************************/
+/**
+ * Function caled when the user wnat to the label timelines.
+ */
+function drawLabelTimeline(data){
+    setData(data);
 }
 
 /*************************************************

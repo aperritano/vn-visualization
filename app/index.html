@@ -17,9 +17,16 @@
 <div id="map"></div>
 <div id="timeline"></div>
 
+<input id="sessionName" type="text" size="5"/><br>
 Label<input type=file id="label" /><button id=uploadLabel>Upload</button>
 <br>
 LabelName<input type=file id="labelName" /><button id=uploadNameLabel>Upload</button>
+<br>
+<button id=loadSession>Load Session</button>
+<br>
+<span id="loadSessionLabels"></span>
+<br>
+<span id="loadSessionName"></span>
 <div id="labels"></div>
 
 <script src="../bower_components/d3/d3.min.js"></script>
@@ -38,6 +45,7 @@ LabelName<input type=file id="labelName" /><button id=uploadNameLabel>Upload</bu
 <!--our scripts-->
 <script src="scripts/main.js"></script>
 <script src="scripts/label.js"></script>
+<script src="scripts/session.js"></script>
 
 </body>
 </html>
