@@ -36,7 +36,7 @@ var dateFormat = '%Y-%m-%d %H:%M:%S';
 var parseDate =
     d3.time.format(dateFormat).parse;
 
-//k = 0;
+//k = 1;
 //readStartEndValue();
 //popolateLabel(k)
 //popolateLabelNameMap(k);
@@ -70,8 +70,6 @@ initMapLeaflet();
 function updateDataFromDB(items) {
 
     var i = 0;
-
-
 
     //there is no timeline available create one
     if (gpsDataset === undefined || gpsDataset[0] === undefined) {

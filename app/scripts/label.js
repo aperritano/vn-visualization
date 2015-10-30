@@ -71,7 +71,7 @@ loadSessionButton.on('click', function() {
  */
 function popolateLabel(sessionId){
 
-    var firebase = new Firebase('https://baboons.firebaseio.com/sessions/' + sessionId + '/labels');
+    var firebase = new Firebase('https://baboons.firebaseio.com/labels/' + sessionId + '/labels');
     firebase.once("value", function (snapshot) {
 
         var values = snapshot.exportVal();
@@ -96,7 +96,7 @@ function popolateLabel(sessionId){
  */
 function popolateLabelNameMap(sessionId){
 
-    var firebase = new Firebase('https://baboons.firebaseio.com/sessions/' + sessionId + '/labelDictionary');
+    var firebase = new Firebase('https://baboons.firebaseio.com/labels/' + sessionId + '/labelDictionary');
     firebase.once("value", function (snapshot) {
 
         var values = snapshot.exportVal();
@@ -153,27 +153,6 @@ function drawLabelTimeline(data){
  *************************************************/
 
 /**
- * Function used to get the data from the DB.
- * @param start, starting time intrval.
- * @param end, ending time interval.
- */
-function getData(initialTime, start, end){
-
-    // Get data from DB.
-    var firebase = new Firebase('https://labeldatababoons.firebaseio.com/timestamps');
-
-    firebase.orderByKey().startAt(start.toString()).endAt(end.toString()).on("value", function (snapshot) {
-
-        // Set the data retrieved from the DB.
-        setData(snapshot.exportVal(), initialTime, start, end);
-
-    }, function (errorObject) {
-        console.log("The read failed: " + errorObject.code);
-    });
-
-}
-
-/**
  * Function used to extract all the lanes (groups) and the items of each group.
  * @param values, data that come from the DB.
  */
@@ -186,7 +165,6 @@ function setData(values){
     var lanesList = [];
     var itemsList = [];
     var items = {};
-    var startTime = {};
 
     /**
      * Counters.
