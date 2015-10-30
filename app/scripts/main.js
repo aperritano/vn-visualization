@@ -36,8 +36,12 @@ var dateFormat = '%Y-%m-%d %H:%M:%S';
 var parseDate =
     d3.time.format(dateFormat).parse;
 
+//k = 0;
+//readStartEndValue();
+//popolateLabel(k)
+//popolateLabelNameMap(k);
 
-ref.orderByKey().startAt('0').endAt('10000').on('value', function (snapshot) {
+ref.orderByKey().startAt('0').endAt('1000').on('value', function (snapshot) {
 
     if( snapshot.val() !== undefined ) {
         //remove the last object
