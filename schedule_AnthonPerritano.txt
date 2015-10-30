@@ -1,0 +1,13 @@
+#
+# Baboons Project
+# Anthony Perritano
+#
+
+# NEXT ASPECT TO DEVELOP
+
+ - Create play animate functionality (Fri 10-30, 3 hour)
+ - Draw network edges (Sat 10-31, 3 hour).
+ - Create node tooltips and labels (Sun 11-3, 3 hour).
+ - Create polymer session chooser (Mon 11-3, 1 hour).
+
+ We have a list of task and schedule
