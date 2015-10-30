@@ -43,6 +43,7 @@ uploadLabelNameButton.on('click', function() {
                  */
                 if(values[k].name == sessionName){
                     sessionId = k;
+                    console.log(sessionId)
                     readDictionaryFile();
                 }
 
@@ -132,7 +133,8 @@ function readDictionaryFile(){
  */
 function uploadDictionary(e){
 
-    var firebase = new Firebase('https://baboons.firebaseio.com/sessions/' + sessionId);
+
+    var firebase = new Firebase('https://baboons.firebaseio.com/labels/' + sessionId);
     firebase.child('labelDictionary').set(null);
     var labelMap = {};
 
@@ -154,6 +156,7 @@ function uploadDictionary(e){
     }
 
     firebase.child('labelDictionary').set(labelMap);
+    Firebase.goOffline();
 
 }
 
@@ -191,7 +194,7 @@ function readLabelFile(){
  */
 function uploadLabel(e){
 
-    var firebase = new Firebase('https://baboons.firebaseio.com/sessions/' + sessionId);
+    var firebase = new Firebase('https://baboons.firebaseio.com/labels/' + sessionId);
     firebase.child('labels').set(null);
     var labelMap = {};
 
@@ -215,5 +218,6 @@ function uploadLabel(e){
     }
 
     firebase.child('labels').set(labelMap);
+    Firebase.goOffline();
 
 }

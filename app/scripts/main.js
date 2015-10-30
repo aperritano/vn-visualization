@@ -37,7 +37,7 @@ var parseDate =
     d3.time.format(dateFormat).parse;
 
 
-ref.orderByKey().startAt('0').endAt('10000').on('value', function (snapshot) {
+ref.orderByKey().startAt('0').endAt('1000').on('value', function (snapshot) {
 
     if( snapshot.val() !== undefined ) {
         //remove the last object
@@ -66,8 +66,6 @@ initMapLeaflet();
 function updateDataFromDB(items) {
 
     var i = 0;
-
-
 
     //there is no timeline available create one
     if (gpsDataset === undefined || gpsDataset[0] === undefined) {
