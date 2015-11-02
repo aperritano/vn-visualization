@@ -72,7 +72,7 @@ loadSessionButton.on('click', function() {
 function popolateLabel(sessionId){
 
     var firebase = new Firebase('https://baboons.firebaseio.com/labels/' + sessionId + '/labels');
-    firebase.once("value", function (snapshot) {
+    firebase.once('value', function (snapshot) {
 
         var values = snapshot.exportVal();
         console.log(values)
@@ -86,7 +86,7 @@ function popolateLabel(sessionId){
        $('#loadSessionLabels').append('Labels Loaded');
 
     }, function (errorObject) {
-        console.log("The read failed: " + errorObject.code);
+        console.log('The read failed: ' + errorObject.code);
     });
 
 }
@@ -97,7 +97,7 @@ function popolateLabel(sessionId){
 function popolateLabelNameMap(sessionId){
 
     var firebase = new Firebase('https://baboons.firebaseio.com/labels/' + sessionId + '/labelDictionary');
-    firebase.once("value", function (snapshot) {
+    firebase.once('value', function (snapshot) {
 
         var values = snapshot.exportVal();
         for(var k in values){
@@ -112,7 +112,7 @@ function popolateLabelNameMap(sessionId){
         $('#loadSessionName').append('Dictionary Loaded');
 
     }, function (errorObject) {
-        console.log("The read failed: " + errorObject.code);
+        console.log('The read failed: ' + errorObject.code);
     });
 
 }
@@ -126,14 +126,14 @@ function readStartEndValue(){
      * Set start and end millisec.
      */
     var firebase = new Firebase('https://baboons.firebaseio.com/info');
-    firebase.on("value", function (snapshot) {
+    firebase.on('value', function (snapshot) {
 
         var val = snapshot.exportVal();
         start = val['startMillisec'];
         end = val['endMillisec'];
 
     }, function (errorObject) {
-        console.log("The read failed: " + errorObject.code);
+        console.log('The read failed: ' + errorObject.code);
     });
 
 }
@@ -360,66 +360,66 @@ function setUpTimeline(startTimestamp, endTimestamp, lanes, items, laneLength){
     if (svgLabel != undefined)
         svgLabel.remove();
 
-    var chart = label.append("svg")
-        .attr("width", w + m[1] + m[3])
-        .attr("height", h + m[0] + m[2])
-        .attr("class", "chart");
+    var chart = label.append('svg')
+        .attr('width', w + m[1] + m[3])
+        .attr('height', h + m[0] + m[2])
+        .attr('class', 'chart');
 
-    var mini = chart.append("g")
-        .attr("transform", "translate(" + m[3] + "," + (mainHeight + m[0]) + ")")
-        .attr("width", w)
-        .attr("height", miniHeight)
-        .attr("class", "mini");
+    var mini = chart.append('g')
+        .attr('transform', 'translate(' + m[3] + ',' + (mainHeight + m[0]) + ')')
+        .attr('width', w)
+        .attr('height', miniHeight)
+        .attr('class', 'mini');
 
     /**
      * Draw the lines
      */
-    mini.append("g").selectAll(".laneLines")
+    mini.append('g').selectAll('.laneLines')
         .data(lanes)
-        .enter().append("line")
-        .attr("x1", m[1])
-        .attr("y1", function(d, i) {return y(d.id);})
-        .attr("x2", w)
-        .attr("y2", function(d, i) {return y(d.id);})
-        .attr("stroke", "lightgray");
+        .enter().append('line')
+        .attr('x1', m[1])
+        .attr('y1', function(d, i) {return y(d.id);})
+        .attr('x2', w)
+        .attr('y2', function(d, i) {return y(d.id);})
+        .attr('stroke', 'lightgray');
 
     /**
      * Draw the label
      */
-    mini.append("g").selectAll(".laneText")
+    mini.append('g').selectAll('.laneText')
         .data(lanes)
-        .enter().append("text")
+        .enter().append('text')
         .text(function(d) {return d.label;})
-        .attr("x", -m[1])
-        .attr("y", function(d, i) {return y(i + .5);})
-        .attr("dy", ".5ex")
-        .attr("text-anchor", "end")
-        .attr("class", "laneText");
+        .attr('x', -m[1])
+        .attr('y', function(d, i) {return y(i + .5);})
+        .attr('dy', '.5ex')
+        .attr('text-anchor', 'end')
+        .attr('class', 'laneText');
 
 
     /**
      * Draw the label foreach lane.
      */
-    mini.append("g").selectAll("miniItems")
+    mini.append('g').selectAll('miniItems')
         .data(items)
-        .enter().append("rect")
-        .attr("class", function(d) {return "miniItem" + d.lane;})
-        .attr("x", function(d) {return x(d.start);})
-        .attr("y", function(d) {return y(d.lanePos + .5) - 5;})
-        .attr("width", function(d) {return (x(d.end) - x(d.start));})
-        .attr("height", 10)
-        .style("fill", function(d){return labelNameColor[parseInt(d.class)].toString();});
+        .enter().append('rect')
+        .attr('class', function(d) {return 'miniItem' + d.lane;})
+        .attr('x', function(d) {return x(d.start);})
+        .attr('y', function(d) {return y(d.lanePos + .5) - 5;})
+        .attr('width', function(d) {return (x(d.end) - x(d.start));})
+        .attr('height', 10)
+        .style('fill', function(d){return labelNameColor[parseInt(d.class)].toString();});
 
     /**
      * Draw the label name in the item.
      *//*
-    mini.append("g").selectAll(".miniLabels")
+    mini.append('g').selectAll('.miniLabels')
         .data(items)
-        .enter().append("text")
+        .enter().append('text')
         .text(function(d) {return d.label;})
-        .attr("x", function(d) {return x(d.start);})
-        .attr("y", function(d) {return y(d.lanePos + .5);})
-        .attr("dy", ".5ex");
+        .attr('x', function(d) {return x(d.start);})
+        .attr('y', function(d) {return y(d.lanePos + .5);})
+        .attr('dy', '.5ex');
     */
 }
 

@@ -51,9 +51,9 @@ ref.orderByKey().startAt('0').endAt('1000').on('value', function (snapshot) {
 
 initMapLeaflet();
 
-k = 1;
+var k = 1;
 readStartEndValue();
-popolateLabel(k)
+popolateLabel(k);
 popolateLabelNameMap(k);
 
 //initMapSVG();
@@ -118,39 +118,6 @@ function updateDataFromDB(items) {
             //create timeline
             createMainTimeline();
         });
-
-
-
-        //gpsDataset.forEach(function(d) {
-        //    try {
-        //        if(d.timestamp === undefined ) {
-        //            debugger;
-        //        } else {
-        //            d.date = parseDate(d.timestamp);
-        //        }
-        //        if ( d.items !== null || d.items !== undefined || d.items[0] !== undefined && d.items[0] !== null) {
-        //            if( isNaN(+d.items.length) === true ) {
-        //                d.items = [];
-        //                d.count = 0;
-        //            } else {
-        //                d.count = +d.items.length;
-        //            }
-        //        } else {
-        //            d.items = [];
-        //            d.count = 0;
-        //        }
-        //    } catch (e) {
-        //        if (e instanceof TypeError) {
-        //            d.items = [];
-        //            //console.info('datum TypeError Exception timestamp: ', d.timestamp);
-        //            d.count = 0;
-        //        }
-        //    }
-        //});
-
-
-        //createCrossFilter();
-       // createLabelTimeLine();
     } else {
         //update timeline
         //update map
@@ -261,7 +228,7 @@ function initMapLeaflet() {
     var height = wHeight * 0.6;
 
 
-
+    
     var mapLeafletWidth = width;
     var mapLeafletHeight = height;
 
@@ -480,7 +447,7 @@ function createMainTimeline() {
 
 
     var area = d3.svg.area()
-        .interpolate("monotone")
+        .interpolate('monotone')
         .x(function(d) { return x(d.date); })
         .y0(height)
         .y1(function(d) { return y(d.count); });
@@ -489,7 +456,7 @@ function createMainTimeline() {
     var gPopulationGraph = timelineSVG.append('g');
 
     gPopulationGraph
-        .append("clipPath")
+        .append('clipPath')
         .attr('id', 'clip')
         .append('rect')
         .attr('width', width)
@@ -498,18 +465,18 @@ function createMainTimeline() {
 
     gPopulationGraph.append('path')
         .attr('class', 'area')
-        .attr("clip-path", "url(#clip)")
+        .attr('clip-path', 'url(#clip)')
         .attr('d', area(gpsDataset));
 
-    gPopulationGraph.append("path")
-        .attr("class", "line")
-        .attr("clip-path", "url(#clip)")
-        .attr("d", line(gpsDataset));
+    gPopulationGraph.append('path')
+        .attr('class', 'line')
+        .attr('clip-path', 'url(#clip)')
+        .attr('d', line(gpsDataset));
 
     gPopulationGraph.append('g')
         .attr('class', 'y axis')
         .style('stroke-width','1px')
-        .attr("transform", "translate(" + width + " ,0)")
+        .attr('transform', 'translate(' + width + ' ,0)')
         .call(yAxis);
 
     //finally make the brush
@@ -523,7 +490,7 @@ function createMainTimeline() {
 
         var diff = vEnd - vStart;
 
-        var vEnd = vStart + (diff / 2);
+        vEnd = vStart + (diff / 2);
 
 
         tEnd = moment(vEnd);
