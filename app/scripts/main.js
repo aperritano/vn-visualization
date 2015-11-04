@@ -27,34 +27,67 @@ var margin = {top: 10, left: 15, bottom: 20, right: 20};
 var mapSVG;
 var map;
 
-var ref = new Firebase('https://baboons.firebaseio.com/timestamps');
+var timestampsDB = new Firebase('https://baboons.firebaseio.com/timestamps');
+var labelsDB = new Firebase('https://baboons.firebaseio.com/labels/0/labels');
+var dictionaryDB = new Firebase('https://baboons.firebaseio.com/labels/0/dictionary');
 var filter;
-var subjects;
-var populationCounts;
+var subjectsFilter;
+var populationCountsFilter;
+var networkFilter;
 
 var dateFormat = '%Y-%m-%d %H:%M:%S';
 var parseDate =
     d3.time.format(dateFormat).parse;
 
+var num = 1000;
 
+var labels;
+var dictionary;
 
-ref.orderByKey().startAt('0').endAt('1000').on('value', function (snapshot) {
+var labelFilter;
 
-    if( snapshot.val() !== undefined ) {
+dictionaryDB.on('value', function (snapshot) {
+
+    if (snapshot.val() !== undefined) {
         //remove the last object
-        updateDataFromDB(snapshot.val() );
-    }
+        console.log('VAL',snapshot.val());
+        updateDictionaryFromDB(snapshot.val());
+        labelsDB.orderByKey().startAt('0').endAt('1000').on('value', function (snapshot) {
 
+            if (snapshot.val() !== undefined) {
+                //remove the last object
+                updateLabelsFromDB(snapshot.val());
+            }
+
+            timestampsDB.orderByKey().startAt('0').endAt('1000').on('value', function (snapshot) {
+
+                if (snapshot.val() !== undefined) {
+                    //remove the last object
+                    updateDataFromDB(snapshot.val());
+
+                }
+
+            }, function (errorObject) {
+                console.log('The read failed: ' + errorObject.code);
+            });
+
+        }, function (errorObject) {
+            console.log('The read failed: ' + errorObject.code);
+        });
+    }
 }, function (errorObject) {
     console.log('The read failed: ' + errorObject.code);
 });
 
+
+
+
 initMapLeaflet();
 
-var k = 1;
-readStartEndValue();
-popolateLabel(k);
-popolateLabelNameMap(k);
+//var k = 1;
+//readStartEndValue();
+//popolateLabel(k);
+//popolateLabelNameMap(k);
 
 //initMapSVG();
 
@@ -63,6 +96,17 @@ popolateLabelNameMap(k);
 
 
 /*** functions ******/
+
+function updateDictionaryFromDB(d) {
+    dictionary = d;
+    console.log('ALL DICT',d);
+}
+
+function updateLabelsFromDB(l) {
+    labels = l;
+    //console.log('ALL LABELS',labels);
+}
+
 
 /**
  * updates when firebase returns
@@ -76,14 +120,45 @@ function updateDataFromDB(items) {
     //there is no timeline available create one
     if (gpsDataset === undefined || gpsDataset[0] === undefined) {
         gpsDataset = items;
-        async.each(gpsDataset, function(d, callback) {
+        async.each(gpsDataset, function (d, callback) {
             try {
-                if(d.timestamp === undefined ) {
+                if (d.timestamp === undefined) {
                 } else {
+
+                    //finds the label that matches the timestamp
+                    var foundTimestamps = labels.filter(function (l) {
+                        if( l.timestamp === d.timestamp ) {
+                            return true;
+                        }
+                        return false;
+
+                    });
+
+                    //if we found a matching timestamp
+                    if( foundTimestamps[0] !== undefined ) {
+                        //finds the dictionary l
+                        var foundDictionary = dictionary.filter(function (k) {
+
+                            if( foundTimestamps[0].label === k.code ) {
+
+                                console.log('FOUND label ', k.code, k);
+                                return true;
+                            }
+
+                            return false;
+
+                        });
+                        //if we found a dictionary entry
+                        if(foundDictionary[0] !== undefined) {
+                            d.labels = foundDictionary[0];
+                        }
+                    } else {
+                        d.labels = -1;
+                    }
                     d.date = parseDate(d.timestamp);
                 }
-                if ( d.items !== null || d.items !== undefined || d.items[0] !== undefined && d.items[0] !== null) {
-                    if( isNaN(+d.items.length) === true ) {
+                if (d.items !== null || d.items !== undefined || d.items[0] !== undefined && d.items[0] !== null) {
+                    if (isNaN(+d.items.length) === true) {
                         d.items = [];
                         d.count = 0;
                     } else {
@@ -102,15 +177,27 @@ function updateDataFromDB(items) {
                 }
             }
             callback();
-        }, function(err){
+        }, function (err) {
 
             // if any of the file processing produced an error, err would equal that error
             filter = crossfilter(gpsDataset);
 
             //subjects = filter.groupAll();
 
-            subjects = filter.dimension(function(d) { return d.date; });
-            populationCounts = filter.dimension(function(d) { return d.count; });
+            subjectsFilter = filter.dimension(function (d) {
+                return d.date;
+            });
+            populationCountsFilter = filter.dimension(function (d) {
+                return d.count;
+            });
+
+            labelFilter = filter.dimension(function (d) {
+                return d.labels;
+            });
+
+            networkFilter = filter.dimension(function (d) {
+                return d.nets;
+            });
 
 
             //create map
@@ -126,7 +213,6 @@ function updateDataFromDB(items) {
 }
 
 
-
 /**
  * Creates the Leaflet with the first datapoint
  *
@@ -139,7 +225,7 @@ function initLeafletOverlays() {
 
 function initDataPointOverlay() {
 
-    var firstPoint = gpsDataset[0];
+    var firstPoint = subjectsFilter.bottom(1)[0];
 
 
     if (firstPoint.items !== undefined) {
@@ -152,8 +238,37 @@ function initDataPointOverlay() {
 function drawDataPointOverlay(dataPoint) {
 
 
-    if( dataPoint.items[0] === undefined) {
+    if (dataPoint.items[0] === undefined) {
         return;
+    }
+
+    var links = [];
+    if (dataPoint.nets !== undefined) {
+
+        dataPoint.nets.forEach(function (net) {
+
+            var s = dataPoint.items.filter(function (d) {
+                return d.id === net[0];
+            });
+
+
+            var t = dataPoint.items.filter(function (d) {
+                return d.id === net[1];
+            });
+
+            var p1 = createLineJSON(s[0]);
+            //s.LatLng = new L.LatLng(s[0].lat, s[0].lon);
+            //t.LatLng = new L.LatLng(t[0].lat, t[0].lon);
+
+            //links.push(p1);
+            var p2 = createLineJSON(t[0]);
+            //s.LatLng = new L.LatLng(s[0].lat, s[0].lon);
+            //t.LatLng = new L.LatLng(t[0].lat, t[0].lon);
+
+            var link = {p1: p1, p2: p2};
+            links.push(link);
+
+        });
     }
 
 
@@ -167,8 +282,7 @@ function drawDataPointOverlay(dataPoint) {
 
         if (i === 0) {
             map.setZoom(19, {animate: true});
-
-           map.panTo(d.LatLng, {animate: true});
+            map.panTo(d.LatLng, {animate: true});
         }
 
         i++;
@@ -176,25 +290,162 @@ function drawDataPointOverlay(dataPoint) {
     });
 
 
-    var circles = mapContainer.selectAll('circle').data(targets);
+    // Define the div for the tooltip
+    var div = d3.select('#tooltip').append('div')
+        .attr('class', 'tooltip')
+        .style('opacity', 0);
 
-    circles.exit().remove();
+    var container = mapContainer.selectAll('circle').data(targets);
 
-    circles.enter()
-        .append('circle')
+    container.exit().remove();
+
+    var circles = container.enter();
+
+    circles.append('circle')
         .attr('class', 'node')
         .attr('id', function (d) {
-            return d.id;
+            return 'circle' + d.id;
+        })
+        .attr('lon', function (d) {
+            return d.lon
+        })
+        .attr('lat', function (d) {
+            return d.lat
         })
         .attr('r', 10)
-        .style('stroke-width','1px')
+        .style('stroke-width', function(d) {
+            if (dataPoint.labels === -1) {
+                return 1;
+            } else {
+                return 3;
+            }
+        })
+        .style('stroke', function(d) {
+            if(dataPoint.labels === -1) {
+                return '#03A9F4';
+            } else {
+                return '#E040FB';
+            }
+        })
+        //.style(' stroke-opacity', function(d) {
+        //    if(d.labels === -1) {
+        //        return '#03A9F4';
+        //    } else {
+        //        return '#E040FB';
+        //    }
+        //})
         .style('fill', function (d) {
             return nodeColorMap(d.id);
         })
-        .style('fill-opacity', 0.7)
-        .on('click', function (d) {
-            window.alert(d);
+        .style('fill-opacity', 0.5)
+        .on('mouseover', function (d) {
+            div.transition()
+                .duration(100)
+                .style('opacity', 0.9);
+            div.html(d.id + '<br/>' + d3.format('.4g')(d.lat) + ',' + d3.format('.4g')(d.lon))
+                .style('left', (d3.event.pageX) + 'px')
+                .style('top', (d3.event.pageY - 28) + 'px');
+        })
+        .on('mouseout', function (d) {
+            div.transition()
+                .duration(500)
+                .style('opacity', 0);
         });
+
+    var lineContainer;
+
+
+    //NET [{"p1":{"lon":36.922608,"lat":0.3513041},"p2":{"lon":36.922675,"lat":0.3513414}}]
+
+    //lon-lat
+    var data = [ [36.922608, 0.3513041], [36.922675, 0.3513414]];
+
+
+    var lineData = [ {  x : 36.922608,    y : 0.3513041},  {  x : 36.922675,   y : 0.3513414}];
+
+    if (links[0] !== undefined) {
+
+        var toLine = d3.svg.line()
+            .interpolate('linear')
+            .x(function (d) {
+                return applyLatLngToLayer3(d).x;
+            })
+            .y(function (d) {
+                return applyLatLngToLayer3(d).y;
+            });
+
+        lineContainer = mapContainer.append("path") // <-E
+            .attr("d", toLine(lineData))
+            .attr('stroke', 'blue')
+            .attr('stroke-width', 2)
+            .attr('fill', 'none');
+
+        console.log('NET', JSON.stringify(links));
+
+        //links.forEach(function(l) {
+        //
+        //    var polyline = L.polyline([
+        //            [l.p1.lat, l.p1.lon],
+        //            [l.p2.lat, l.p2.lon]],
+        //        {
+        //            color: 'black',
+        //            weight: 2,
+        //            opacity: 1
+        //        }
+        //    ).addTo(map);
+        //});
+        //
+        //
+        //
+        //svg.selectAll("path.line")
+        //    .data(data)
+        //    .enter()
+        //    .append("path") // <-E
+        //    .attr("class", "line")
+        //    .attr("d", function(d){return line(d);});
+
+
+        //var lineContainer = mapSVG.append('g');
+        //
+        //
+        //linePath = mapContainer.selectAll(".lineConnect").data(links[0])
+        //    .enter()
+        //    .append('path')
+        //    .attr("stroke", "blue")
+        //    .attr("stroke-width", 2)
+        //    .attr("fill", "none");
+
+
+    }
+
+
+    //var toLine = d3.svg.line()
+    //    .interpolate("linear")
+    //    .x(function(d) { return map.latLngToLayerPoint(d[0].LatLng).x; })
+    //    .y(function(d) { return map.latLngToLayerPoint(d.LatLng).y; });
+    //
+    //mapContainer.selectAll('.route').data(links).enter().append('path')
+    //    .attr('class', 'line')
+    //    .style('stroke','black')
+    //    .style('stroke-width','1px')
+    //    .attr("d", function(d) { return path1(d.geometry.coordinates); });
+    //
+    //
+    //
+
+
+    //var toLine = d3.svg.line()
+    //    .interpolate('linear')
+    //    .x(function(d) {
+    //        var t = applyLatLngToLayer3(d).x;
+    //        return t;
+    //    })
+    //    .y(function(d) {
+    //        var t = applyLatLngToLayer3(d).y;
+    //        return t;
+    //    });
+    //
+
 
     //remove old ones
     map.on('viewreset', update);
@@ -202,11 +453,58 @@ function drawDataPointOverlay(dataPoint) {
 
     update();
 
+    function applyLatLngToLayer3(d) {
+        var x = d.x;
+        var y = d.y;
+        return map.latLngToLayerPoint(new L.LatLng(y, x))
+    }
 
+
+    function applyLatLngToLayer2(d) {
+        var y = d[1];
+        var x = d[0];
+        return map.latLngToLayerPoint(new L.LatLng(y, x))
+    }
+
+    function applyLatLngToLayer(d) {
+        var y = d.geometry.coordinates[1]
+        var x = d.geometry.coordinates[0]
+        return map.latLngToLayerPoint(new L.LatLng(y, x))
+    }
+
+    function createLineJSON(source) {
+        var geoLine = {lon: source.lon, lat: source.lat};
+
+        return geoLine;
+    }
 
 
     function update() {
-        d3.transition(circles)
+
+
+
+
+        //d3.transition(textContainer)
+        //    .attr('transform',
+        //        function (d) {
+        //            return 'translate(' +
+        //                map.latLngToLayerPoint(d.LatLng).x + ',' +
+        //                map.latLngToLayerPoint(d.LatLng).y + ')';
+        //        }
+        //    );
+
+        // linePath.attr("d", toLine)
+
+        //d3.transition(lineContainer)
+        //    .attr('transform',
+        //        function (d) {
+        //            return 'translate(' +
+        //                map.latLngToLayerPoint(new L.LatLng(d.y, d.x)).x + ',' +
+        //                map.latLngToLayerPoint(new L.LatLng(d.y, d.x)).y + ')';
+        //        }
+        //    );
+
+        d3.transition(container)
             .attr('transform',
                 function (d) {
                     return 'translate(' +
@@ -215,7 +513,13 @@ function drawDataPointOverlay(dataPoint) {
                 }
             );
     }
+
+//     if (lineContainer !== undefined) {
+//         lineContainer.attr("d", toLine);
+
+//     }
 }
+
 
 /**
  * Init the leaflet portion
@@ -228,7 +532,6 @@ function initMapLeaflet() {
     var height = wHeight * 0.6;
 
 
-    
     var mapLeafletWidth = width;
     var mapLeafletHeight = height;
 
@@ -374,18 +677,34 @@ function handleCountryOverlayControl() {
  * Create the main time line
  *
  * @param items - that complete dataset
-3 */
+ 3 */
 function createMainTimeline() {
 
     var customTimeFormat = d3.time.format.multi([
-        ['.%L', function(d) { return d.getMilliseconds(); }],
-        [':%S', function(d) { return d.getSeconds(); }],
-        ['%I:%M', function(d) { return d.getMinutes(); }],
-        ['%I %p', function(d) { return d.getHours(); }],
-        ['%a %d', function(d) { return d.getDay() && d.getDate() !== 1; }],
-        ['%b %d', function(d) { return d.getDate() !== 1; }],
-        ['%B', function(d) { return d.getMonth(); }],
-        ['%Y', function() { return true; }]
+        ['.%L', function (d) {
+            return d.getMilliseconds();
+        }],
+        [':%S', function (d) {
+            return d.getSeconds();
+        }],
+        ['%I:%M', function (d) {
+            return d.getMinutes();
+        }],
+        ['%I %p', function (d) {
+            return d.getHours();
+        }],
+        ['%a %d', function (d) {
+            return d.getDay() && d.getDate() !== 1;
+        }],
+        ['%b %d', function (d) {
+            return d.getDate() !== 1;
+        }],
+        ['%B', function (d) {
+            return d.getMonth();
+        }],
+        ['%Y', function () {
+            return true;
+        }]
     ]);
 
     var margin = {top: 10, left: 15, bottom: 20, right: 20},
@@ -393,12 +712,12 @@ function createMainTimeline() {
         height = 60 - margin.top - margin.bottom;
 
 
-    var t2 = subjects.top(1)[0];
-    var t1 = subjects.bottom(1)[0];
+    var t2 = subjectsFilter.top(1)[0];
+    var t1 = subjectsFilter.bottom(1)[0];
 
     var tStart = moment(t1.timestamp).toDate();
     var tEnd = moment(t2.timestamp).toDate();
-    var t15 = moment(t1.timestamp).add(15, 'm').toDate();
+    var t15 = moment(t1.timestamp).add(5, 'm').toDate();
 
 
     var x = d3.time.scale()
@@ -425,7 +744,7 @@ function createMainTimeline() {
 
     //population graph
 
-    var s1 = subjects.top(1)[0];
+    var s1 = subjectsFilter.top(1)[0];
 
 
     var yPadding = s1.count + 3;
@@ -436,21 +755,24 @@ function createMainTimeline() {
     var yAxis = d3.svg.axis()
         .scale(y).orient('left').tickValues([yPadding]);
 
-        var line = d3.svg.line()
-        .x(function(d) {
+    var line = d3.svg.line()
+        .x(function (d) {
             return x(d.date);
         })
-        .y(function(d) {
+        .y(function (d) {
             return y(d.count);
         });
 
 
-
     var area = d3.svg.area()
         .interpolate('monotone')
-        .x(function(d) { return x(d.date); })
+        .x(function (d) {
+            return x(d.date);
+        })
         .y0(height)
-        .y1(function(d) { return y(d.count); });
+        .y1(function (d) {
+            return y(d.count);
+        });
 
 
     var gPopulationGraph = timelineSVG.append('g');
@@ -464,18 +786,153 @@ function createMainTimeline() {
 
 
     gPopulationGraph.append('path')
-        .attr('class', 'area')
+        .attr('class', 'area_population')
         .attr('clip-path', 'url(#clip)')
         .attr('d', area(gpsDataset));
 
     gPopulationGraph.append('path')
-        .attr('class', 'line')
+        .attr('class', 'line_population')
         .attr('clip-path', 'url(#clip)')
         .attr('d', line(gpsDataset));
 
     gPopulationGraph.append('g')
         .attr('class', 'y axis')
-        .style('stroke-width','1px')
+        .style('stroke-width', '1px')
+        .attr('transform', 'translate(' + width + ' ,0)')
+        .call(yAxis);
+
+    //label graph
+
+    var l1 = labelFilter.top(1)[0];
+
+
+    var yPadding = l1.count + 3;
+    var y = d3.scale.linear()
+        .domain([0, yPadding])
+        .range([height, 0]);
+
+    var yAxis = d3.svg.axis()
+        .scale(y).orient('left').tickValues([yPadding]);
+
+    var line = d3.svg.line()
+        .x(function (d) {
+            return x(d.date);
+        })
+        .y(function (d) {
+            if(d.labels === -1) {
+                return y(0);
+            } else {
+                return y(1);
+            }
+        });
+
+
+    var area = d3.svg.area()
+        .interpolate('monotone')
+        .x(function (d) {
+            return x(d.date);
+        })
+        .y0(height)
+        .y1(function (d) {
+            if(d.labels === -1) {
+                return y(0);
+            } else {
+                return y(1);
+            }
+        });
+
+
+
+    var gLabelGraph = timelineSVG.append('g');
+
+    gLabelGraph
+        .append('clipPath')
+        .attr('id', 'clip')
+        .append('rect')
+        .attr('width', width)
+        .attr('height', height);
+
+
+    gLabelGraph.append('path')
+        .attr('class', 'area_label')
+        .attr('clip-path', 'url(#clip)')
+        .attr('d', area(gpsDataset));
+
+    gLabelGraph.append('path')
+        .attr('class', 'line_label')
+        .attr('clip-path', 'url(#clip)')
+        .attr('d', line(gpsDataset));
+
+    gLabelGraph.append('g')
+        .attr('class', 'y axis')
+        .style('stroke-width', '1px')
+        .attr('transform', 'translate(' + width + ' ,0)')
+        .call(yAxis);
+
+    //network graph
+
+    var n1 = networkFilter.top(1)[0];
+
+
+    var yPadding = n1.count + 3;
+    var y = d3.scale.linear()
+        .domain([0, yPadding])
+        .range([height, 0]);
+
+    var yAxis = d3.svg.axis()
+        .scale(y).orient('left').tickValues([yPadding]);
+
+    var line = d3.svg.line()
+        .x(function (d) {
+            return x(d.date);
+        })
+        .y(function (d) {
+            if(d.nets === undefined) {
+                return y(0);
+            } else {
+                return y(d.nets.length);
+            }
+        });
+
+
+    var area = d3.svg.area()
+        .interpolate('monotone')
+        .x(function (d) {
+            return x(d.date);
+        })
+        .y0(height)
+        .y1(function (d) {
+            if(d.nets === undefined) {
+                return y(0);
+            } else {
+                return y(d.nets.length);
+            }
+        });
+
+
+    var gNetworkGraph = timelineSVG.append('g');
+
+    gNetworkGraph
+        .append('clipPath')
+        .attr('id', 'clip')
+        .append('rect')
+        .attr('width', width)
+        .attr('height', height);
+
+
+    gNetworkGraph.append('path')
+        .attr('class', 'area_label')
+        .attr('clip-path', 'url(#clip)')
+        .attr('d', area(gpsDataset));
+
+    gNetworkGraph.append('path')
+        .attr('class', 'line_label')
+        .attr('clip-path', 'url(#clip)')
+        .attr('d', line(gpsDataset));
+
+    gNetworkGraph.append('g')
+        .attr('class', 'y axis')
+        .style('stroke-width', '1px')
         .attr('transform', 'translate(' + width + ' ,0)')
         .call(yAxis);
 
@@ -483,10 +940,10 @@ function createMainTimeline() {
 
     //create the brush
 
-    if(moment(t15).isAfter(tEnd)) {
+    if (moment(t15).isAfter(tEnd)) {
 
-        var vEnd = moment(timeDomain[1]).valueOf();
-        var vStart = moment(timeDomain[0]).valueOf();
+        var vEnd = moment(tEnd).valueOf();
+        var vStart = moment(tStart).valueOf();
 
         var diff = vEnd - vStart;
 
@@ -538,14 +995,16 @@ function brushended() {
     //filter range
     if (extent1[0] !== undefined && extent1[1] !== undefined) {
 
-        brushFilteredDates = subjects.filterRange(extent1);
+        brushFilteredDates = subjectsFilter.filterRange(extent1);
 
         var b = brushFilteredDates.bottom(Infinity);
 
         //console.log(JSON.stringify(b));
         //grab the first one
         drawDataPointOverlay(b[0]);
-        drawLabelTimeline(b);
+
+        //la
+        // drawLabelTimeline(b);
         //var tStart = moment(extent1[0]);
         //var tEnd = moment(extent1[1]);
         ////zoomToDateRange(tStart, tEnd);
@@ -561,14 +1020,14 @@ function playSelection() {
     //find the first one with points
     var found = false;
 
-    for( var i = 0; i < currentTimeRange.length; i++) {
+    for (var i = 0; i < currentTimeRange.length; i++) {
         var d = currentTimeRange[i];
         if (d.items !== undefined) {
             //setInterval(function () {
-                //console.log('playing...', d.items);
-                drawDataPointOverlay(d);
+            //console.log('playing...', d.items);
+            drawDataPointOverlay(d);
 
-                    //}, 250);
+            //}, 250);
 
 
         }
@@ -593,7 +1052,7 @@ function nodeColorMap(index) {
 
     var c = colors[index];
 
-    return palette.get(c, '400');
+    return palette.get('Purple', 'A200');
 
 }
 

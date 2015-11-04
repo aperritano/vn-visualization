@@ -4,12 +4,12 @@
     <link rel="stylesheet" href="../bower_components/roboto-fontface/css/roboto-fontface.css" type="text/css" charset="utf-8" media="all">
     <link rel="stylesheet" href="../bower_components/google-material-color/dist/palette.css" type="text/css" charset="utf-8" media="all">
     <link rel="stylesheet" href="../bower_components/leaflet/dist/leaflet.css" type="text/css" charset="utf-8" media="all"/>
-
+    <link rel="stylesheet" href="tooltip/css/d3-bootstrap-plugins.min.css" type="text/css" charset="utf-8" media="all"/>
     <link rel="stylesheet" href="styles/main.css" />
 </head>
 <body>
 <span id="browser-sync-binding"></span>
-
+<div id="tooltip"></div>
 <input name="updateButton"
        type="button"
        value="play"
@@ -17,17 +17,17 @@
 <div id="map"></div>
 <div id="timeline"></div>
 
-<input id="sessionName" type="text" size="5"/><br>
-Label<input type=file id="label" /><button id=uploadLabel>Upload</button>
-<br>
-LabelName<input type=file id="labelName" /><button id=uploadNameLabel>Upload</button>
-<br>
-<button id=loadSession>Load Session</button>
-<br>
-<span id="loadSessionLabels"></span>
-<br>
-<span id="loadSessionName"></span>
-<div id="labels"></div>
+<!--<input id="sessionName" type="text" size="5"/><br>-->
+<!--Label<input type=file id="label" /><button id=uploadLabel>Upload</button>-->
+<!--<br>-->
+<!--LabelName<input type=file id="labelName" /><button id=uploadNameLabel>Upload</button>-->
+<!--<br>-->
+<!--<button id=loadSession>Load Session</button>-->
+<!--<br>-->
+<!--<span id="loadSessionLabels"></span>-->
+<!--<br>-->
+<!--<span id="loadSessionName"></span>-->
+<!--<div id="labels"></div>-->
 
 <script src="../bower_components/d3/d3.min.js"></script>
 <script src="../bower_components/async/dist/async.min.js"></script>
@@ -36,16 +36,17 @@ LabelName<input type=file id="labelName" /><button id=uploadNameLabel>Upload</bu
 <script src="../bower_components/google-material-color/dist/palette.js"></script>
 <script src="../node_modules/predicate/dist/predicate.js"></script>
 <script src="../bower_components/firebase/firebase.js"></script>
-<script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
 <script src="../node_modules/crossfilter/crossfilter.min.js"></script>
 <script src="../bower_components/firebase/firebase-debug.js"></script>
 <script src="../bower_components/leaflet/dist/leaflet.js"></script>
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
 
 <!--our scripts-->
 <script src="scripts/main.js"></script>
-<script src="scripts/label.js"></script>
-<script src="scripts/session.js"></script>
+<!--<script src="scripts/label.js"></script>-->
+<!--<script src="scripts/session.js"></script>-->
 
 </body>
 </html>

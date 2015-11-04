@@ -23,8 +23,8 @@ uploadLabelNameButton.on('click', function() {
     var sessionName = sessionNameText.val();
     var ref = new Firebase('https://baboons.firebaseio.com/sessions/');
 
-    if (sessionName == '') {
-        alert('Insert a Session Name')
+    if (sessionName === '') {
+        alert('Insert a Session Name');
         return;
     }
 
