@@ -50,16 +50,16 @@ dictionaryDB.on('value', function (snapshot) {
 
     if (snapshot.val() !== undefined) {
         //remove the last object
-        console.log('VAL',snapshot.val());
         updateDictionaryFromDB(snapshot.val());
-        labelsDB.orderByKey().startAt('0').endAt('1000').on('value', function (snapshot) {
+        labelsDB.orderByKey().startAt('0').endAt('10000').on('value', function (snapshot) {
 
             if (snapshot.val() !== undefined) {
+
                 //remove the last object
                 updateLabelsFromDB(snapshot.val());
             }
 
-            timestampsDB.orderByKey().startAt('0').endAt('1000').on('value', function (snapshot) {
+            timestampsDB.orderByKey().startAt('0').endAt('10000').on('value', function (snapshot) {
 
                 if (snapshot.val() !== undefined) {
                     //remove the last object
@@ -99,12 +99,10 @@ initMapLeaflet();
 
 function updateDictionaryFromDB(d) {
     dictionary = d;
-    console.log('ALL DICT',d);
 }
 
 function updateLabelsFromDB(l) {
     labels = l;
-    //console.log('ALL LABELS',labels);
 }
 
 
@@ -140,18 +138,18 @@ function updateDataFromDB(items) {
                         var foundDictionary = dictionary.filter(function (k) {
 
                             if( foundTimestamps[0].label === k.code ) {
-
-                                console.log('FOUND label ', k.code, k);
                                 return true;
                             }
 
                             return false;
 
                         });
+
                         //if we found a dictionary entry
                         if(foundDictionary[0] !== undefined) {
                             d.labels = foundDictionary[0];
                         }
+
                     } else {
                         d.labels = -1;
                     }
@@ -379,8 +377,6 @@ function drawDataPointOverlay(dataPoint) {
             .attr('stroke', 'blue')
             .attr('stroke-width', 2)
             .attr('fill', 'none');
-
-        console.log('NET', JSON.stringify(links));
 
         //links.forEach(function(l) {
         //
@@ -1002,9 +998,7 @@ function brushended() {
         //console.log(JSON.stringify(b));
         //grab the first one
         drawDataPointOverlay(b[0]);
-
-        //la
-        // drawLabelTimeline(b);
+        drawLabelTimeline(b);
         //var tStart = moment(extent1[0]);
         //var tEnd = moment(extent1[1]);
         ////zoomToDateRange(tStart, tEnd);

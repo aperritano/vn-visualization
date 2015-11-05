@@ -1,142 +1,13 @@
 /*************************************************
  *              FILE UPLOAD.
  *************************************************/
-var loadSessionButton = $('#loadSession');
-
 var results = null;
 
 /**
  * Label name map.
  */
-var labelMap = {};
-var labelNameMap = {};
-var labelNameColor = {};
 var start = 0;
 var end = 0;
-
-/*************************************************
- *              BUTTON CLICK EVENT
- *************************************************/
-
-/**
- * Manage the upload of the label names.
- */
-
-loadSessionButton.on('click', function() {
-
-    var sessionName = sessionNameText.val();
-    var ref = new Firebase('https://baboons.firebaseio.com/sessions/');
-
-    if (sessionName == '') {
-        alert('Insert a Session Name')
-        return;
-    }
-
-    ref.orderByKey().once('value', function (snapshot) {
-
-        var values = snapshot.exportVal();
-        if( values !== undefined ) {
-
-            /**
-             * Find the session.
-             */
-            for(var k in values){
-
-                /**
-                 * Upload the data.
-                 */
-                if(values[k].name == sessionName){
-
-                    readStartEndValue();
-                    popolateLabel(k)
-                    popolateLabelNameMap(k);
-
-                }
-
-            }
-
-        }
-
-    }, function (errorObject) {
-        console.log('The read failed: ' + errorObject.code);
-    });
-
-});
-
-/*************************************************
- *              POPOLATE LEBEL MAPS
- *************************************************/
-/**
- * Function used to popolate the label map.
- */
-function popolateLabel(sessionId){
-
-    var firebase = new Firebase('https://baboons.firebaseio.com/labels/' + sessionId + '/labels');
-    firebase.once('value', function (snapshot) {
-
-        var values = snapshot.exportVal();
-        console.log(values)
-        for(var k in values){
-
-            labelMap[values[k].timestampNumber] = values[k].label;
-
-        }
-
-        console.log(labelMap);
-       $('#loadSessionLabels').append('Labels Loaded');
-
-    }, function (errorObject) {
-        console.log('The read failed: ' + errorObject.code);
-    });
-
-}
-
-/**
- * Function used to popolate the label name map.
- */
-function popolateLabelNameMap(sessionId){
-
-    var firebase = new Firebase('https://baboons.firebaseio.com/labels/' + sessionId + '/labelDictionary');
-    firebase.once('value', function (snapshot) {
-
-        var values = snapshot.exportVal();
-        for(var k in values){
-
-            labelNameMap[values[k].code] = values[k].label;
-            labelNameColor[values[k].code] = values[k].color;
-
-        }
-
-        console.log(labelNameMap);
-        console.log(labelNameColor);
-        $('#loadSessionName').append('Dictionary Loaded');
-
-    }, function (errorObject) {
-        console.log('The read failed: ' + errorObject.code);
-    });
-
-}
-
-/**
- * Read start and end value.
- */
-function readStartEndValue(){
-
-    /**
-     * Set start and end millisec.
-     */
-    var firebase = new Firebase('https://baboons.firebaseio.com/info');
-    firebase.on('value', function (snapshot) {
-
-        var val = snapshot.exportVal();
-        start = val['startMillisec'];
-        end = val['endMillisec'];
-
-    }, function (errorObject) {
-        console.log('The read failed: ' + errorObject.code);
-    });
-
-}
 
 /*************************************************
  *              DRAW TIMELINE
@@ -145,6 +16,7 @@ function readStartEndValue(){
  * Function caled when the user wnat to the label timelines.
  */
 function drawLabelTimeline(data){
+
     setData(data);
 }
 
@@ -196,8 +68,8 @@ function setData(values){
                 var net = item.nets[nKey];
 
                 // Take the IDs of the two baboons.
-                var idOne = net.idOne;
-                var idTwo = net.idTwo;
+                var idOne = net[0];
+                var idTwo = net[1];
 
                 // Compose the key
                 var key = idOne + '' + idTwo;
@@ -219,8 +91,7 @@ function setData(values){
 
                 }
 
-                var nTimestamp = item.millisec - start;
-                var label = labelMap[nTimestamp];
+                var label = item.labels.label;
 
                 //console.log(label)
 
@@ -235,13 +106,14 @@ function setData(values){
                     if (!groupAlreadyExist(items, idOne, idTwo)) {
 
                         var value = {};
-                        value['label'] = labelNameMap[labelMap[nTimestamp]];
+                        value['label'] = item.labels.label;
                         value['lanePos'] = lanes[key].id;
                         value['id'] = itemCounter;
                         value['lane'] = key;
-                        value['start'] = item.millisec;
+                        value['start'] = item.milliseconds;
                         value['end'] = 0;
-                        value['class'] = labelMap[nTimestamp].toString();
+                        value['class'] = item.labels.code;
+                        value['color'] = item.labels.color;
 
                         items[key] = value;
                         itemCounter += 1;
@@ -253,7 +125,7 @@ function setData(values){
                          */
                         var oldValue = items[key];
 
-                        if(oldValue['label'] != label.toString()){
+                        if(oldValue['label'] != label){
 
                             /**
                              * If the label is different create a new one with new label.
@@ -262,13 +134,14 @@ function setData(values){
                             itemsList.push(oldValue);
 
                             var value = {};
-                            value['label'] = labelNameMap[labelMap[nTimestamp]];
+                            value['label'] = item.labels.label;
                             value['lanePos'] = lanes[key].id;
                             value['id'] = itemCounter;
                             value['lane'] = key;
-                            value['start'] = item.millisec;
+                            value['start'] = item.milliseconds;
                             value['end'] = 0;
-                            value['class'] = labelMap[nTimestamp].toString();
+                            value['class'] = item.labels.code;
+                            value['color'] = item.labels.color;
 
                             items[key] = value;
                             itemCounter += 1;
@@ -286,7 +159,7 @@ function setData(values){
 
                         var value = items[k];
                         console.log(value['label'])
-                        value['end'] = item.millisec - 1;
+                        value['end'] = item.milliseconds - 1;
 
                         itemsList.push(value);
                         itemCounter += 1;
@@ -306,26 +179,22 @@ function setData(values){
     /**
      * All the remaining data in the startTIme should create an item.
      */
-    nTimestamp = values[values.length - 1].millisec - start;
     for (var k in items) {
 
         // Skip the ite that don't have a label.
-        if (labelMap[nTimestamp] == undefined)
+        if (item.labels == -1)
             continue;
 
         var value = items[k];
-        value['end'] = values[values.length - 1].millisec;
+        value['end'] = values[values.length - 1].milliseconds;
 
         itemsList.push(value);
         itemCounter += 1;
 
     }
 
-    var startTimestamp = values[0].millisec;
-    var endTimestamp = values[values.length - 1].millisec;
-
-    console.log(lanesList);
-    console.log(itemsList);
+    var startTimestamp = values[0].milliseconds;
+    var endTimestamp = values[values.length - 1].milliseconds;
 
     setUpTimeline(startTimestamp, endTimestamp, lanesList, itemsList, Object.keys(lanes).length);
 
@@ -408,7 +277,7 @@ function setUpTimeline(startTimestamp, endTimestamp, lanes, items, laneLength){
         .attr('y', function(d) {return y(d.lanePos + .5) - 5;})
         .attr('width', function(d) {return (x(d.end) - x(d.start));})
         .attr('height', 10)
-        .style('fill', function(d){return labelNameColor[parseInt(d.class)].toString();});
+        .style('fill', function(d){return d['color'];});
 
     /**
      * Draw the label name in the item.
