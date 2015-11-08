@@ -43,7 +43,9 @@ var num = 1000;
 
 var labels;
 var dictionary;
-var timeOverlayProps = { startTimeTitle: 'Start Time:', startTime: '', endTimeTitle: 'End Time:', endTime: ''};
+var timeOverlay;
+var timeOverlayProps = {};
+var brushFilteredDates;
 
 var m = '800';
 
@@ -237,7 +239,6 @@ function drawDataPointOverlay(dataPoint) {
 
     var links = [];
     if (dataPoint.nets !== undefined) {
-
         dataPoint.nets.forEach(function (net) {
 
             var s = dataPoint.items.filter(function (d) {
@@ -301,10 +302,10 @@ function drawDataPointOverlay(dataPoint) {
             return 'circle' + d.id;
         })
         .attr('lon', function (d) {
-            return d.lon
+            return d.lon;
         })
         .attr('lat', function (d) {
-            return d.lat
+            return d.lat;
         })
         .attr('r', 10)
         .style('stroke-width', function (d) {
@@ -321,13 +322,6 @@ function drawDataPointOverlay(dataPoint) {
                 return '#E040FB';
             }
         })
-        //.style(' stroke-opacity', function(d) {
-        //    if(d.labels === -1) {
-        //        return '#03A9F4';
-        //    } else {
-        //        return '#E040FB';
-        //    }
-        //})
         .style('fill', function (d) {
             return nodeColorMap(d.id);
         })
@@ -344,7 +338,10 @@ function drawDataPointOverlay(dataPoint) {
             div.transition()
                 .duration(500)
                 .style('opacity', 0);
-        });
+        })
+        .transition()
+        .delay(3000)
+        .duration(3000);
 
     var lineContainer;
 
@@ -371,7 +368,7 @@ function drawDataPointOverlay(dataPoint) {
         mapContainer.selectAll('path').remove();
         links.forEach(function (link) {
             lineContainer = mapContainer.append("path") // <-E
-                .attr("d", toLine(link))
+                .attr('d', toLine(link))
                 .attr('stroke', 'blue')
                 .attr('stroke-width', 2)
                 .attr('fill', 'none');
@@ -389,20 +386,20 @@ function drawDataPointOverlay(dataPoint) {
     function applyLatLngToLayer3(d) {
         var x = d.x;
         var y = d.y;
-        return map.latLngToLayerPoint(new L.LatLng(y, x))
+        return map.latLngToLayerPoint(new L.LatLng(y, x));
     }
 
 
     function applyLatLngToLayer2(d) {
         var y = d[1];
         var x = d[0];
-        return map.latLngToLayerPoint(new L.LatLng(y, x))
+        return map.latLngToLayerPoint(new L.LatLng(y, x));
     }
 
     function applyLatLngToLayer(d) {
         var y = d.geometry.coordinates[1]
         var x = d.geometry.coordinates[0]
-        return map.latLngToLayerPoint(new L.LatLng(y, x))
+        return map.latLngToLayerPoint(new L.LatLng(y, x));
     }
 
     function createLineJSON(source) {
@@ -479,7 +476,7 @@ function initMapLeaflet() {
         attributionControl: false
     }).setView([0.3509073, 36.9229031], 5);
     //map.touchZoom.disable();
-    //map.doubleClickZoom.disable();
+    map.doubleClickZoom.disable();
     //map.scrollWheelZoom.disable();
     //map.boxZoom.disable();
     //map.keyboard.disable();
@@ -509,22 +506,44 @@ function initMapLeaflet() {
      */
 
 
-    var timeOverlay = L.control({position: 'topRight'});
+
+
+    timeOverlay = L.control({position: 'topright'});
 
     timeOverlay.onAdd = function (map) {
         timeOverlayDIV = L.DomUtil.create('div', 'timeOverlay');
 
-        timeOverlay.update(timeOverlayProps);
+        timeOverlay.update();
         return timeOverlayDIV;
     };
 
-    timeOverlay.update = function(props) {
-        timeOverlayDIV.innerHTML = '<h5>Time Range</h5>' +
-            '<b>' + props.startTimeTitle + '</b>:' + props.startTime + '<br>' + '<b>' + props.endTimeTitle + '</b>:' + props.endTime ;
+    timeOverlay.update = function() {
+
+        if( !_.isUndefined(timeOverlayProps.startTime) || !_.isUndefined(timeOverlayProps.endTime) ) {
+            var t1 = timeOverlayProps.startTime.format('LTS M/D/YY');
+            var t2 = timeOverlayProps.endTime.format('LTS M/D/YY');
+
+            var div = document.getElementById('control-panel');
+            document.getElementById('start-time').innerHTML = 'Start:&nbsp&nbsp' + t1;
+            document.getElementById('end-time').innerHTML = 'End:&nbsp&nbsp&nbsp&nbsp' + t2;
+
+            var playButton = document.getElementById('play');
+            playButton.onclick = function(){
+                playSelection();
+                console.log('play buttonClicked');
+            };
+            var timeButton = document.getElementById('time');
+            timeButton.onclick = function(){
+                console.log('time buttonClicked');
+            };
+            div.style.display = 'block';
+            timeOverlayDIV.appendChild(div);
+        }
 
     }
 
     timeOverlay.addTo(map);
+
 
     // create the control
     //document.getElementById('countryOverlayControl').addEventListener('click', handleCountryOverlayControl, false);
@@ -650,6 +669,12 @@ function createMainTimeline() {
     var tEnd = moment(t2.timestamp).toDate();
     var t5 = moment(t1.timestamp).add(5, 'm').toDate();
 
+    //update the props
+
+    timeOverlayProps.startTime = moment(t1.timestamp);
+    timeOverlayProps.endTime = moment(t1.timestamp).add(5, 'm');
+    timeOverlay.update();
+
     var byDate = xFilter.dimension(function (d) {
         return d.date;
     });
@@ -663,7 +688,7 @@ function createMainTimeline() {
         if (d.labels === -1) {
             return 0;
         } else {
-            return 1;
+            return 3;
         }
         ;
     });
@@ -680,16 +705,16 @@ function createMainTimeline() {
     var netsMax = netsGroup.top(1)[0].value;
     var labelMax = labelGroup.top(1)[0].value;
 
-    Array.prototype.max = function() {
+    Array.prototype.max = function () {
         return Math.max.apply(null, this);
     };
 
-    var yMax = [countMax,netsMax,labelMax].max();
+    var yMax = [countMax, netsMax, labelMax].max();
 
     var combined = dc.compositeChart("#timeline2");
 
-    var stackCharts =  dc.lineChart(combined)
-        .ordinalColors(['#56B2EA','#E064CD','#F8B700','#78CC00','#7B71C5'])
+    var stackCharts = dc.lineChart(combined)
+        .ordinalColors(['#56B2EA', '#E064CD', '#F8B700', '#78CC00', '#7B71C5'])
 
         .renderArea(true)
         .group(labelGroup)
@@ -700,7 +725,7 @@ function createMainTimeline() {
         .useRightYAxis(true)
         .on('filtered', brushing);
 
- combined
+    combined
         .width(wWidth)
         .height(height)
         .margins(margin)
@@ -710,7 +735,7 @@ function createMainTimeline() {
 
     combined.compose([stackCharts]).rightYAxis().tickValues([stackCharts.yAxisMax()]);
 
-    combined.filter(dc.filters.RangedFilter(tStart,t5));
+    combined.filter(dc.filters.RangedFilter(tStart, t5));
 
     //combined.on('filtered', brushing);
 
@@ -720,131 +745,45 @@ function createMainTimeline() {
     function brushing(chart, filter) {
         //console.log('we are brushing', _.isNull(filter), _.isNull(chart));
 
-        if(_.isNull(filter)) {
+        if (_.isNull(filter)) {
         } else {
-            var brushFilteredDates = dateDimension.filterRange([filter[0],filter[1]]);
 
-            var b = brushFilteredDates.bottom(1)[0];
+            var t1 = filter[0];
+            var t2 = filter[1];
 
-            drawDataPointOverlay(b);
+            brushFilteredDates = dateDimension.filterRange([t1, t2]);
+            var point = brushFilteredDates.bottom(1)[0];
+            timeOverlayProps.startTime = moment(t1);
+            timeOverlayProps.endTime = moment(t2);
+            timeOverlay.update();
+
+            drawDataPointOverlay(point);
 
             var b = brushFilteredDates.bottom(Infinity);
-            drawLabelTimeline(b);
+            drawLabelTimeline(b)
         }
 
 
-
     }
-    //combined.renderAll();
-
-
-
-    //finally make the brush
-
-    //create the brush
-
-    //if (moment(t15).isAfter(tEnd)) {
-    //
-    //    var vEnd = moment(tEnd).valueOf();
-    //    var vStart = moment(tStart).valueOf();
-    //
-    //    var diff = vEnd - vStart;
-    //
-    //    vEnd = vStart + (diff / 2);
-    //
-    //
-    //    tEnd = moment(vEnd);
-    //} else {
-    //    tEnd = t15;
-    //}
-    //
-    //brush = d3.svg.brush()
-    //    .x(x)
-    //    .extent([tStart, tEnd])
-    //    .on('brushend', brushended);
-    //
-    //var gBrush = timelineSVG.append('g')
-    //    .attr('class', 'brush')
-    //    .call(brush)
-    //    .call(brush.event);
-    //
-    //gBrush.selectAll('rect')
-    //    .attr('height', height);
-    //
-    //updateDataFromDB(t1);
 }
 
-//var brushFilteredDates;
-//function brushended() {
-//    // only transition after input
-//    if (!d3.event.sourceEvent) {
-//        return;
-//    }
-//    var extent0 = brush.extent();
-//    var extent1 = extent0.map(d3.time.minute.utc.round);
-//
-//    // if empty when rounded, use floor & ceil instead
-//    if (extent1[0] >= extent1[1]) {
-//        extent1[0] = d3.time.minute.utc.floor(extent0[0]);
-//        extent1[1] = d3.time.minute.utc.ceil(extent0[1]);
-//    }
-//
-//    d3.select(this).transition()
-//        .call(brush.extent(extent1))
-//        .call(brush.event);
-//    //console.log('brush dates', JSON.stringify(extent1), moment(extent1[0]).toDate(), moment(extent1[1]).toDate());
-//
-//
-//    //filter range
-//    if (extent1[0] !== undefined && extent1[1] !== undefined) {
-//
-//        brushFilteredDates = dateDimension.filterRange(extent1);
-//
-//        var b = brushFilteredDates.bottom(Infinity);
-//
-//        //console.log(JSON.stringify(b));
-//        //grab the first one
-//        drawDataPointOverlay(b[0]);
-//
-//        //la
-//        // drawLabelTimeline(b);
-//        //var tStart = moment(extent1[0]);
-//        //var tEnd = moment(extent1[1]);
-//        ////zoomToDateRange(tStart, tEnd);
-//    }
-//
-//}
 
-/***
- * PUT YOUR CREATE LABEL
- */
 
 function playSelection() {
     //find the first one with points
     var found = false;
 
-    for (var i = 0; i < currentTimeRange.length; i++) {
-        var d = currentTimeRange[i];
+    var ranged = brushFilteredDates.bottom(Infinity);
+
+    for (var i = 0; i < ranged.length; i++) {
+        var d = ranged[i];
         if (d.items !== undefined) {
-            //setInterval(function () {
-            //console.log('playing...', d.items);
             drawDataPointOverlay(d);
-
-            //}, 250);
-
-
+            console.log('playing...');
         }
 
     }
     console.log('done');
-    //currentTimeRange.forEach(function (d) {
-    //
-    //    setInterval(function () {
-    //
-    //
-    //    }, 500);
-    //
-    //});
 }
 
 /**
