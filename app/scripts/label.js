@@ -60,7 +60,7 @@ function setData(values){
             /**
              * Go into all the nets.
              */
-            for (var iKey in ts.items) {
+            for (var iKey = 0; iKey < ts.items.length; iKey++) {
 
                 var item = ts.items[iKey];
 
@@ -226,8 +226,6 @@ function setData(values){
     var startTimestamp = (values[0].milliseconds * 1000);
     var endTimestamp = (values[values.length - 1].milliseconds * 1000);
 
-    console.log(gantList);
-
     setUpTimelineGroup(gantGroupList, startTimestamp, endTimestamp);
     setUpTimelineIndividuals(gantList, startTimestamp, endTimestamp);
 
@@ -264,7 +262,7 @@ function setUpTimelineGroup(data, start, end){
             tickTime: d3.time.minutes,
             tickInterval: 1,
             tickSize: 20})
-        .mouseover(function (d, i, datum) {
+        /*.mouseover(function (d, i, datum) {
             div.transition()
                 .duration(100)
                 .style('opacity', 0.9);
@@ -272,14 +270,12 @@ function setUpTimelineGroup(data, start, end){
                 .style('left', (d3.event.pageX) + 'px')
                 .style('top', (d3.event.pageY - 28) + 'px');
 
-            console.log(datum)
-
         })
         .mouseout(function (d, i, datum) {
             div.transition()
                 .duration(500)
                 .style('opacity', 0);
-        })
+        })*/
         .margin({left:70, right:30, top:0, bottom:0});
 
     // Draw it
@@ -308,7 +304,7 @@ function setUpTimelineIndividuals(data, start, end){
             tickTime: d3.time.minutes,
             tickInterval: 1,
             tickSize: 20})
-        .mouseover(function (d, i, datum) {
+        /*.mouseover(function (d, i, datum) {
             div.transition()
                 .duration(100)
                 .style('opacity', 0.9);
@@ -321,7 +317,7 @@ function setUpTimelineIndividuals(data, start, end){
             div.transition()
                 .duration(500)
                 .style('opacity', 0);
-        })
+        })*/
         .click(function (d, i, datum) {
 
             console.log(d)
