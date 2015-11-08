@@ -177,6 +177,7 @@ div.tooltipLabel {
 .coloredDiv {
     height:20px; width:20px; float:left;
 }
+
 /**
  * Leaflet TimeOverLay
  */
@@ -192,4 +193,3 @@ div.tooltipLabel {
     margin: 0 0 5px;
     color: #777;
 }
-

@@ -51,11 +51,11 @@ dictionaryDB.on('value', function (snapshot) {
 
     if (snapshot.val() !== undefined) {
         //remove the last object
+        console.log('VAL', snapshot.val());
         updateDictionaryFromDB(snapshot.val());
         labelsDB.orderByKey().startAt('0').endAt(m).on('value', function (snapshot) {
 
             if (snapshot.val() !== undefined) {
-
                 //remove the last object
                 updateLabelsFromDB(snapshot.val());
             }
@@ -98,10 +98,12 @@ initMapLeaflet();
 
 function updateDictionaryFromDB(d) {
     dictionary = d;
+    console.log('ALL DICT', d);
 }
 
 function updateLabelsFromDB(l) {
     labels = l;
+    //console.log('ALL LABELS',labels);
 }
 
 
@@ -145,12 +147,10 @@ function updateDataFromDB(items) {
                             return false;
 
                         });
-
                         //if we found a dictionary entry
                         if (foundDictionary[0] !== undefined) {
                             d.labels = foundDictionary[0];
                         }
-
                     } else {
                         d.labels = -1;
                     }
@@ -650,6 +650,7 @@ function createMainTimeline() {
     var tEnd = moment(t2.timestamp).toDate();
     var t5 = moment(t1.timestamp).add(5, 'm').toDate();
 
+
     var byDate = xFilter.dimension(function (d) {
         return d.date;
     });
@@ -718,7 +719,7 @@ function createMainTimeline() {
     dc.renderAll();
 
     function brushing(chart, filter) {
-        //console.log('we are brushing', _.isNull(filter), _.isNull(chart));
+        console.log('we are brushing', _.isNull(filter), _.isNull(chart));
 
         if(_.isNull(filter)) {
         } else {
@@ -727,9 +728,6 @@ function createMainTimeline() {
             var b = brushFilteredDates.bottom(1)[0];
 
             drawDataPointOverlay(b);
-
-            var b = brushFilteredDates.bottom(Infinity);
-            drawLabelTimeline(b);
         }
 
 
