@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="styles/main.css" />
 </head>
 <body>
+
 <span id="browser-sync-binding"></span>
 <div id="tooltip"></div>
 <input name="updateButton"
@@ -16,7 +17,9 @@
        onclick="playSelection()" />
 <div id="map"></div>
 <div id="timeline"></div>
-<div id="labels"></div>
+<div id="labelsGroup"></div>
+<div id="labelsIndividuals"></div>
+<div id="tooltipLabel"></div>
 
 <script src="../bower_components/d3/d3.min.js"></script>
 <script src="../bower_components/async/dist/async.min.js"></script>
@@ -33,6 +36,7 @@
 <!--our scripts-->
 <script src="scripts/main.js"></script>
 <script src="scripts/label.js"></script>
+<script src="scripts/d3-timeline.js"></script>
 
 </body>
 </html>

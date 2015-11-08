@@ -51,7 +51,7 @@ dictionaryDB.on('value', function (snapshot) {
     if (snapshot.val() !== undefined) {
         //remove the last object
         updateDictionaryFromDB(snapshot.val());
-        labelsDB.orderByKey().startAt('0').endAt('10000').on('value', function (snapshot) {
+        labelsDB.orderByKey().startAt('0').endAt('1000').on('value', function (snapshot) {
 
             if (snapshot.val() !== undefined) {
 
@@ -59,7 +59,7 @@ dictionaryDB.on('value', function (snapshot) {
                 updateLabelsFromDB(snapshot.val());
             }
 
-            timestampsDB.orderByKey().startAt('0').endAt('10000').on('value', function (snapshot) {
+            timestampsDB.orderByKey().startAt('0').endAt('1000').on('value', function (snapshot) {
 
                 if (snapshot.val() !== undefined) {
                     //remove the last object

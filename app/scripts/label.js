@@ -9,6 +9,8 @@ var results = null;
 var start = 0;
 var end = 0;
 
+var brushNew;
+
 /*************************************************
  *              DRAW TIMELINE
  *************************************************/
@@ -33,67 +35,67 @@ function setData(values){
     /**
      * Structure used to create the lanes and the items.
      */
-    var lanes = {};
-    var lanesList = [];
-    var itemsList = [];
-    var items = {};
+    var gantGroupMap = {};
+    var gantGroupList = [];
 
-    /**
-     * Counters.
-     */
-    var groupCounter = 0;
-    var itemCounter = 0;
+    var gantMap = {};
+    var gantList = [];
 
     /**
      * Iterate over each timestamp.
      */
     for (var vKey in values) {
 
-        var item = values[vKey];
+        var ts = values[vKey];
 
         // Skip missing data
-        if (item == undefined)
+        if (ts == undefined)
             return;
 
         /**
          * If there are nets analyze them.
          */
-        if (item.nets != undefined) {
+        if (ts.items != undefined) {
 
             /**
              * Go into all the nets.
              */
-            for (var nKey in item.nets) {
+            for (var iKey in ts.items) {
 
-                var net = item.nets[nKey];
-
-                // Take the IDs of the two baboons.
-                var idOne = net[0];
-                var idTwo = net[1];
+                var item = ts.items[iKey];
 
                 // Compose the key
-                var key = idOne + '' + idTwo;
+                var key = item.id;
 
                 /**
-                 * If the group (net) doesn't exist add to the lanes structure.
+                 * If the individual doesn't exist create the structure related to the individual.
                  */
-                if (!groupAlreadyExist(lanes, idOne, idTwo)) {
+                if (gantMap[key] == undefined) {
 
                     var value = {};
-                    value['id'] = groupCounter;
-                    value['label'] = 'Group ' + idOne + ' ' + idTwo;
-                    value['idOne'] = idOne;
-                    value['idTwo'] = idTwo;
+                    value['class'] = key.toString();
+                    value['label'] = 'Individual ' + key;
+                    value['times'] = [];
+                    value['actual'] = null;
 
-                    lanes[key] = value;
-                    lanesList.push(value);
-                    groupCounter += 1;
+                    gantMap[key] = value;
 
                 }
 
-                var label = item.labels.label;
+                /**
+                 * Groups.
+                 */
 
-                //console.log(label)
+                if(gantGroupMap['class'] == undefined){
+
+                    gantGroupMap['class'] = key.toString();
+                    gantGroupMap['label'] = 'Group Activity';
+                    gantGroupMap['times'] = [];
+                    gantGroupMap['actual'] = null;
+
+                }
+
+                var label = ts.labels.label;
 
                 /**
                  * If the label of the current TS is different from undefined create an item for the current group.
@@ -101,102 +103,133 @@ function setData(values){
                 if (label != undefined){
 
                     /**
-                     * The group is created if it not exist already.
+                     * Groups.
                      */
-                    if (!groupAlreadyExist(items, idOne, idTwo)) {
 
+                    // Take the last gantt rect
+                    var actual = gantGroupMap['actual'];
+
+                    //The group is created if it not exist already.
+                    if (actual == null) {
+
+                        // If the last rectangle has been finished
                         var value = {};
-                        value['label'] = item.labels.label;
-                        value['lanePos'] = lanes[key].id;
-                        value['id'] = itemCounter;
-                        value['lane'] = key;
-                        value['start'] = item.milliseconds;
-                        value['end'] = 0;
-                        value['class'] = item.labels.code;
-                        value['color'] = item.labels.color;
-
-                        items[key] = value;
-                        itemCounter += 1;
+                        value['starting_time'] = (ts.milliseconds * 1000);
+                        value['ending_time'] = (ts.milliseconds * 1000);
+                        value['color'] = ts.labels.color;
+                        value['name'] = ts.labels.label;
+                        gantGroupMap['actual'] = value;
 
                     }else{
 
-                        /**
-                         * If it already exist check if the label is the same.
-                         */
-                        var oldValue = items[key];
+                        gantGroupMap['actual']['ending_time'] = (ts.milliseconds * 1000);
 
-                        if(oldValue['label'] != label){
+                    }
 
-                            /**
-                             * If the label is different create a new one with new label.
-                             */
-                            oldValue['end'] = item.millisec - 1;
-                            itemsList.push(oldValue);
+                    /**
+                     * Individuals
+                     */
 
-                            var value = {};
-                            value['label'] = item.labels.label;
-                            value['lanePos'] = lanes[key].id;
-                            value['id'] = itemCounter;
-                            value['lane'] = key;
-                            value['start'] = item.milliseconds;
-                            value['end'] = 0;
-                            value['class'] = item.labels.code;
-                            value['color'] = item.labels.color;
+                    // Take the last gantt rect
+                    var actual = gantMap[key]['actual'];
 
-                            items[key] = value;
-                            itemCounter += 1;
+                    //The group is created if it not exist already.
+                    if (actual == null) {
+
+                        // If the last rectangle has been finished
+                        var value = {};
+                        value['starting_time'] = (ts.milliseconds * 1000);
+                        value['ending_time'] = (ts.milliseconds * 1000);
+                        value['color'] = ts.labels.color;
+                        value['name'] = ts.labels.label;
+                        gantMap[key]['actual'] = value;
+
+                    }else{
+
+                        gantMap[key]['actual']['ending_time'] = (ts.milliseconds * 1000);
+
+                        }
+
+                }else{
+
+                    /**
+                     * Groups.
+                     */
+                    var value = gantGroupMap['actual'];
+                    if(value != null){
+
+                        gantGroupMap['times'].push(value);
+                        gantGroupMap['actual'] = null;
+
+                    }
+
+                    /**
+                     * Individuals.
+                     */
+
+                    //The label is undefined, end all the items.
+                    for(var k in gantMap){
+
+                        var value = gantMap[k]['actual'];
+                        if(value != null){
+
+                            gantMap[k]['times'].push(value);
+                            gantMap[k]['actual'] = null;
 
                         }
 
                     }
 
-                }else{
-
-                    /**
-                     * The label is undefined, end all the items.
-                     */
-                    for(var k in items){
-
-                        var value = items[k];
-                        console.log(value['label'])
-                        value['end'] = item.milliseconds - 1;
-
-                        itemsList.push(value);
-                        itemCounter += 1;
-
-                    }
-
-                    items = {};
-
                 }
 
-            } // End for for each NET
+            } // End for for each INDIVIDUAL
 
         }
 
     } // End for on TIMESTAMPS
 
     /**
-     * All the remaining data in the startTIme should create an item.
+     * Groups;
      */
-    for (var k in items) {
+    value = gantGroupMap['actual'];
+    if(value != null){
 
-        // Skip the ite that don't have a label.
-        if (item.labels == -1)
-            continue;
-
-        var value = items[k];
-        value['end'] = values[values.length - 1].milliseconds;
-
-        itemsList.push(value);
-        itemCounter += 1;
+        gantGroupMap['times'].push(value);
+        gantGroupMap['actual'] = null;
 
     }
 
-    var startTimestamp = values[0].milliseconds;
-    var endTimestamp = values[values.length - 1].milliseconds;
+    /**
+     * All the remaining data in the startTIme should create an item.
+     */
+    for (var k in gantMap) {
 
-    setUpTimeline(startTimestamp, endTimestamp, lanesList, itemsList, Object.keys(lanes).length);
+        var value = gantMap[k]['actual'];
+        if(value != null){
+
+            gantMap[k]['times'].push(value);
+            gantMap[k]['actual'] = null;
+
+        }
+
+    }
+
+    delete gantGroupMap['actual'];
+    gantGroupList.push(gantGroupMap);
+
+    // Convert MAP into LIST
+    for(var k in gantMap){
+        delete gantMap[k]['actual'];
+        gantList.push(gantMap[k]);
+    }
+
+    var startTimestamp = (values[0].milliseconds * 1000);
+    var endTimestamp = (values[values.length - 1].milliseconds * 1000);
+
+    console.log(gantList);
+
+    setUpTimelineGroup(gantGroupList, startTimestamp, endTimestamp);
+    setUpTimelineIndividuals(gantList, startTimestamp, endTimestamp);
 
 }
 
@@ -204,111 +237,131 @@ function setData(values){
  *              BUILT THE TIMELINES
  *************************************************/
 
-function setUpTimeline(startTimestamp, endTimestamp, lanes, items, laneLength){
+/**
+ * Function that create the gantt-chart.
+ * @param data
+ * @param start, start milliseconds
+ * @param end, end milliseconds
+ */
+function setUpTimelineGroup(data, start, end){
 
-    //console.log(startTimestamp);
-    //console.log(endTimestamp);
+    var div = d3.select('#tooltipLabel').append('div').attr('class', 'tooltipLabel').style('opacity', 0);
 
-    var m = [20, 15, 15, 120], //top right bottom left
-        w = 1600 - m[1] - m[3],
-        h = (15 * lanes.length) - m[0] - m[2],
-        miniHeight = laneLength * 12 + 50,
-        mainHeight = h - miniHeight - 50;
-
-    /**
-     * Create the scales
-     */
-    var x = d3.time.scale().domain([startTimestamp,endTimestamp]).range([0, w]);
-    var y = d3.scale.linear().domain([0, laneLength]).range([0, miniHeight]);
-
-
-    var label = d3.select('#labels');
-
-    // Reset the SVG with th pat labels
+    var label = d3.select('#labelsGroup');
     var svgLabel = label.select('svg');
     if (svgLabel != undefined)
         svgLabel.remove();
 
-    var chart = label.append('svg')
-        .attr('width', w + m[1] + m[3])
-        .attr('height', h + m[0] + m[2])
-        .attr('class', 'chart');
+    // Chart
+    var chart = d3.timeline()
+        .beginning(start)
+        .ending(end)
+        .stack()
+        .showTimeAxisTick()
+        .rotateTicks(30)
+        .tickFormat(
+        {format: d3.time.format("%I:%M %p"),
+            tickTime: d3.time.minutes,
+            tickInterval: 1,
+            tickSize: 20})
+        .mouseover(function (d, i, datum) {
+            div.transition()
+                .duration(100)
+                .style('opacity', 0.9);
+            div.html(datum['label'] + '<br>' + datum['times'][0]['name'])
+                .style('left', (d3.event.pageX) + 'px')
+                .style('top', (d3.event.pageY - 28) + 'px');
 
-    var mini = chart.append('g')
-        .attr('transform', 'translate(' + m[3] + ',' + (mainHeight + m[0]) + ')')
-        .attr('width', w)
-        .attr('height', miniHeight)
-        .attr('class', 'mini');
+            console.log(datum)
 
-    /**
-     * Draw the lines
-     */
-    mini.append('g').selectAll('.laneLines')
-        .data(lanes)
-        .enter().append('line')
-        .attr('x1', m[1])
-        .attr('y1', function(d, i) {return y(d.id);})
-        .attr('x2', w)
-        .attr('y2', function(d, i) {return y(d.id);})
-        .attr('stroke', 'lightgray');
+        })
+        .mouseout(function (d, i, datum) {
+            div.transition()
+                .duration(500)
+                .style('opacity', 0);
+        })
+        .margin({left:70, right:30, top:0, bottom:0});
 
-    /**
-     * Draw the label
-     */
-    mini.append('g').selectAll('.laneText')
-        .data(lanes)
-        .enter().append('text')
-        .text(function(d) {return d.label;})
-        .attr('x', -m[1])
-        .attr('y', function(d, i) {return y(i + .5);})
-        .attr('dy', '.5ex')
-        .attr('text-anchor', 'end')
-        .attr('class', 'laneText');
+    // Draw it
+    var svg = label.append("svg").attr("width", 1200).datum(data).call(chart);
 
-
-    /**
-     * Draw the label foreach lane.
-     */
-    mini.append('g').selectAll('miniItems')
-        .data(items)
-        .enter().append('rect')
-        .attr('class', function(d) {return 'miniItem' + d.lane;})
-        .attr('x', function(d) {return x(d.start);})
-        .attr('y', function(d) {return y(d.lanePos + .5) - 5;})
-        .attr('width', function(d) {return (x(d.end) - x(d.start));})
-        .attr('height', 10)
-        .style('fill', function(d){return d['color'];});
-
-    /**
-     * Draw the label name in the item.
-     *//*
-    mini.append('g').selectAll('.miniLabels')
-        .data(items)
-        .enter().append('text')
-        .text(function(d) {return d.label;})
-        .attr('x', function(d) {return x(d.start);})
-        .attr('y', function(d) {return y(d.lanePos + .5);})
-        .attr('dy', '.5ex');
-    */
 }
 
+function setUpTimelineIndividuals(data, start, end){
 
+    var div = d3.select('#tooltipLabel').append('div').attr('class', 'tooltipLabel').style('opacity', 0);
+
+    var label = d3.select('#labelsIndividuals');
+    var svgLabel = label.select('svg');
+    if (svgLabel != undefined)
+        svgLabel.remove();
+
+    // Chart
+    var chart = d3.timeline()
+        .beginning(start)
+        .ending(end)
+        .stack()
+        .showTimeAxisTick()
+        .rotateTicks(30)
+        .tickFormat(
+        {format: d3.time.format("%I:%M %p"),
+            tickTime: d3.time.minutes,
+            tickInterval: 1,
+            tickSize: 20})
+        .mouseover(function (d, i, datum) {
+            div.transition()
+                .duration(100)
+                .style('opacity', 0.9);
+            div.html(datum['label'] + '<br>' + datum['times'][0]['name'])
+                .style('left', (d3.event.pageX) + 'px')
+                .style('top', (d3.event.pageY - 28) + 'px');
+
+        })
+        .mouseout(function (d, i, datum) {
+            div.transition()
+                .duration(500)
+                .style('opacity', 0);
+        })
+        .click(function (d, i, datum) {
+
+            console.log(d)
+            console.log(i)
+            console.log(d3.event.pageX)
+            console.log(d3.event.pageY)
+
+        })
+        .margin({left:70, right:30, top:0, bottom:0});
+
+    // Draw it
+    var svg = label.append("svg").attr("width", 1200).datum(data).call(chart);
+
+    var tStart = moment(start).toDate();
+    var tEnd = moment(end).toDate();
+    /*
+    var x = d3.time.scale().domain([tStart, tEnd]).range([0, 1200]);
+
+    brushNew = d3.svg.brush().x(x).extent([tStart, tEnd]).on('brushend', brushendedNew);
+    var gBrushNew = svg.append('g').attr('class', 'brush').call(brushNew).call(brushNew.event);
+
+    gBrushNew.selectAll('rect').attr('height', 100);
+    */
+}
 /*************************************************
  *              UTILITY FUNCTIONS
  *************************************************/
 
-/**
- * Function used to check if a group is already inserted in the dictionary.
- */
-function groupAlreadyExist(dictionary, idOne, idTwo){
+function brushendedNew() {
+    if (!d3.event.sourceEvent) return; // only transition after input
+    var extent0 = brushNew.extent(),
+        extent1 = extent0.map(d3.time.day.round);
 
-    var key = idOne + '' + idTwo;
-    if(key in dictionary)
-        return true;
+    // if empty when rounded, use floor & ceil instead
+    if (extent1[0] >= extent1[1]) {
+        extent1[0] = d3.time.day.floor(extent0[0]);
+        extent1[1] = d3.time.day.ceil(extent0[1]);
+    }
 
-    key = idTwo + '' + idOne;
-    if(key in dictionary)
-        return true;
-
-    return false;
+    d3.select(this).transition()
+        .call(brushNew.extent(extent1))
+        .call(brushNew.event);
 }
