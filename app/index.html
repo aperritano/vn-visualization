@@ -9,16 +9,31 @@
 
     <link rel="stylesheet" href="tooltip/css/d3-bootstrap-plugins.min.css" type="text/css" charset="utf-8" media="all"/>
     <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/dc.min.css" />
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+          rel="stylesheet">
+
+    <!--<link rel="stylesheet" href="../bower_components/tether-drop/dist/css/drop-theme-arrows.css" type="text/css" charset="utf-8" media="all"/>-->
+
 </head>
 <body>
 <span id="browser-sync-binding"></span>
+<div id="control-panel" style="display: none">
+    <h4 align="center">Time Range</h4>
+    <span id="start-time">Start:t1</span><br>
+    <span id="end-time">End:&nbsp&nbsp&nbsp&nbsp</span>
+    <br>
+    <hr>
+    <div class="button-container">
+        <div id="play" class="play-button"><i class="material-icons">play_arrow</i></div>
+        <div id="time" class="play-button"><i class="material-icons">hourglass_empty</i></div>
+    </div>
+</div>
 <div id="tooltip"></div>
-<input name="updateButton"
-       type="button"
-       value="play"
-       onclick="playSelection()" />
 <div id="map"></div>
 <div id="timeline2"></div>
+
 
 <!--<input id="sessionName" type="text" size="5"/><br>-->
 <!--Label<input type=file id="label" /><button id=uploadLabel>Upload</button>-->
@@ -50,12 +65,16 @@
 <script src="../bower_components/underscore/underscore-min.js"></script>
 
 <!--<script src="../bower_components/dcjs/dc.min.js"></script>-->
-<script src="dcjs/dc.js"></script>
+<script src="scripts/dc.min.js"></script>
 <script src="../bower_components/reductio/reductio.min.js"></script>
 
 <script src="../bower_components/leaflet/dist/leaflet.js"></script>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<!--<script src="../bower_components/tether-drop/dist/js/drop.min.js"></script>-->
+<!--<script src="../bower_components/tether/dist/js/tether.min.js"></script>-->
+
 
 
 <!--our scripts-->
