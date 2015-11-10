@@ -29,8 +29,7 @@
     "dcjs": "~1.7.5",
     "reductio": "~0.5.0",
     "underscore": "~1.8.3",
-    "tether-drop": "~1.4.0"
+    "tether-drop": "~1.4.0",
+    "d3-timeline": "~0.0.5"
   }
-  
 }
-

@@ -65,39 +65,6 @@ body {
     stroke-width: 1px;
 }
 
-.population-background {
-    fill: #ffffff;
-    fill-opacity: 0.1;
-}
-path.line_population {
-    fill: none;
-    stroke-width: 1px;
-    stroke: #E040FB;
-    shape-rendering: auto;
-    /*shape-rendering: crispEdges;*/
-}
-
-path.area_population {
-    fill: #E040FB;
-    fill-opacity: 0.3;
-    shape-rendering: auto;
-
-}
-
-path.line_network {
-    fill: none;
-    stroke-width: 1px;
-    stroke: #7d7d7d;
-    shape-rendering: auto;
-    /*shape-rendering: crispEdges;*/
-}
-
-path.area_network {
-    fill: #7d7d7d;
-    fill-opacity: 0.3;
-    shape-rendering: auto;
-
-}
 
 path.line_label {
     fill: none;
@@ -126,32 +93,32 @@ path.lineConnect {
     stroke-width: 1;
 }
 
-div.tooltip {
-    position: absolute;
-    text-align: center;
-    width: 100px;
-    height: 30px;
-    padding: 2px;
-    font-size: 12px;
-    font-family: "Roboto";
-    background: lightsteelblue;
-    border: 0px;
-    border-radius: 8px;
-    pointer-events: none;
-}
+/*div.tooltip {*/
+    /*position: absolute;*/
+    /*text-align: center;*/
+    /*width: 100px;*/
+    /*height: 30px;*/
+    /*padding: 2px;*/
+    /*font-size: 12px;*/
+    /*font-family: "Roboto";*/
+    /*background: lightsteelblue;*/
+    /*border: 0px;*/
+    /*border-radius: 8px;*/
+    /*pointer-events: none;*/
+/*}*/
 
-div.tooltipLabel {
-    position: absolute;
-    text-align: center;
-    width: 100px;
-    height: 30px;
-    padding: 2px;
-    font: 12px sans-serif;
-    background: lightsteelblue;
-    border: 0px;
-    border-radius: 8px;
-    pointer-events: none;
-}
+/*div.tooltipLabel {*/
+    /*position: absolute;*/
+    /*text-align: center;*/
+    /*width: 100px;*/
+    /*height: 30px;*/
+    /*padding: 2px;*/
+    /*font: 12px sans-serif;*/
+    /*background: lightsteelblue;*/
+    /*border: 0px;*/
+    /*border-radius: 8px;*/
+    /*pointer-events: none;*/
+/*}*/
 
 .axis path,
 .axis line {
@@ -160,20 +127,38 @@ div.tooltipLabel {
     shape-rendering: crispEdges;
 }
 .axis text {
-    font-family: sans-serif;
+    font-family: "Roboto";
+    font-size: 10px;
+    fill: #000;
+
+}
+/*text style of the label*/
+.timeline-label {
+    fill: #000000;
+    font-family: "Roboto";
     font-size: 10px;
 }
-.timeline-label {
-    font-family: sans-serif;
-    font-size: 12px;
+
+.spacer {
+    position: relative;
+    float:top;
+    background-color: gray;
+
 }
-#timeline2 .axis {
-    transform: translate(0px,40px);
-    -ms-transform: translate(0px,40px); /* IE 9 */
-    -webkit-transform: translate(0px,40px); /* Safari and Chrome */
-    -o-transform: translate(0px,40px); /* Opera */
-    -moz-transform: translate(0px,40px); /* Firefox */
-}
+/*.group-labels {*/
+    /*position: relative;*/
+    /*background-color: #e8e8e8;*/
+    /*height: 50px;*/
+    /*top: 50px;*/
+    /*left: 20px;*/
+/*}*/
+/*#timeline2 .axis {*/
+    /*transform: translate(0px,40px);*/
+    /*-ms-transform: translate(0px,40px); !* IE 9 *!*/
+    /*-webkit-transform: translate(0px,40px); !* Safari and Chrome *!*/
+    /*-o-transform: translate(0px,40px); !* Opera *!*/
+    /*-moz-transform: translate(0px,40px); !* Firefox *!*/
+/*}*/
 
 .coloredDiv {
     height:20px; width:20px; float:left;
@@ -209,10 +194,10 @@ hr {
 }
 
 /*#play-button {*/
-    /*height: 40px;*/
-    /*width: 40px;*/
-    /*background: #34696f;*/
-    /*border: 2px solid rgba(33, 68, 72, 0.59);*/
+/*height: 40px;*/
+/*width: 40px;*/
+/*background: #34696f;*/
+/*border: 2px solid rgba(33, 68, 72, 0.59);*/
 /*}*/
 
 div.button-container {
@@ -251,9 +236,9 @@ div.blocks {
 }
 
 /*.play-button:active {*/
-    /*display: inline-block;*/
-    /*margin: 5px;*/
-    /*height: 24px;*/
-    /*width: 24px;*/
-    /*border: 1px solid grey;*/
+/*display: inline-block;*/
+/*margin: 5px;*/
+/*height: 24px;*/
+/*width: 24px;*/
+/*border: 1px solid grey;*/
 /*}*/

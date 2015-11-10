@@ -1,19 +1,9 @@
-/*global L, Firebase, d3, moment, topojson*/
+/*global L, Firebase, d3, moment, dc, _, crossfilter, async, topojson*/
 
-//var tooltip;
-//var svg;
-//var colors;
-//var projection;
-//var path;
-
-var debug = true;
 
 var mapContainer;
-//var zoom;
 
-var brush;
 var gpsDataset;
-var currentTimeRange = [];
 
 //dimensions
 var wHeight = 'innerHeight' in window ? window.innerHeight : document.documentElement.offsetHeight;
@@ -30,34 +20,33 @@ var map;
 var timestampsDB = new Firebase('https://baboons.firebaseio.com/timestamps');
 var labelsDB = new Firebase('https://baboons.firebaseio.com/labels/0/labels');
 var dictionaryDB = new Firebase('https://baboons.firebaseio.com/labels/0/dictionary');
-var xFilter;
-var dateDimension;
-var populationCountsFilter;
-var networkFilter;
 
 var dateFormat = '%Y-%m-%d %H:%M:%S';
 var parseDate =
     d3.time.format(dateFormat).parse;
 
-var num = 1000;
+var allSubjects;
+var xFilter;
+var dateDimension;
+var brushFilteredDates;
 
 var labels;
 var dictionary;
 var timeOverlay;
 var timeOverlayProps = {};
-var brushFilteredDates;
 
-var m = '800';
+
+var m = '10000';
 
 dictionaryDB.on('value', function (snapshot) {
 
     if (snapshot.val() !== undefined) {
         //remove the last object
+        console.log('VAL', snapshot.val());
         updateDictionaryFromDB(snapshot.val());
         labelsDB.orderByKey().startAt('0').endAt(m).on('value', function (snapshot) {
 
             if (snapshot.val() !== undefined) {
-
                 //remove the last object
                 updateLabelsFromDB(snapshot.val());
             }
@@ -99,11 +88,19 @@ initMapLeaflet();
 /*** functions ******/
 
 function updateDictionaryFromDB(d) {
+    //console.log('D',d);
+    for(var i = 0; i < d.length; i++) {
+        if(!_.isUndefined(d[i])) {
+            d[i].color = nodeColorMap(i);
+        }
+    }
     dictionary = d;
+    console.log('dictionary',dictionary);
 }
 
 function updateLabelsFromDB(l) {
     labels = l;
+    console.log('LABELS',labels);
 }
 
 
@@ -115,6 +112,8 @@ function updateLabelsFromDB(l) {
 function updateDataFromDB(items) {
 
     var i = 0;
+
+    console.log('ITEMS');
 
     //there is no timeline available create one
     if (gpsDataset === undefined || gpsDataset[0] === undefined) {
@@ -147,12 +146,10 @@ function updateDataFromDB(items) {
                             return false;
 
                         });
-
                         //if we found a dictionary entry
                         if (foundDictionary[0] !== undefined) {
                             d.labels = foundDictionary[0];
                         }
-
                     } else {
                         d.labels = -1;
                     }
@@ -308,20 +305,27 @@ function drawDataPointOverlay(dataPoint) {
             return d.lat;
         })
         .attr('r', 10)
-        .style('stroke-width', function (d) {
+        .style('stroke-width', function () {
             if (dataPoint.labels === -1) {
                 return 1;
             } else {
                 return 3;
             }
         })
-        .style('stroke', function (d) {
+        .style('stroke', function () {
             if (dataPoint.labels === -1) {
                 return '#03A9F4';
             } else {
                 return '#E040FB';
             }
         })
+        //.style(' stroke-opacity', function(d) {
+        //    if(d.labels === -1) {
+        //        return '#03A9F4';
+        //    } else {
+        //        return '#E040FB';
+        //    }
+        //})
         .style('fill', function (d) {
             return nodeColorMap(d.id);
         })
@@ -338,10 +342,7 @@ function drawDataPointOverlay(dataPoint) {
             div.transition()
                 .duration(500)
                 .style('opacity', 0);
-        })
-        .transition()
-        .delay(3000)
-        .duration(3000);
+        });
 
     var lineContainer;
 
@@ -349,10 +350,10 @@ function drawDataPointOverlay(dataPoint) {
     //NET [{"p1":{"lon":36.922608,"lat":0.3513041},"p2":{"lon":36.922675,"lat":0.3513414}}]
 
     //lon-lat
-    var data = [[36.922608, 0.3513041], [36.922675, 0.3513414]];
+    //var data = [[36.922608, 0.3513041], [36.922675, 0.3513414]];
 
 
-    var lineData = [{x: 36.922608, y: 0.3513041}, {x: 36.922675, y: 0.3513414}];
+    //var lineData = [{x: 36.922608, y: 0.3513041}, {x: 36.922675, y: 0.3513414}];
 
     var toLine = d3.svg.line()
         .interpolate('linear')
@@ -367,7 +368,7 @@ function drawDataPointOverlay(dataPoint) {
 
         mapContainer.selectAll('path').remove();
         links.forEach(function (link) {
-            lineContainer = mapContainer.append("path") // <-E
+            lineContainer = mapContainer.append('path') // <-E
                 .attr('d', toLine(link))
                 .attr('stroke', 'blue')
                 .attr('stroke-width', 2)
@@ -397,8 +398,8 @@ function drawDataPointOverlay(dataPoint) {
     }
 
     function applyLatLngToLayer(d) {
-        var y = d.geometry.coordinates[1]
-        var x = d.geometry.coordinates[0]
+        var y = d.geometry.coordinates[1];
+        var x = d.geometry.coordinates[0];
         return map.latLngToLayerPoint(new L.LatLng(y, x));
     }
 
@@ -505,12 +506,11 @@ function initMapLeaflet() {
      * Overlays
      */
 
-
-
+    var timeOverlayDIV;
 
     timeOverlay = L.control({position: 'topright'});
 
-    timeOverlay.onAdd = function (map) {
+    timeOverlay.onAdd = function() {
         timeOverlayDIV = L.DomUtil.create('div', 'timeOverlay');
 
         timeOverlay.update();
@@ -540,7 +540,7 @@ function initMapLeaflet() {
             timeOverlayDIV.appendChild(div);
         }
 
-    }
+    };
 
     timeOverlay.addTo(map);
 
@@ -630,6 +630,139 @@ function handleCountryOverlayControl() {
  3 */
 function createMainTimeline() {
 
+    var margin = {top: 10, left: 15, bottom: 20, right: 20};
+        //width = wWidth - margin.left - margin.right,
+    var height = 100 - margin.top - margin.bottom;
+
+
+    var t2 = dateDimension.top(1)[0];
+    var t1 = dateDimension.bottom(1)[0];
+
+    var tStart = moment(t1.timestamp).toDate();
+    var tEnd = moment(t2.timestamp).toDate();
+    var t5 = moment(t1.timestamp).add(5, 'm').toDate();
+
+    //update the props
+
+    timeOverlayProps.startTime = moment(t1.timestamp);
+    timeOverlayProps.endTime = moment(t1.timestamp).add(5, 'm');
+    timeOverlay.update();
+
+
+    var byDate = xFilter.dimension(function (d) {
+        return d.date;
+    });
+
+
+    var countGroup = byDate.group().reduceSum(function (d) {
+        return d.count;
+    });
+
+    var labelGroup = byDate.group().reduceSum(function (d) {
+        if (d.labels === -1) {
+            return 0;
+        } else {
+            return 3;
+        }
+    });
+
+    var netsGroup = byDate.group().reduceSum(function (d) {
+        if (d.edges === undefined) {
+            return 0;
+        } else {
+            return d.edges.length;
+        }
+    });
+
+    //var countMax = countGroup.top(1)[0].value;
+    //var netsMax = netsGroup.top(1)[0].value;
+    //var labelMax = labelGroup.top(1)[0].value;
+    //
+    //Array.prototype.max = function () {
+    //    return Math.max.apply(null, this);
+    //};
+
+    //var yMax = [countMax, netsMax, labelMax].max();
+
+    var combined = dc.compositeChart('#main-timeline');
+
+    var stackCharts = dc.lineChart(combined)
+        .ordinalColors([nodeColorMap(0), nodeColorMap(11), nodeColorMap(12)])
+        .renderArea(true)
+        .group(labelGroup)
+        .stack(countGroup)
+        .stack(netsGroup)
+        .elasticX(true)
+        .elasticY(true)
+        .useRightYAxis(true)
+        .on('filtered', brushing);
+
+    combined
+        .width(wWidth)
+        .height(height)
+        .margins(margin)
+        .dimension(byDate)
+        .brushOn(true)
+        .x(d3.time.scale().domain([tStart, tEnd]));
+
+    combined.compose([stackCharts]).rightYAxis().tickValues([stackCharts.yAxisMax()]);
+
+    combined.filter(dc.filters.RangedFilter(tStart, t5));
+
+    combined.on('filtered', brushing);
+
+    dc.renderAll();
+
+    updateGroupLabelTimeline(tStart, t5);
+
+
+    function brushing(chart, filter) {
+        console.log('we are brushing', _.isNull(filter), _.isNull(chart));
+
+        if (_.isNull(filter)) {
+        } else {
+
+            var t1 = filter[0];
+            var t2 = filter[1];
+            brushFilteredDates = dateDimension.filterRange([t1, t2]);
+
+            var point = brushFilteredDates.bottom(1)[0];
+
+            timeOverlayProps.startTime = moment(t1);
+            timeOverlayProps.endTime = moment(t2);
+            timeOverlay.update();
+
+            drawDataPointOverlay(point);
+
+
+            updateGroupLabelTimeline(t1, t2);
+        }
+
+
+    }
+}
+
+function updateGroupLabelTimeline(tStart, tEnd) {
+
+    //get data for timeline
+
+    var defaultRangeFilter = dateDimension.filterRange([tStart, tEnd]);
+    var allDefaultRangeDates = defaultRangeFilter.bottom(Infinity);
+
+    var labelsTuple = getLabelsInRange(allDefaultRangeDates);
+
+    //do the group timeline
+
+
+    //tooltiop
+    //var div = d3.select('#tooltipLabel').append('div').attr('class', 'tooltipLabel').style('opacity', 0);
+
+    var sDate = moment(tStart).valueOf();
+    var eDate = moment(tEnd).valueOf();
+
+    var groupLabels = labelsTuple[0];
+    //var individualLabels = labelsTuple[1];
+
     var customTimeFormat = d3.time.format.multi([
         ['.%L', function (d) {
             return d.getMilliseconds();
@@ -657,129 +790,57 @@ function createMainTimeline() {
         }]
     ]);
 
-    var margin = {top: 10, left: 15, bottom: 20, right: 20},
-        width = wWidth - margin.left - margin.right,
-        height = 100 - margin.top - margin.bottom;
-
-
-    var t2 = dateDimension.top(1)[0];
-    var t1 = dateDimension.bottom(1)[0];
-
-    var tStart = moment(t1.timestamp).toDate();
-    var tEnd = moment(t2.timestamp).toDate();
-    var t5 = moment(t1.timestamp).add(5, 'm').toDate();
-
-    //update the props
-
-    timeOverlayProps.startTime = moment(t1.timestamp);
-    timeOverlayProps.endTime = moment(t1.timestamp).add(5, 'm');
-    timeOverlay.update();
-
-    var byDate = xFilter.dimension(function (d) {
-        return d.date;
-    });
-
-
-    var countGroup = byDate.group().reduceSum(function (d) {
-        return d.count;
-    });
-
-    var labelGroup = byDate.group().reduceSum(function (d) {
-        if (d.labels === -1) {
-            return 0;
-        } else {
-            return 3;
-        }
-        ;
-    });
-
-    var netsGroup = byDate.group().reduceSum(function (d) {
-        if (d.edges === undefined) {
-            return 0;
-        } else {
-            return d.edges.length;
-        }
-    });
-
-    var countMax = countGroup.top(1)[0].value;
-    var netsMax = netsGroup.top(1)[0].value;
-    var labelMax = labelGroup.top(1)[0].value;
-
-    Array.prototype.max = function () {
-        return Math.max.apply(null, this);
-    };
-
-    var yMax = [countMax, netsMax, labelMax].max();
-
-    var combined = dc.compositeChart("#timeline2");
-
-    var stackCharts = dc.lineChart(combined)
-        .ordinalColors(['#56B2EA', '#E064CD', '#F8B700', '#78CC00', '#7B71C5'])
-
-        .renderArea(true)
-        .group(labelGroup)
-        .stack(countGroup)
-        .stack(netsGroup)
-        .elasticX(true)
-        .elasticY(true)
-        .useRightYAxis(true)
-        .on('filtered', brushing);
-
-    combined
-        .width(wWidth)
-        .height(height)
-        .margins(margin)
-        .dimension(byDate)
-        .brushOn(true)
-        .x(d3.time.scale().domain([tStart, tEnd]))
-
-    combined.compose([stackCharts]).rightYAxis().tickValues([stackCharts.yAxisMax()]);
-
-    combined.filter(dc.filters.RangedFilter(tStart, t5));
-
-    //combined.on('filtered', brushing);
-
-
-    dc.renderAll();
-
-    function brushing(chart, filter) {
-        //console.log('we are brushing', _.isNull(filter), _.isNull(chart));
-
-        if (_.isNull(filter)) {
-        } else {
-
-            var t1 = filter[0];
-            var t2 = filter[1];
-
-            brushFilteredDates = dateDimension.filterRange([t1, t2]);
-            var point = brushFilteredDates.bottom(1)[0];
-            timeOverlayProps.startTime = moment(t1);
-            timeOverlayProps.endTime = moment(t2);
-            timeOverlay.update();
-
-            drawDataPointOverlay(point);
-
-            var b = brushFilteredDates.bottom(Infinity);
-            drawLabelTimeline(b)
-        }
-
-
+    var svgLabel = d3.select('#grouplabels').select('svg');
+    if (svgLabel !== undefined) {
+        svgLabel.remove();
     }
+
+    var groupLabelMargin = {top: 10, left: 10, bottom: 0, right: 15};
+    var width = wWidth - margin.left - margin.right;
+
+
+    var l =  dictionary.filter(function(d) {
+       return d.labels;
+    });
+
+    // Chart
+    var chart = d3.timeline()
+        .beginning(sDate)
+         .ending(eDate)
+        .stack()
+         .tickFormat(
+            {format: customTimeFormat,
+            tickTime: d3.time.minutes,
+            tickInterval: 1,
+            tickSize: 20})
+        .margin({top: 10, left: 10, bottom: 0, right: 15});
+
+    //d3.selectAll('.timeline-label').attr('transform', 'translate(2px,0px)');
+
+    d3.select('#grouplabels').append('svg')
+        .attr('width', width+groupLabelMargin.right)
+        .style('margin-left',5)
+        .style('margin-right',0)
+        .datum(groupLabels).call(chart);
+
 }
 
 
 
 function playSelection() {
     //find the first one with points
-    var found = false;
-
     var ranged = brushFilteredDates.bottom(Infinity);
 
     for (var i = 0; i < ranged.length; i++) {
         var d = ranged[i];
         if (d.items !== undefined) {
+            //setInterval(function () {
+            //console.log('playing...', d.items);
             drawDataPointOverlay(d);
-            console.log('playing...');
+
+            //}, 250);
+
+
         }
 
     }
@@ -790,11 +851,16 @@ function playSelection() {
  * lookup for node colors
  */
 function nodeColorMap(index) {
-    var colors = ['Red', 'Purple', 'Deep Purple', 'Ingio', 'Light Blue', 'Cyan', 'Green', 'Teal', 'Lime', 'Yellow', 'Orange', 'Deep Orange', 'Brown', 'Grey', 'Blue Grey'];
+   // var colors = ['Red', 'Purple', 'Deep Purple', 'Ingio', 'Light Blue', 'Cyan', 'Green', 'Teal', 'Lime', 'Yellow', 'Orange', 'Deep Orange', 'Brown', 'Grey', 'Blue Grey'];
 
-    var c = colors[index];
+    var brewer = ['#1f78b4','#a6cee3','#ccebc5','#33a02c','#fb8072','#fb9a99','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928','#F8B700'];
+    //var c = colors[index];
 
-    return palette.get('Purple', 'A200');
+    if( index > brewer.length ) {
+        index = 0;
+    }
+
+    return brewer[index];
 
 }
 
