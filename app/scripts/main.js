@@ -43,7 +43,7 @@ var currentDataPoint;
 
 
 
-var m = '500';
+var m = '10000';
 
 dictionaryDB.on('value', function (snapshot) {
 
@@ -751,10 +751,6 @@ function updateLabelTimeline(tStart, tEnd) {
 
     //do the group timeline
 
-
-    //tooltiop
-    //var div = d3.select('#tooltipLabel').append('div').attr('class', 'tooltipLabel').style('opacity', 0);
-
     var sDate = moment(tStart).valueOf();
     var eDate = moment(tEnd).valueOf();
     var minutes = (eDate - sDate)/1000/60;
@@ -809,6 +805,7 @@ function updateLabelTimeline(tStart, tEnd) {
 
     var groupLabelMargin = {top: 10, left: 10, bottom: 0, right: 15};
     var width = wWidth - margin.left - margin.right;
+    var tooltip = d3.select('#tooltipLabel').append('div').attr('class', 'tooltipLabel').style('opacity', 0);
 
     // Chart
     var chart = d3.timeline()
@@ -820,7 +817,28 @@ function updateLabelTimeline(tStart, tEnd) {
             tickTime: d3.time.minutes,
             tickInterval: minutesTick,
             tickSize: 20})
-        .margin({top: 10, left: 10, bottom: 0, right: 15});
+        .margin({top: 10, left: 10, bottom: 0, right: 15})
+        .mouseover(function (d, i, datum) {
+
+            if(minutes < LIMIT_LABEL)
+                return;
+
+            tooltip.transition()
+                .duration(100)
+                .style('opacity', 0.9);
+            tooltip.html(datum['times'][i]['name'])
+                .style('left', (d3.event.pageX) + 'px')
+                .style('top', (d3.event.pageY - 28) + 'px');
+        })
+        .mouseout(function (d, i, datum) {
+
+            if(minutes < LIMIT_LABEL)
+                return;
+
+            tooltip.transition()
+                .duration(500)
+                .style('opacity', 0);
+        });
 
     //d3.selectAll('.timeline-label').attr('transform', 'translate(2px,0px)');
 
