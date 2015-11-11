@@ -59,11 +59,11 @@ body {
 
 /*node css*/
 
-.node {
-    /*shape-rendering: crispEdges;*/
-    stroke: #000;
-    stroke-width: 1px;
-}
+/*.node {*/
+    /*!*shape-rendering: crispEdges;*!*/
+    /*stroke: #000;*/
+    /*stroke-width: 1px;*/
+/*}*/
 
 
 path.line_label {

@@ -36,25 +36,27 @@ var timeOverlay;
 var timeOverlayProps = {};
 
 
-var m = '10000';
+var m = '500';
 
 dictionaryDB.on('value', function (snapshot) {
 
     if (snapshot.val() !== undefined) {
         //remove the last object
-        console.log('VAL', snapshot.val());
+        console.log('labels fetched:', new Date());
         updateDictionaryFromDB(snapshot.val());
         labelsDB.orderByKey().startAt('0').endAt(m).on('value', function (snapshot) {
 
             if (snapshot.val() !== undefined) {
+                console.log('labels fetched:',new Date());
                 //remove the last object
                 updateLabelsFromDB(snapshot.val());
             }
 
             timestampsDB.orderByKey().startAt('0').endAt(m).on('value', function (snapshot) {
-
+                console.log('Timestamp fetched:', new Date());
                 if (snapshot.val() !== undefined) {
                     //remove the last object
+
                     updateDataFromDB(snapshot.val());
 
                 }
@@ -113,8 +115,6 @@ function updateDataFromDB(items) {
 
     var i = 0;
 
-    console.log('ITEMS');
-
     //there is no timeline available create one
     if (gpsDataset === undefined || gpsDataset[0] === undefined) {
         gpsDataset = items;
@@ -151,7 +151,7 @@ function updateDataFromDB(items) {
                             d.labels = foundDictionary[0];
                         }
                     } else {
-                        d.labels = -1;
+                        d.labels = {};
                     }
                     d.date = parseDate(d.timestamp);
                 }
@@ -235,8 +235,8 @@ function drawDataPointOverlay(dataPoint) {
     }
 
     var links = [];
-    if (dataPoint.nets !== undefined) {
-        dataPoint.nets.forEach(function (net) {
+    if (dataPoint.edges !== undefined) {
+        dataPoint.edges.forEach(function (net) {
 
             var s = dataPoint.items.filter(function (d) {
                 return d.id === net[0];
@@ -248,17 +248,18 @@ function drawDataPointOverlay(dataPoint) {
             });
 
             var p1 = createLineJSON(s[0]);
-            //s.LatLng = new L.LatLng(s[0].lat, s[0].lon);
-            //t.LatLng = new L.LatLng(t[0].lat, t[0].lon);
 
             //links.push(p1);
             var p2 = createLineJSON(t[0]);
-            //s.LatLng = new L.LatLng(s[0].lat, s[0].lon);
-            //t.LatLng = new L.LatLng(t[0].lat, t[0].lon);
-
 
             var link = [{x: p1.lon, y: p1.lat}, {x: p2.lon, y: p2.lat}];
             links.push(link);
+
+            function createLineJSON(source) {
+                var geoLine = {lon: source.lon, lat: source.lat};
+
+                return geoLine;
+            }
 
         });
     }
@@ -266,20 +267,24 @@ function drawDataPointOverlay(dataPoint) {
 
     var targets = dataPoint.items;
 
-
-    var i = 0;
-    targets.forEach(function (d) {
-
+    targets.forEach(function (d, i) {
+        d.labels = dataPoint.labels;
         d.LatLng = new L.LatLng(d.lat, d.lon);
-
         if (i === 0) {
-            map.setZoom(19, {animate: true});
-            map.panTo(d.LatLng, {animate: true});
+            //map.setZoom(19, {animate: true});
+            //map.panTo(d.LatLng, {animate: true});
         }
-
-        i++;
-
     });
+
+
+    var toLine = d3.svg.line()
+        .interpolate('linear')
+        .x(function (d) {
+            return applyLatLngToLayer(d).x;
+        })
+        .y(function (d) {
+            return applyLatLngToLayer(d).y;
+        });
 
 
     // Define the div for the tooltip
@@ -287,16 +292,14 @@ function drawDataPointOverlay(dataPoint) {
         .attr('class', 'tooltip')
         .style('opacity', 0);
 
-    var container = mapContainer.selectAll('circle').data(targets);
+    mapContainer.selectAll('circle').remove();
 
-    container.exit().remove();
+    var circles = mapContainer.selectAll('circle').data(targets);
 
-    var circles = container.enter();
-
-    circles.append('circle')
+    circles.enter().append('circle')
         .attr('class', 'node')
-        .attr('id', function (d) {
-            return 'circle' + d.id;
+        .attr('id', function(d) {
+            return d.id;
         })
         .attr('lon', function (d) {
             return d.lon;
@@ -304,32 +307,24 @@ function drawDataPointOverlay(dataPoint) {
         .attr('lat', function (d) {
             return d.lat;
         })
-        .attr('r', 10)
-        .style('stroke-width', function () {
-            if (dataPoint.labels === -1) {
-                return 1;
+        .attr('r', 6)
+        .style('stroke-width', function (d) {
+            if(_.isEmpty(d.labels)) {
+                return 2;
             } else {
-                return 3;
+                return 4;
             }
         })
-        .style('stroke', function () {
-            if (dataPoint.labels === -1) {
-                return '#03A9F4';
+        .style('stroke', function (d) {
+            if(_.isEmpty(d.labels)) {
+                return 'white';
             } else {
-                return '#E040FB';
+                return d.labels.color;
             }
+
         })
-        //.style(' stroke-opacity', function(d) {
-        //    if(d.labels === -1) {
-        //        return '#03A9F4';
-        //    } else {
-        //        return '#E040FB';
-        //    }
-        //})
-        .style('fill', function (d) {
-            return nodeColorMap(d.id);
-        })
-        .style('fill-opacity', 0.5)
+        .style('fill', '#1f78b4')
+        .style('fill-opacity', 1.0)
         .on('mouseover', function (d) {
             div.transition()
                 .duration(100)
@@ -344,39 +339,6 @@ function drawDataPointOverlay(dataPoint) {
                 .style('opacity', 0);
         });
 
-    var lineContainer;
-
-
-    //NET [{"p1":{"lon":36.922608,"lat":0.3513041},"p2":{"lon":36.922675,"lat":0.3513414}}]
-
-    //lon-lat
-    //var data = [[36.922608, 0.3513041], [36.922675, 0.3513414]];
-
-
-    //var lineData = [{x: 36.922608, y: 0.3513041}, {x: 36.922675, y: 0.3513414}];
-
-    var toLine = d3.svg.line()
-        .interpolate('linear')
-        .x(function (d) {
-            return applyLatLngToLayer3(d).x;
-        })
-        .y(function (d) {
-            return applyLatLngToLayer3(d).y;
-        });
-
-    if (links[0] !== undefined) {
-
-        mapContainer.selectAll('path').remove();
-        links.forEach(function (link) {
-            lineContainer = mapContainer.append('path') // <-E
-                .attr('d', toLine(link))
-                .attr('stroke', 'blue')
-                .attr('stroke-width', 2)
-                .attr('fill', 'none');
-
-            console.log('NET', JSON.stringify(link));
-        });
-    }
 
     //remove old ones
     map.on('viewreset', update);
@@ -384,58 +346,37 @@ function drawDataPointOverlay(dataPoint) {
 
     update();
 
-    function applyLatLngToLayer3(d) {
+    function applyLatLngToLayer(d) {
         var x = d.x;
         var y = d.y;
         return map.latLngToLayerPoint(new L.LatLng(y, x));
     }
 
 
-    function applyLatLngToLayer2(d) {
-        var y = d[1];
-        var x = d[0];
-        return map.latLngToLayerPoint(new L.LatLng(y, x));
-    }
-
-    function applyLatLngToLayer(d) {
-        var y = d.geometry.coordinates[1];
-        var x = d.geometry.coordinates[0];
-        return map.latLngToLayerPoint(new L.LatLng(y, x));
-    }
-
-    function createLineJSON(source) {
-        var geoLine = {lon: source.lon, lat: source.lat};
-
-        return geoLine;
-    }
-
-
     function update() {
 
+        paths = mapContainer.selectAll('path');
 
 
+        if(!_.isUndefined(paths)) {
+            paths.remove();
+            if (links[0] !== undefined) {
+                //paths.remove();
+                links.forEach(function (link) {
+                    paths = mapContainer.append('path') // <-E
+                        .attr('d', toLine(link))
+                        .attr('stroke', 'blue')
+                        .attr('stroke-width', 2)
+                        .attr('fill', 'none');
+                    //console.log('NET', JSON.stringify(link));
+                });
+            }
 
-        //d3.transition(textContainer)
-        //    .attr('transform',
-        //        function (d) {
-        //            return 'translate(' +
-        //                map.latLngToLayerPoint(d.LatLng).x + ',' +
-        //                map.latLngToLayerPoint(d.LatLng).y + ')';
-        //        }
-        //    );
 
-        // linePath.attr("d", toLine)
+        }
 
-        //d3.transition(lineContainer)
-        //    .attr('transform',
-        //        function (d) {
-        //            return 'translate(' +
-        //                map.latLngToLayerPoint(new L.LatLng(d.y, d.x)).x + ',' +
-        //                map.latLngToLayerPoint(new L.LatLng(d.y, d.x)).y + ')';
-        //        }
-        //    );
 
-        d3.transition(container)
+        d3.transition(circles)
             .attr('transform',
                 function (d) {
                     return 'translate(' +
@@ -445,10 +386,6 @@ function drawDataPointOverlay(dataPoint) {
             );
     }
 
-//     if (lineContainer !== undefined) {
-//         lineContainer.attr("d", toLine);
-
-//     }
 }
 
 
@@ -508,7 +445,7 @@ function initMapLeaflet() {
 
     var timeOverlayDIV;
 
-    timeOverlay = L.control({position: 'topright'});
+    timeOverlay = L.control({position: 'bottomleft'});
 
     timeOverlay.onAdd = function() {
         timeOverlayDIV = L.DomUtil.create('div', 'timeOverlay');
@@ -555,8 +492,6 @@ function initMapLeaflet() {
  * Uses d3 to add counties to the overlay
  */
 function addCountryOverlay() {
-
-
     d3.json('KEN.topojson', function (error, collection) {
 
         //unknown error, check the console
@@ -640,7 +575,7 @@ function createMainTimeline() {
 
     var tStart = moment(t1.timestamp).toDate();
     var tEnd = moment(t2.timestamp).toDate();
-    var t5 = moment(t1.timestamp).add(5, 'm').toDate();
+    var t5 = moment(t1.timestamp).add(2, 'm').toDate();
 
     //update the props
 
@@ -659,7 +594,7 @@ function createMainTimeline() {
     });
 
     var labelGroup = byDate.group().reduceSum(function (d) {
-        if (d.labels === -1) {
+        if (_.isEmpty(d.labels)) {
             return 0;
         } else {
             return 3;
@@ -713,11 +648,11 @@ function createMainTimeline() {
 
     dc.renderAll();
 
-    updateGroupLabelTimeline(tStart, t5);
+    updateLabelTimeline(tStart, t5);
 
 
     function brushing(chart, filter) {
-        console.log('we are brushing', _.isNull(filter), _.isNull(chart));
+       // console.log('we are brushing', _.isNull(filter), _.isNull(chart));
 
         if (_.isNull(filter)) {
         } else {
@@ -735,14 +670,14 @@ function createMainTimeline() {
             drawDataPointOverlay(point);
 
 
-            updateGroupLabelTimeline(t1, t2);
+            updateLabelTimeline(t1, t2);
         }
 
 
     }
 }
 
-function updateGroupLabelTimeline(tStart, tEnd) {
+function updateLabelTimeline(tStart, tEnd) {
 
     //get data for timeline
 
@@ -797,11 +732,6 @@ function updateGroupLabelTimeline(tStart, tEnd) {
 
     var groupLabelMargin = {top: 10, left: 10, bottom: 0, right: 15};
     var width = wWidth - margin.left - margin.right;
-
-
-    var l =  dictionary.filter(function(d) {
-       return d.labels;
-    });
 
     // Chart
     var chart = d3.timeline()
