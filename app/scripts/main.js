@@ -609,16 +609,6 @@ function createMainTimeline() {
         }
     });
 
-    //var countMax = countGroup.top(1)[0].value;
-    //var netsMax = netsGroup.top(1)[0].value;
-    //var labelMax = labelGroup.top(1)[0].value;
-    //
-    //Array.prototype.max = function () {
-    //    return Math.max.apply(null, this);
-    //};
-
-    //var yMax = [countMax, netsMax, labelMax].max();
-
     var combined = dc.compositeChart('#main-timeline');
 
     var stackCharts = dc.lineChart(combined)
