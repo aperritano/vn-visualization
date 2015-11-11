@@ -32,8 +32,14 @@ var brushFilteredDates;
 
 var labels;
 var dictionary;
+
+//overlays for leaflet
 var timeOverlay;
 var timeOverlayProps = {};
+var buttonOverlay;
+
+var currentDataPoint;
+
 
 
 var m = '500';
@@ -242,7 +248,6 @@ function drawDataPointOverlay(dataPoint) {
                 return d.id === net[0];
             });
 
-
             var t = dataPoint.items.filter(function (d) {
                 return d.id === net[1];
             });
@@ -270,11 +275,9 @@ function drawDataPointOverlay(dataPoint) {
     targets.forEach(function (d, i) {
         d.labels = dataPoint.labels;
         d.LatLng = new L.LatLng(d.lat, d.lon);
-        if (i === 0) {
-            //map.setZoom(19, {animate: true});
-            //map.panTo(d.LatLng, {animate: true});
-        }
     });
+
+    currentDataPoint = dataPoint;
 
 
     var toLine = d3.svg.line()
@@ -287,57 +290,17 @@ function drawDataPointOverlay(dataPoint) {
         });
 
 
+
+
+
     // Define the div for the tooltip
     var div = d3.select('#tooltip').append('div')
         .attr('class', 'tooltip')
         .style('opacity', 0);
 
-    mapContainer.selectAll('circle').remove();
 
-    var circles = mapContainer.selectAll('circle').data(targets);
 
-    circles.enter().append('circle')
-        .attr('class', 'node')
-        .attr('id', function(d) {
-            return d.id;
-        })
-        .attr('lon', function (d) {
-            return d.lon;
-        })
-        .attr('lat', function (d) {
-            return d.lat;
-        })
-        .attr('r', 6)
-        .style('stroke-width', function (d) {
-            if(_.isEmpty(d.labels)) {
-                return 2;
-            } else {
-                return 4;
-            }
-        })
-        .style('stroke', function (d) {
-            if(_.isEmpty(d.labels)) {
-                return 'white';
-            } else {
-                return d.labels.color;
-            }
 
-        })
-        .style('fill', '#1f78b4')
-        .style('fill-opacity', 1.0)
-        .on('mouseover', function (d) {
-            div.transition()
-                .duration(100)
-                .style('opacity', 0.9);
-            div.html(d.id + '<br/>' + d3.format('.4g')(d.lat) + ',' + d3.format('.4g')(d.lon))
-                .style('left', (d3.event.pageX) + 'px')
-                .style('top', (d3.event.pageY - 28) + 'px');
-        })
-        .on('mouseout', function (d) {
-            div.transition()
-                .duration(500)
-                .style('opacity', 0);
-        });
 
 
     //remove old ones
@@ -356,24 +319,65 @@ function drawDataPointOverlay(dataPoint) {
     function update() {
 
         paths = mapContainer.selectAll('path');
+        paths.remove();
 
-
-        if(!_.isUndefined(paths)) {
-            paths.remove();
-            if (links[0] !== undefined) {
-                //paths.remove();
-                links.forEach(function (link) {
-                    paths = mapContainer.append('path') // <-E
-                        .attr('d', toLine(link))
-                        .attr('stroke', 'blue')
-                        .attr('stroke-width', 2)
-                        .attr('fill', 'none');
-                    //console.log('NET', JSON.stringify(link));
-                });
-            }
-
-
+        if (links[0] !== undefined) {
+            //paths.remove();
+            links.forEach(function (link) {
+                paths = mapContainer.append('path') // <-E
+                    .attr('d', toLine(link))
+                    .attr('stroke', 'blue')
+                    .attr('stroke-width', 2)
+                    .attr('fill', 'none');
+            });
         }
+
+        mapContainer.selectAll('circle').remove();
+
+        var circles = mapContainer.selectAll('circle').data(targets);
+
+        circles.enter().append('circle')
+            .attr('class', 'node')
+            .attr('id', function(d) {
+                return d.id;
+            })
+            .attr('lon', function (d) {
+                return d.lon;
+            })
+            .attr('lat', function (d) {
+                return d.lat;
+            })
+            .attr('r', 6)
+            .style('stroke-width', function (d) {
+                if(_.isEmpty(d.labels)) {
+                    return 2;
+                } else {
+                    return 4;
+                }
+            })
+            .style('stroke', function (d) {
+                if(_.isEmpty(d.labels)) {
+                    return 'white';
+                } else {
+                    return d.labels.color;
+                }
+
+            })
+            .style('fill', '#1f78b4')
+            .style('fill-opacity', 1.0)
+            .on('mouseover', function (d) {
+                div.transition()
+                    .duration(100)
+                    .style('opacity', 0.9);
+                div.html(d.id + '<br/>' + d3.format('.4g')(d.lat) + ',' + d3.format('.4g')(d.lon))
+                    .style('left', (d3.event.pageX) + 'px')
+                    .style('top', (d3.event.pageY - 28) + 'px');
+            })
+            .on('mouseout', function (d) {
+                div.transition()
+                    .duration(500)
+                    .style('opacity', 0);
+            });
 
 
         d3.transition(circles)
@@ -384,6 +388,10 @@ function drawDataPointOverlay(dataPoint) {
                         map.latLngToLayerPoint(d.LatLng).y + ')';
                 }
             );
+
+
+
+
     }
 
 }
@@ -467,12 +475,11 @@ function initMapLeaflet() {
             var playButton = document.getElementById('play');
             playButton.onclick = function(){
                 playSelection();
-                console.log('play buttonClicked');
             };
-            var timeButton = document.getElementById('time');
-            timeButton.onclick = function(){
-                console.log('time buttonClicked');
-            };
+            //var timeButton = document.getElementById('time');
+            //timeButton.onclick = function(){
+            //    console.log('time buttonClicked');
+            //};
             div.style.display = 'block';
             timeOverlayDIV.appendChild(div);
         }
@@ -481,9 +488,31 @@ function initMapLeaflet() {
 
     timeOverlay.addTo(map);
 
+    var buttonDIV;
 
-    // create the control
-    //document.getElementById('countryOverlayControl').addEventListener('click', handleCountryOverlayControl, false);
+    buttonOverlay = L.control({position: 'topleft'});
+
+    buttonOverlay.onAdd = function() {
+        buttonDIV = L.DomUtil.create('div', 'buttonOverlay');
+
+        buttonOverlay.update();
+        return buttonDIV;
+    };
+
+    buttonOverlay.update = function() {
+
+
+            var div = document.getElementById('zoom-panel');
+            var zoomButton = document.getElementById('zoom-point');
+            zoomButton.onclick = function(){
+                zoomCurrentPoint();
+            };
+            div.style.display = 'block';
+            buttonDIV.appendChild(div);
+
+    };
+
+    buttonOverlay.addTo(map);
 
 }
 
@@ -756,7 +785,15 @@ function updateLabelTimeline(tStart, tEnd) {
 
 }
 
+function zoomCurrentPoint() {
+    console.log('zoomCurrentPoint');
 
+    if(!_.isUndefined(currentDataPoint) && !_.isUndefined(currentDataPoint.items)) {
+        var item = currentDataPoint.items[0];
+        map.setZoom(19, {animate: true});
+        map.panTo(item.LatLng, {animate: true});
+    }
+}
 
 function playSelection() {
     //find the first one with points
