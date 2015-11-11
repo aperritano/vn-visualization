@@ -1,7 +1,7 @@
 /*************************************************
  *              VARIABLES
  *************************************************/
-var LIMIT_LABEL = 60;
+var LIMIT_LABEL = 45;
 var LIMIT_TICK = 15;
 
 /*************************************************
@@ -112,6 +112,8 @@ function getLabelsInRange(dataPoints) {
                         gantGroupMapValue.color = ts.labels.color;
                         if(minutes < LIMIT_LABEL)
                             gantGroupMapValue.label = ts.labels.label;
+                        else
+                            gantGroupMapValue.name = ts.labels.label;
                         gantGroupMap.actual = gantGroupMapValue;
 
                     } else {
@@ -136,6 +138,8 @@ function getLabelsInRange(dataPoints) {
                         groupValue.color = ts.labels.color;
                         if(minutes < LIMIT_LABEL)
                             groupValue.label = ts.labels.label;
+                        else
+                            groupValue.name = ts.labels.label;
                         gantMap[key].actual = groupValue;
                     } else {
                         gantMap[key].actual.ending_time = moment(ts.timestamp).valueOf();
