@@ -1,25 +1,11 @@
-
-
-/**
- * Label name map.
- */
-//var start = 0;
-//var end = 0;
-
-//var brushNew;
-
 /*************************************************
- *              DRAW TIMELINE
+ *              VARIABLES
  *************************************************/
-/**
- * Function caled when the user wnat to the label timelines.
- */
-//function getLabelsInRange(dataPoint) {
-//    processLabelData(dataPoint);
-//}
+var LIMIT_LABEL = 60;
+var LIMIT_TICK = 15;
 
 /*************************************************
- *              GET DATA FROM DB
+ *              COMPUTE DATA
  *************************************************/
 
 /**
@@ -27,6 +13,10 @@
  * @param dataPoints, data that come from the DB.
  */
 function getLabelsInRange(dataPoints) {
+
+    var startTimestamp = (dataPoints[0].milliseconds);
+    var endTimestamp = (dataPoints[dataPoints.length - 1].milliseconds);
+    var minutes = (endTimestamp - startTimestamp)/60;
 
     /**
      * Structure used to create the lanes and the items.
@@ -79,7 +69,6 @@ function getLabelsInRange(dataPoints) {
                     var gantMapValue = {};
                     gantMapValue.class = key.toString();
                     //s for subject
-                    //gantMapValue.label = 'Individual ' + key;
                     gantMapValue.label = 'S ' + key;
                     gantMapValue.times = [];
                     gantMapValue.actual = null;
@@ -93,7 +82,6 @@ function getLabelsInRange(dataPoints) {
                 if (gantGroupMap.class === undefined) {
                     gantGroupMap.class = key.toString();
                     //Lets short this
-                    //gantGroupMap.label = 'Group ' + key.toString();
                     gantGroupMap.label = 'G ' + key.toString();
                     gantGroupMap.times = [];
                     gantGroupMap.actual = null;
@@ -122,7 +110,8 @@ function getLabelsInRange(dataPoints) {
                         gantGroupMapValue.starting_time = moment(ts.timestamp).valueOf();
                         gantGroupMapValue.ending_time = moment(ts.timestamp).valueOf();
                         gantGroupMapValue.color = ts.labels.color;
-                        gantGroupMapValue.label = ts.labels.label;
+                        if(minutes < LIMIT_LABEL)
+                            gantGroupMapValue.label = ts.labels.label;
                         gantGroupMap.actual = gantGroupMapValue;
 
                     } else {
@@ -145,7 +134,8 @@ function getLabelsInRange(dataPoints) {
                         groupValue.starting_time = moment(ts.timestamp).valueOf();
                         groupValue.ending_time = moment(ts.timestamp).valueOf();
                         groupValue.color = ts.labels.color;
-                        groupValue.label = ts.labels.label;
+                        if(minutes < LIMIT_LABEL)
+                            groupValue.label = ts.labels.label;
                         gantMap[key].actual = groupValue;
                     } else {
                         gantMap[key].actual.ending_time = moment(ts.timestamp).valueOf();
@@ -221,9 +211,6 @@ function getLabelsInRange(dataPoints) {
         delete gantMap[j].actual;
         gantIndividualList.push(gantMap[j]);
     }
-
-    //var startTimestamp = (dataPoints[0].milliseconds * 1000);
-    //var endTimestamp = (dataPoints[dataPoints.length - 1].milliseconds * 1000);
 
     return [gantGroupList.concat(gantIndividualList)];
     //setUpTimelineGroup(gantGroupList, startTimestamp, endTimestamp);

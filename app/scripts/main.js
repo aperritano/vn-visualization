@@ -759,6 +759,17 @@ function updateGroupLabelTimeline(tStart, tEnd) {
 
     var sDate = moment(tStart).valueOf();
     var eDate = moment(tEnd).valueOf();
+    var minutes = (eDate - sDate)/1000/60;
+
+    var minutesTick = 1;
+    if (minutes > LIMIT_TICK && minutes <= LIMIT_TICK*2)
+        minutesTick = 5;
+    if (minutes > LIMIT_TICK*2 && minutes <= LIMIT_TICK*4)
+        minutesTick = 15;
+    if (minutes > LIMIT_TICK*4 && minutes <= LIMIT_TICK*8)
+        minutesTick = 30;
+    if (minutes > LIMIT_TICK*8)
+        minutesTick = 60;
 
     var groupLabels = labelsTuple[0];
     //var individualLabels = labelsTuple[1];
@@ -811,7 +822,7 @@ function updateGroupLabelTimeline(tStart, tEnd) {
          .tickFormat(
             {format: customTimeFormat,
             tickTime: d3.time.minutes,
-            tickInterval: 1,
+            tickInterval: minutesTick,
             tickSize: 20})
         .margin({top: 10, left: 10, bottom: 0, right: 15});
 
