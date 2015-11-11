@@ -1,4 +1,4 @@
-/*global L, Firebase, d3, moment, dc, _, crossfilter, async, topojson*/
+/*global L, Firebase, timer, d3, moment, dc, _, crossfilter, async, topojson*/
 
 
 var mapContainer;
@@ -37,6 +37,7 @@ var dictionary;
 var timeOverlay;
 var timeOverlayProps = {};
 var buttonOverlay;
+var animateOverlay;
 
 var currentDataPoint;
 
@@ -99,7 +100,7 @@ function updateDictionaryFromDB(d) {
     //console.log('D',d);
     for(var i = 0; i < d.length; i++) {
         if(!_.isUndefined(d[i])) {
-            d[i].color = nodeColorMap(i);
+            d[i].color = generalColorMap(i);
         }
     }
     dictionary = d;
@@ -234,6 +235,9 @@ function initDataPointOverlay() {
 
 function drawDataPointOverlay(dataPoint) {
 
+    currentDataPoint = dataPoint;
+
+    animateOverlay.update();
 
     if (_.isUndefined(dataPoint) || _.isUndefined(dataPoint.items)) {
         console.log('undefined datapoint');
@@ -277,7 +281,7 @@ function drawDataPointOverlay(dataPoint) {
         d.LatLng = new L.LatLng(d.lat, d.lon);
     });
 
-    currentDataPoint = dataPoint;
+
 
 
     var toLine = d3.svg.line()
@@ -318,7 +322,7 @@ function drawDataPointOverlay(dataPoint) {
 
     function update() {
 
-        paths = mapContainer.selectAll('path');
+        var paths = mapContainer.selectAll('path');
         paths.remove();
 
         if (links[0] !== undefined) {
@@ -355,15 +359,17 @@ function drawDataPointOverlay(dataPoint) {
                     return 4;
                 }
             })
-            .style('stroke', function (d) {
+            .style('stroke', function (d, i) {
                 if(_.isEmpty(d.labels)) {
-                    return 'white';
+                    return nodeColorMap(i);
                 } else {
                     return d.labels.color;
                 }
 
             })
-            .style('fill', '#1f78b4')
+            .style('fill', function(d, i) {
+                return nodeColorMap(i);
+            })
             .style('fill-opacity', 1.0)
             .on('mouseover', function (d) {
                 div.transition()
@@ -379,6 +385,9 @@ function drawDataPointOverlay(dataPoint) {
                     .style('opacity', 0);
             });
 
+            //.transition()
+            //.duration(500);
+
 
         d3.transition(circles)
             .attr('transform',
@@ -389,6 +398,18 @@ function drawDataPointOverlay(dataPoint) {
                 }
             );
 
+
+        //function transition(path) {
+        //    linePath.transition()
+        //        .duration(7500)
+        //        .attrTween("stroke-dasharray", tweenDash)
+        //        .each("end", function() {
+        //            d3.select(this).call(transition);// infinite loop
+        //            ptFeatures.style("opacity", 0)
+        //        });
+        //
+        //
+        //}
 
 
 
@@ -471,15 +492,6 @@ function initMapLeaflet() {
             var div = document.getElementById('control-panel');
             document.getElementById('start-time').innerHTML = 'Start:&nbsp&nbsp' + t1;
             document.getElementById('end-time').innerHTML = 'End:&nbsp&nbsp&nbsp&nbsp' + t2;
-
-            var playButton = document.getElementById('play');
-            playButton.onclick = function(){
-                playSelection();
-            };
-            //var timeButton = document.getElementById('time');
-            //timeButton.onclick = function(){
-            //    console.log('time buttonClicked');
-            //};
             div.style.display = 'block';
             timeOverlayDIV.appendChild(div);
         }
@@ -513,6 +525,38 @@ function initMapLeaflet() {
     };
 
     buttonOverlay.addTo(map);
+
+    var animateOverlayDIV;
+
+    animateOverlay = L.control({position: 'bottomright'});
+
+    animateOverlay.onAdd = function() {
+        animateOverlayDIV = L.DomUtil.create('div', 'animateOverlay');
+
+        animateOverlay.update();
+        return animateOverlayDIV;
+    };
+
+    animateOverlay.update = function() {
+
+        if( !_.isUndefined(currentDataPoint)) {
+            var t1 = moment(currentDataPoint.timestamp).format('LTS M/D/YY');
+
+            var div = document.getElementById('animate-panel');
+            document.getElementById('current-time').innerHTML = 'Current Time:&nbsp&nbsp' + t1;
+
+
+            var playButton = document.getElementById('play');
+            playButton.onclick = function(){
+                playSelection();
+            };
+            div.style.display = 'block';
+            animateOverlayDIV.appendChild(div);
+        }
+
+    };
+
+    animateOverlay.addTo(map);
 
 }
 
@@ -641,7 +685,7 @@ function createMainTimeline() {
     var combined = dc.compositeChart('#main-timeline');
 
     var stackCharts = dc.lineChart(combined)
-        .ordinalColors([nodeColorMap(0), nodeColorMap(11), nodeColorMap(12)])
+        .ordinalColors([generalColorMap(0), generalColorMap(11), generalColorMap(12)])
         .renderArea(true)
         .group(labelGroup)
         .stack(countGroup)
@@ -716,18 +760,21 @@ function updateLabelTimeline(tStart, tEnd) {
     var minutes = (eDate - sDate)/1000/60;
 
     var minutesTick = 1;
-    if (minutes > LIMIT_TICK && minutes <= LIMIT_TICK*2)
+    if (minutes > LIMIT_TICK && minutes <= LIMIT_TICK*2) {
         minutesTick = 5;
-    if (minutes > LIMIT_TICK*2 && minutes <= LIMIT_TICK*4)
+    }
+    if (minutes > LIMIT_TICK*2 && minutes <= LIMIT_TICK*4) {
         minutesTick = 15;
-    if (minutes > LIMIT_TICK*4 && minutes <= LIMIT_TICK*8)
+    }
+    if (minutes > LIMIT_TICK*4 && minutes <= LIMIT_TICK*8) {
         minutesTick = 30;
-    if (minutes > LIMIT_TICK*8)
+    }
+    if (minutes > LIMIT_TICK*8) {
         minutesTick = 60;
+    }
+
 
     var groupLabels = labelsTuple[0];
-    //var individualLabels = labelsTuple[1];
-
     var customTimeFormat = d3.time.format.multi([
         ['.%L', function (d) {
             return d.getMilliseconds();
@@ -789,37 +836,46 @@ function zoomCurrentPoint() {
     console.log('zoomCurrentPoint');
 
     if(!_.isUndefined(currentDataPoint) && !_.isUndefined(currentDataPoint.items)) {
-        var item = currentDataPoint.items[0];
-        map.setZoom(19, {animate: true});
-        map.panTo(item.LatLng, {animate: true});
+        if( !_.isUndefined(currentDataPoint.items[0]) ) {
+            var item = currentDataPoint.items[0];
+                map.setZoom(19, {animate: true});
+            map.panTo(item.LatLng, {animate: true});
+        }
     }
 }
 
 function playSelection() {
     //find the first one with points
     var ranged = brushFilteredDates.bottom(Infinity);
+    var interval = 175; // one second in milliseconds
 
-    for (var i = 0; i < ranged.length; i++) {
-        var d = ranged[i];
-        if (d.items !== undefined) {
-            //setInterval(function () {
-            //console.log('playing...', d.items);
-            drawDataPointOverlay(d);
-
-            //}, 250);
-
+    var i = 0;
+    var makeCallback = function() {
+        // note that we're returning a new callback function each time
+        return function() {
+            if( i < ranged.length) {
+                var d = ranged[i];
+                if (d.items !== undefined) {
+                    drawDataPointOverlay(d);
+                }
+                i++;
+                d3.timer(makeCallback(), interval);
+                return true;
+            }
+            return false;
 
         }
+    };
 
-    }
+    d3.timer(makeCallback(), interval);
     console.log('done');
 }
 
 /**
  * lookup for node colors
  */
-function nodeColorMap(index) {
-   // var colors = ['Red', 'Purple', 'Deep Purple', 'Ingio', 'Light Blue', 'Cyan', 'Green', 'Teal', 'Lime', 'Yellow', 'Orange', 'Deep Orange', 'Brown', 'Grey', 'Blue Grey'];
+function generalColorMap(index) {
+    // var colors = ['Red', 'Purple', 'Deep Purple', 'Ingio', 'Light Blue', 'Cyan', 'Green', 'Teal', 'Lime', 'Yellow', 'Orange', 'Deep Orange', 'Brown', 'Grey', 'Blue Grey'];
 
     var brewer = ['#1f78b4','#a6cee3','#ccebc5','#33a02c','#fb8072','#fb9a99','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928','#F8B700'];
     //var c = colors[index];
@@ -831,4 +887,21 @@ function nodeColorMap(index) {
     return brewer[index];
 
 }
+
+function nodeColorMap(index) {
+    // var colors = ['Red', 'Purple', 'Deep Purple', 'Ingio', 'Light Blue', 'Cyan', 'Green', 'Teal', 'Lime', 'Yellow', 'Orange', 'Deep Orange', 'Brown', 'Grey', 'Blue Grey'];
+
+    var brewer = ['#33a02c','#ffffb3','#e31a1c','#fb8072','#80b1d3','#fdb462','#b3de69','#fccde5','#ff7f00','#bc80bd','#ccebc5','#ffed6f','#b15928','#6a3d9a'];
+;
+    //var c = colors[index];
+
+    if( index > brewer.length ) {
+        index = 0;
+    }
+
+    return brewer[index];
+
+}
+
+
 

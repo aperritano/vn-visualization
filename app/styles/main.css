@@ -175,7 +175,22 @@ path.lineConnect {
     box-shadow: 0 0 15px rgba(0,0,0,0.2);
     border-radius: 5px;
 }
+
+.animateOverlay {
+    padding: 6px 8px;
+    font-size: 10px;
+    font-family: "Roboto";
+    background: white;
+    background: rgba(255,255,255,0.8);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+}
 .timeOverlay h4 {
+    margin: auto;
+    color: #404040;
+}
+
+.animateOverlay h4 {
     margin: auto;
     color: #404040;
 }
@@ -232,8 +247,8 @@ div.zoom-button {
 div.play-button {
     -moz-appearance:button; /* Firefox */
     -webkit-appearance:button; /* Safari and Chrome */
-    display: inline-block;
-    margin: 2px;
+    /*display: inline-block;*/
+    margin: auto;
     /*padding: 1px 1px;*/
     height: 24px;
     width: 24px;
@@ -247,6 +262,12 @@ div.play-button {
     -webkit-border-radius: 2px;
     -webkit-box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
 
+}
+
+div.interval-text {
+    margin: auto;
+    width: 24px;
+    text-align: center;
 }
 
 div.blocks {
