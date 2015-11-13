@@ -39,12 +39,12 @@ body {
     fill-opacity: 0.2;
 }
 
-.brush .extent {
-    stroke: grey;
-    fill-opacity: .1;
-    stroke-width: 1px;
-    shape-rendering: crispEdges;
-}
+brush .extent {
+     stroke: grey;
+     fill-opacity: .1;
+     stroke-width: 1px;
+     shape-rendering: crispEdges;
+ }
 
 .leaflet-container {
     cursor: default !important;

@@ -11,7 +11,7 @@ var wWidth = 'innerWidth' in window ? window.innerWidth : document.documentEleme
 
 //var mainOffset = 15;
 
-var margin = {top: 10, left: 15, bottom: 20, right: 20};
+var margin = {top: 10, left: 30, bottom: 20, right: 20};
 
 
 var mapSVG;
@@ -638,7 +638,7 @@ function handleCountryOverlayControl() {
  3 */
 function createMainTimeline() {
 
-    var margin = {top: 10, left: 15, bottom: 20, right: 20};
+    var margin = {top: 10, left: 30, bottom: 20, right: 20};
         //width = wWidth - margin.left - margin.right,
     var height = 100 - margin.top - margin.bottom;
 
@@ -803,21 +803,21 @@ function updateLabelTimeline(tStart, tEnd) {
         svgLabel.remove();
     }
 
-    var groupLabelMargin = {top: 10, left: 10, bottom: 0, right: 15};
+    var groupLabelMargin = {top: 10, left: 30, bottom: 0, right: 15};
     var width = wWidth - margin.left - margin.right;
     var tooltip = d3.select('#tooltipLabel').append('div').attr('class', 'tooltipLabel').style('opacity', 0);
 
     // Chart
     var chart = d3.timeline()
         .beginning(sDate)
-         .ending(eDate)
+        .ending(eDate)
         .stack()
-         .tickFormat(
+        .tickFormat(
             {format: customTimeFormat,
             tickTime: d3.time.minutes,
             tickInterval: minutesTick,
             tickSize: 20})
-        .margin({top: 10, left: 10, bottom: 0, right: 15})
+        .margin({top: 10, left: 30, bottom: 0, right: 15})
         .mouseover(function (d, i, datum) {
 
             if(minutes < LIMIT_LABEL)
@@ -842,11 +842,42 @@ function updateLabelTimeline(tStart, tEnd) {
 
     //d3.selectAll('.timeline-label').attr('transform', 'translate(2px,0px)');
 
-    d3.select('#grouplabels').append('svg')
+    var labelSvg = d3.select('#grouplabels').append('svg')
         .attr('width', width+groupLabelMargin.right)
         .style('margin-left',5)
         .style('margin-right',0)
         .datum(groupLabels).call(chart);
+
+    var gBrush = labelSvg.append('g');
+
+    var seconds = (eDate - sDate)/1000;
+    var width = (labelSvg.attr("width") - chart.margin().left - chart.margin().right)/seconds;
+
+    gBrush.append('rect')
+        .attr('height', labelSvg.attr("height"))
+        .attr('width', width)
+        .attr('fill', 'black')
+        .attr('opacity', 0.2)
+        .attr('transform', 'translate(' + chart.margin().left + ',' + chart.margin().top + ')')
+        .attr("id", "labelbrush");
+
+}
+
+function updateLabelBrush(tStart, tEnd, dataPoint){
+
+    var sDate = moment(tStart).valueOf();
+    var eDate = moment(tEnd).valueOf();
+    var cDate = moment(dataPoint.timestamp).valueOf();
+
+
+    var svg = d3.select("#grouplabels").select("svg");
+    var rect = svg.select("#labelbrush");
+
+    var seconds = (eDate - sDate)/1000;
+    var width = (svg.attr("width") - margin.left - margin.right)/seconds;
+    var delta = ((cDate - sDate)/1000)*width;
+
+    rect.attr('transform', 'translate(' + (margin.left + delta) + ',' + margin.top + ')');
 
 }
 
@@ -866,6 +897,8 @@ function playSelection() {
     //find the first one with points
     var ranged = brushFilteredDates.bottom(Infinity);
     var interval = 175; // one second in milliseconds
+    var sDate = ranged[0].timestamp;
+    var eDate = ranged[ranged.length - 1].timestamp;
 
     var i = 0;
     var makeCallback = function() {
@@ -875,6 +908,7 @@ function playSelection() {
                 var d = ranged[i];
                 if (d.items !== undefined) {
                     drawDataPointOverlay(d);
+                    updateLabelBrush(sDate, eDate, d);
                 }
                 i++;
                 d3.timer(makeCallback(), interval);
