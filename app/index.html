@@ -19,23 +19,29 @@
 </head>
 <body>
 <span id="browser-sync-binding"></span>
+<div id="pbar"></div>
 <div id="control-panel" style="display: none">
-    <h4 align="center">Time Range</h4>
-    <span id="start-time">Start:t1</span><br>
+    <h4 align="center">Brush Range</h4>
+    <span id="start-time">Start:&nbsp</span><br>
     <span id="end-time">End:&nbsp&nbsp&nbsp&nbsp</span>
-    <br>
     <hr>
-    <div class="button-container">
-        <div id="play" class="play-button"><i class="material-icons">play_arrow</i></div>
-        <div id="time" class="play-button"><i class="material-icons">hourglass_empty</i></div>
-    </div>
-
 </div>
-<!--<div id="tooltip"></div>-->
-<div id="map"></div>
+<div id="animate-panel" style="display: none">
+    <h4 align="center">Animate Range</h4>
+    <span id="current-time">Current:&nbsp</span><br>
+    <hr>
+    <span><div id="play" class="play-button"><i class="material-icons">play_arrow</i></div></span>
+    <span><div id="interval-text">1 sec (interval)</div></span>
+</div>
+<div id="zoom-panel" style="display: none">
+    <div id="zoom-point" class="zoom-button"><i class="material-icons">explore</i></div>
+</div>
+<div id="tooltip"></div>
+<div id="map" style="display: none"></div>
 
 <div id="main-timeline"></div>
 <div id="grouplabels"></div>
+<div id="tooltipLabel"></div>
 
 
 
@@ -43,10 +49,9 @@
 <!--<div id="tooltipLabel"></div>-->
 
 <script src="../bower_components/d3/d3.min.js"></script>
-
 <!--util-->
 <script src="../bower_components/moment/min/moment.min.js"></script>
-<script src="../node_modules/predicate/dist/predicate.js"></script>
+
 <script src="../bower_components/async/dist/async.min.js"></script>
 <script src="../bower_components/topojson/topojson.js"></script>
 
@@ -54,13 +59,14 @@
 <script src="../bower_components/google-material-color/dist/palette.js"></script>
 
 <script src="../bower_components/firebase/firebase.js"></script>
-<script src="../bower_components/crossfilter/crossfilter.min.js"></script>
+<script src="../bower_components/crossfilter2/crossfilter.min.js"></script>
 <script src="../bower_components/underscore/underscore-min.js"></script>
+<script src="../bower_components/progressbar.js/dist/progressbar.min.js "></script>
+<script src='../bower_components/oboe/dist/oboe-browser.min.js'></script>
 
 <script src="dcjs/d3-timeline.js"></script>
 <script src="dcjs/dc.js"></script>
-<script src="../bower_components/reductio/reductio.min.js"></script>
-
+<script src="../node_modules/paralleljs/lib/parallel.js"></script>
 <script src="../bower_components/leaflet/dist/leaflet.js"></script>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>

@@ -1,9 +1,9 @@
-/*global L, Firebase, d3, moment, dc, _, crossfilter, async, topojson*/
+/*global L, Firebase, timer, d3, Parallel, moment, dc, _, crossfilter, async, topojson*/
 
 
 var mapContainer;
 
-var gpsDataset;
+
 
 //dimensions
 var wHeight = 'innerHeight' in window ? window.innerHeight : document.documentElement.offsetHeight;
@@ -17,9 +17,10 @@ var margin = {top: 10, left: 15, bottom: 20, right: 20};
 var mapSVG;
 var map;
 
-var timestampsDB = new Firebase('https://baboons.firebaseio.com/timestamps');
-var labelsDB = new Firebase('https://baboons.firebaseio.com/labels/0/labels');
-var dictionaryDB = new Firebase('https://baboons.firebaseio.com/labels/0/dictionary');
+// var infoDB = new Firebase('https://baboons.firebaseio.com/info');
+// var timestampsDB = new Firebase('https://baboons.firebaseio.com/timestamps');
+// var labelsDB = new Firebase('https://baboons.firebaseio.com/labels/0/labels');
+// var dictionaryDB = new Firebase('https://baboons.firebaseio.com/labels/0/dictionary');
 
 var dateFormat = '%Y-%m-%d %H:%M:%S';
 var parseDate =
@@ -27,52 +28,206 @@ var parseDate =
 
 var allSubjects;
 var xFilter;
-var dateDimension;
+var byDate;
 var brushFilteredDates;
 
-var labels;
-var dictionary;
+var labels = []
+var dictionary = [];
+var gpsDataset = [];
+
+//overlays for leaflet
 var timeOverlay;
 var timeOverlayProps = {};
+var buttonOverlay;
+var animateOverlay;
+
+var currentDataPoint;
+
+var byDate;
+
+var countGroup;
+
+var labelGroup;
+
+var netsGroup;
+
+var m = '500';
+
+var startTime;
+var endTime;
+
+var pgress = 0;
+
+var pbar = new ProgressBar.Line('#pbar', {color: '#BCD7E9'});
+//pbar.setValue(0);
+//pbar.animate(1.0, {
+//    duration: 40000
+//});
+//
+
+function getDictionary() {
+    oboe('https://baboons.firebaseio.com/labels/0/dictionary.json')
+        .node('!.*', function (dict) {
 
 
-var m = '10000';
-
-dictionaryDB.on('value', function (snapshot) {
-
-    if (snapshot.val() !== undefined) {
-        //remove the last object
-        console.log('VAL', snapshot.val());
-        updateDictionaryFromDB(snapshot.val());
-        labelsDB.orderByKey().startAt('0').endAt(m).on('value', function (snapshot) {
-
-            if (snapshot.val() !== undefined) {
-                //remove the last object
-                updateLabelsFromDB(snapshot.val());
+            if (dict !== undefined) {
+                var index = dict.code - 1;
+                dict.color = nodeColorMap(index);
+                dictionary.push(dict);
             }
 
-            timestampsDB.orderByKey().startAt('0').endAt(m).on('value', function (snapshot) {
 
-                if (snapshot.val() !== undefined) {
-                    //remove the last object
-                    updateDataFromDB(snapshot.val());
+            return oboe.drop;
+        })
+        .done(function (finaljson) {
+            //console.log('dictionary',dictionary);
+            console.log('done with dict, starting timestamps');
+        });
+}
 
+function getLabels() {
+    oboe('https://baboons.firebaseio.com/labels/0/labels.json')
+        .node('!.*', function (label) {
+            labels.push(label);
+            return oboe.drop;
+        })
+        .done(function (finaljson) {
+            //console.log('labels',labels);
+            console.log('done with labels, starting timestamps');
+            doTimestampFetch();
+        });
+}
+
+function doTimestampFetch() {
+
+    var pgress = 0;
+    oboe('https://baboons.firebaseio.com/timestamps.json')
+        .node('!.*', function (t) {
+            if (t.timestamp === undefined) {
+            } else {
+
+                pgress = pgress + .00005;
+                console.log(pgress);
+                pbar.animate(pgress);
+                try {             
+                    if (t.items !== null || t.items !== undefined || t.items[0] !== undefined && t.items[0] !== null) {
+                        if (isNaN(+t.items.length) === true) {
+                            t.items = [];
+                            t.count = 0;
+                            t.edges = [];
+                            t.labels = {};
+                        } else {
+                            t.count = +t.items.length;
+                            var found = FindItemBinarySearch(labels, t.timestamp);
+                            if( found !== -1 ) {
+                                var label = labels[found];
+                                t.labels = label;
+                                var index = t.labels.label - 1;
+                                var dictionaryLabel = dictionary[index];
+                                //merge
+                                t.labels.code = dictionaryLabel.code;
+                                t.labels.color = dictionaryLabel.color;
+                                t.labels.label = dictionaryLabel.label;
+                            }  else {
+                                t.labels = {};
+                            }
+                            if( _.isUndefined(t.edges) || _.isEmpty(t.edges) ) {
+                                t.edges = [];
+                            }                                       
+                        }
+                    } else {
+                        t.items = [];
+                        t.count = 0;
+                        t.labels = {};
+                        t.edges = [];
+                    }
+                                        
+                    t.timestamp = parseDate(t.timestamp);
+
+                    gpsDataset.push(t);
+                    //console.log(t);
+                } catch (e) {
+                    if (e instanceof TypeError) {
+                        t.count = 0;
+                        t.items = [];
+                        t.labels = {};
+                        t.edges = [];
+                        gpsDataset.push(t);
+                        //console.log(t);
+                        //console.info('datum TypeError Exception timestamp: ', d.timestamp);
+                    }
                 }
+            }
 
-            }, function (errorObject) {
-                console.log('The read failed: ' + errorObject.code);
+            return oboe.drop;
+        })
+        .done(function (finaljson) {
+            pbar.animate(1);
+            pbar.destroy();
+            console.log('all done');
+            xFilter = crossfilter(gpsDataset);
+
+
+            allSubjects = xFilter.groupAll();
+
+            byDate = xFilter.dimension(function (d) {
+
+                return d.timestamp;
             });
 
-        }, function (errorObject) {
-            console.log('The read failed: ' + errorObject.code);
+            countGroup = byDate.group().reduceSum(function (d) {
+                return d.count;
+            });
+
+            labelsGroup = byDate.group().reduceSum(function (d) {
+                if( !_.isEmpty(d.labels)) {
+                    return 5;
+                }
+                return 0;
+            });
+
+
+            netsGroup = byDate.group().reduceSum(function (d) {
+                if(d.edges.length !== 0) {
+                    return d.edges.length/2;
+                }
+                return 0;
+            });
+
+
+
+            initMapLeaflet();
+            createMainTimeline('init');
+
+
         });
+}
+
+function FindItemBinarySearch(items, value) {
+    var startIndex  = 0,
+        stopIndex   = items.length - 1,
+        middle      = Math.floor((stopIndex + startIndex)/2);
+
+    while(items[middle].timestamp != value && startIndex < stopIndex){
+
+        //adjust search area
+        if (value < items[middle].timestamp){
+            stopIndex = middle - 1;
+        } else if (value > items[middle].timestamp){
+            startIndex = middle + 1;
+        }
+
+        //recalculate middle
+        middle = Math.floor((stopIndex + startIndex)/2);
     }
-}, function (errorObject) {
-    console.log('The read failed: ' + errorObject.code);
-});
 
+    //make sure it's the right value
+    return (items[middle].timestamp != value) ? -1 : middle;
 
-initMapLeaflet();
+}
+
+getDictionary();
+getLabels();
 
 //var k = 1;
 //readStartEndValue();
@@ -87,121 +242,7 @@ initMapLeaflet();
 
 /*** functions ******/
 
-function updateDictionaryFromDB(d) {
-    //console.log('D',d);
-    for(var i = 0; i < d.length; i++) {
-        if(!_.isUndefined(d[i])) {
-            d[i].color = nodeColorMap(i);
-        }
-    }
-    dictionary = d;
-    console.log('dictionary',dictionary);
-}
 
-function updateLabelsFromDB(l) {
-    labels = l;
-    console.log('LABELS',labels);
-}
-
-
-/**
- * updates when firebase returns
- *
- * @param items
- */
-function updateDataFromDB(items) {
-
-    var i = 0;
-
-    console.log('ITEMS');
-
-    //there is no timeline available create one
-    if (gpsDataset === undefined || gpsDataset[0] === undefined) {
-        gpsDataset = items;
-        async.each(gpsDataset, function (d, callback) {
-            try {
-                if (d.timestamp === undefined) {
-                } else {
-
-                    //finds the label that matches the timestamp
-                    var foundTimestamps = labels.filter(function (l) {
-                        if (l.timestamp === d.timestamp) {
-                            return true;
-                        }
-                        return false;
-
-                    });
-
-                    //if we found a matching timestamp
-                    if (foundTimestamps[0] !== undefined) {
-                        //finds the dictionary l
-                        var foundDictionary = dictionary.filter(function (k) {
-
-                            if (foundTimestamps[0].label === k.code) {
-
-                               // console.log('FOUND label ', k.code, k);
-                                return true;
-                            }
-
-                            return false;
-
-                        });
-                        //if we found a dictionary entry
-                        if (foundDictionary[0] !== undefined) {
-                            d.labels = foundDictionary[0];
-                        }
-                    } else {
-                        d.labels = -1;
-                    }
-                    d.date = parseDate(d.timestamp);
-                }
-                if (d.items !== null || d.items !== undefined || d.items[0] !== undefined && d.items[0] !== null) {
-                    if (isNaN(+d.items.length) === true) {
-                        d.items = [];
-                        d.count = 0;
-                    } else {
-                        d.count = +d.items.length;
-                    }
-                } else {
-                    d.items = [];
-                    d.count = 0;
-                    ///d.label
-                }
-
-                if (d.edges === null || d.edges === undefined || d.edges[0] === undefined && d.edges[0] === null) {
-                    d.edges = [];
-                }
-            } catch (e) {
-                if (e instanceof TypeError) {
-                    d.items = [];
-                    //console.info('datum TypeError Exception timestamp: ', d.timestamp);
-                    d.count = 0;
-                }
-            }
-            callback();
-        }, function (err) {
-
-            // if any of the file processing produced an error, err would equal that error
-            xFilter = crossfilter(gpsDataset);
-
-            allSubjects = xFilter.groupAll();
-
-            dateDimension = xFilter.dimension(function (d) {
-                return d.date;
-            });
-
-
-            //create map
-            initLeafletOverlays();
-            //create timeline
-            createMainTimeline();
-        });
-    } else {
-        //update timeline
-        //update map
-    }
-
-}
 
 
 /**
@@ -216,7 +257,7 @@ function initLeafletOverlays() {
 
 function initDataPointOverlay() {
 
-    var firstPoint = dateDimension.bottom(1)[0];
+    var firstPoint = byDate.bottom(1)[0];
 
 
     if (firstPoint.items !== undefined) {
@@ -228,6 +269,9 @@ function initDataPointOverlay() {
 
 function drawDataPointOverlay(dataPoint) {
 
+    currentDataPoint = dataPoint;
+
+    animateOverlay.update();
 
     if (_.isUndefined(dataPoint) || _.isUndefined(dataPoint.items)) {
         console.log('undefined datapoint');
@@ -235,30 +279,30 @@ function drawDataPointOverlay(dataPoint) {
     }
 
     var links = [];
-    if (dataPoint.nets !== undefined) {
-        dataPoint.nets.forEach(function (net) {
+    if (dataPoint.edges !== undefined) {
+        dataPoint.edges.forEach(function (net) {
 
             var s = dataPoint.items.filter(function (d) {
                 return d.id === net[0];
             });
-
 
             var t = dataPoint.items.filter(function (d) {
                 return d.id === net[1];
             });
 
             var p1 = createLineJSON(s[0]);
-            //s.LatLng = new L.LatLng(s[0].lat, s[0].lon);
-            //t.LatLng = new L.LatLng(t[0].lat, t[0].lon);
 
             //links.push(p1);
             var p2 = createLineJSON(t[0]);
-            //s.LatLng = new L.LatLng(s[0].lat, s[0].lon);
-            //t.LatLng = new L.LatLng(t[0].lat, t[0].lon);
-
 
             var link = [{x: p1.lon, y: p1.lat}, {x: p2.lon, y: p2.lat}];
             links.push(link);
+
+            function createLineJSON(source) {
+                var geoLine = {lon: source.lon, lat: source.lat};
+
+                return geoLine;
+            }
 
         });
     }
@@ -266,117 +310,24 @@ function drawDataPointOverlay(dataPoint) {
 
     var targets = dataPoint.items;
 
-
-    var i = 0;
-    targets.forEach(function (d) {
-
+    targets.forEach(function (d, i) {
+        d.labels = dataPoint.labels;
         d.LatLng = new L.LatLng(d.lat, d.lon);
-
-        if (i === 0) {
-            map.setZoom(19, {animate: true});
-            map.panTo(d.LatLng, {animate: true});
-        }
-
-        i++;
-
     });
 
-
-    // Define the div for the tooltip
-    var div = d3.select('#tooltip').append('div')
-        .attr('class', 'tooltip')
-        .style('opacity', 0);
-
-    var container = mapContainer.selectAll('circle').data(targets);
-
-    container.exit().remove();
-
-    var circles = container.enter();
-
-    circles.append('circle')
-        .attr('class', 'node')
-        .attr('id', function (d) {
-            return 'circle' + d.id;
-        })
-        .attr('lon', function (d) {
-            return d.lon;
-        })
-        .attr('lat', function (d) {
-            return d.lat;
-        })
-        .attr('r', 10)
-        .style('stroke-width', function () {
-            if (dataPoint.labels === -1) {
-                return 1;
-            } else {
-                return 3;
-            }
-        })
-        .style('stroke', function () {
-            if (dataPoint.labels === -1) {
-                return '#03A9F4';
-            } else {
-                return '#E040FB';
-            }
-        })
-        //.style(' stroke-opacity', function(d) {
-        //    if(d.labels === -1) {
-        //        return '#03A9F4';
-        //    } else {
-        //        return '#E040FB';
-        //    }
-        //})
-        .style('fill', function (d) {
-            return nodeColorMap(d.id);
-        })
-        .style('fill-opacity', 0.5)
-        .on('mouseover', function (d) {
-            div.transition()
-                .duration(100)
-                .style('opacity', 0.9);
-            div.html(d.id + '<br/>' + d3.format('.4g')(d.lat) + ',' + d3.format('.4g')(d.lon))
-                .style('left', (d3.event.pageX) + 'px')
-                .style('top', (d3.event.pageY - 28) + 'px');
-        })
-        .on('mouseout', function (d) {
-            div.transition()
-                .duration(500)
-                .style('opacity', 0);
-        });
-
-    var lineContainer;
-
-
-    //NET [{"p1":{"lon":36.922608,"lat":0.3513041},"p2":{"lon":36.922675,"lat":0.3513414}}]
-
-    //lon-lat
-    //var data = [[36.922608, 0.3513041], [36.922675, 0.3513414]];
-
-
-    //var lineData = [{x: 36.922608, y: 0.3513041}, {x: 36.922675, y: 0.3513414}];
 
     var toLine = d3.svg.line()
         .interpolate('linear')
         .x(function (d) {
-            return applyLatLngToLayer3(d).x;
+            return applyLatLngToLayer(d).x;
         })
         .y(function (d) {
-            return applyLatLngToLayer3(d).y;
+            return applyLatLngToLayer(d).y;
         });
 
-    if (links[0] !== undefined) {
 
-        mapContainer.selectAll('path').remove();
-        links.forEach(function (link) {
-            lineContainer = mapContainer.append('path') // <-E
-                .attr('d', toLine(link))
-                .attr('stroke', 'blue')
-                .attr('stroke-width', 2)
-                .attr('fill', 'none');
+    // Define the div for the tooltip
 
-            console.log('NET', JSON.stringify(link));
-        });
-    }
 
     //remove old ones
     map.on('viewreset', update);
@@ -384,58 +335,88 @@ function drawDataPointOverlay(dataPoint) {
 
     update();
 
-    function applyLatLngToLayer3(d) {
+    function applyLatLngToLayer(d) {
         var x = d.x;
         var y = d.y;
         return map.latLngToLayerPoint(new L.LatLng(y, x));
     }
 
 
-    function applyLatLngToLayer2(d) {
-        var y = d[1];
-        var x = d[0];
-        return map.latLngToLayerPoint(new L.LatLng(y, x));
-    }
-
-    function applyLatLngToLayer(d) {
-        var y = d.geometry.coordinates[1];
-        var x = d.geometry.coordinates[0];
-        return map.latLngToLayerPoint(new L.LatLng(y, x));
-    }
-
-    function createLineJSON(source) {
-        var geoLine = {lon: source.lon, lat: source.lat};
-
-        return geoLine;
-    }
-
-
     function update() {
 
+        var paths = mapContainer.selectAll('path');
+        paths.remove();
+
+        if (links[0] !== undefined) {
+            //paths.remove();
+            links.forEach(function (link) {
+                paths = mapContainer.append('path') // <-E
+                    .attr('d', toLine(link))
+                    .attr('stroke', 'blue')
+                    .attr('stroke-width', 2)
+                    .attr('fill', 'none');
+            });
+        }
+
+        mapContainer.selectAll('circle').remove();
+
+        var circles = mapContainer.selectAll('circle').data(targets);
+
+        circles.enter().append('circle')
+            .attr('class', 'node')
+            .attr('id', function (d) {
+                return d.id;
+            })
+            .attr('lon', function (d) {
+                return d.lon;
+            })
+            .attr('lat', function (d) {
+                return d.lat;
+            })
+            .attr('r', 6)
+            .style('stroke-width', function (d) {
+                if (_.isEmpty(d.labels)) {
+                    return 2;
+                } else {
+                    return 4;
+                }
+            })
+            .style('stroke', function (d, i) {
+                if (_.isEmpty(d.labels)) {
+                    return nodeColorMap(i);
+                } else {
+                    return d.labels.color;
+                }
+
+            })
+            .style('fill', function (d, i) {
+                return nodeColorMap(i);
+            })
+            .style('fill-opacity', 1.0)
+            .on('mouseover', function (d) {
+
+                var div = d3.select('#tooltip').append('div')
+                    .attr('class', 'tooltip')
+                    .style('opacity', 0);
+
+                div.transition()
+                    .duration(100)
+                    .style('opacity', 1.0);
+                div.html(d.id + '<br/>' + d3.format('.4g')(d.lat) + ',' + d3.format('.4g')(d.lon))
+                    .style('left', (d3.event.pageX) + 'px')
+                    .style('top', (d3.event.pageY - 28) + 'px');
+            })
+            .on('mouseout', function (d) {
+                div.transition()
+                    .duration(500)
+                    .style('opacity', 0);
+            });
+
+        //.transition()
+        //.duration(500);
 
 
-
-        //d3.transition(textContainer)
-        //    .attr('transform',
-        //        function (d) {
-        //            return 'translate(' +
-        //                map.latLngToLayerPoint(d.LatLng).x + ',' +
-        //                map.latLngToLayerPoint(d.LatLng).y + ')';
-        //        }
-        //    );
-
-        // linePath.attr("d", toLine)
-
-        //d3.transition(lineContainer)
-        //    .attr('transform',
-        //        function (d) {
-        //            return 'translate(' +
-        //                map.latLngToLayerPoint(new L.LatLng(d.y, d.x)).x + ',' +
-        //                map.latLngToLayerPoint(new L.LatLng(d.y, d.x)).y + ')';
-        //        }
-        //    );
-
-        d3.transition(container)
+        d3.transition(circles)
             .attr('transform',
                 function (d) {
                     return 'translate(' +
@@ -443,12 +424,23 @@ function drawDataPointOverlay(dataPoint) {
                         map.latLngToLayerPoint(d.LatLng).y + ')';
                 }
             );
+
+
+        //function transition(path) {
+        //    linePath.transition()
+        //        .duration(7500)
+        //        .attrTween("stroke-dasharray", tweenDash)
+        //        .each("end", function() {
+        //            d3.select(this).call(transition);// infinite loop
+        //            ptFeatures.style("opacity", 0)
+        //        });
+        //
+        //
+        //}
+
+
     }
 
-//     if (lineContainer !== undefined) {
-//         lineContainer.attr("d", toLine);
-
-//     }
 }
 
 
@@ -458,9 +450,10 @@ function drawDataPointOverlay(dataPoint) {
 function initMapLeaflet() {
 
     var m = document.getElementById('map');
+    m.style.display = 'block';
 
     var width = wWidth - margin.right - margin.left;
-    var height = wHeight * 0.6;
+    var height = wHeight * 0.5;
 
 
     var mapLeafletWidth = width;
@@ -483,7 +476,11 @@ function initMapLeaflet() {
     //map.keyboard.disable();
     //map.dragging.disable();
 
-    L.tileLayer('http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
+    //var Esri_WorldImagery = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    //    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    //});
+
+    L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 18,
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
@@ -508,34 +505,24 @@ function initMapLeaflet() {
 
     var timeOverlayDIV;
 
-    timeOverlay = L.control({position: 'topright'});
+    timeOverlay = L.control({position: 'bottomleft'});
 
-    timeOverlay.onAdd = function() {
+    timeOverlay.onAdd = function () {
         timeOverlayDIV = L.DomUtil.create('div', 'timeOverlay');
 
         timeOverlay.update();
         return timeOverlayDIV;
     };
 
-    timeOverlay.update = function() {
+    timeOverlay.update = function () {
 
-        if( !_.isUndefined(timeOverlayProps.startTime) || !_.isUndefined(timeOverlayProps.endTime) ) {
+        if (!_.isUndefined(timeOverlayProps.startTime) || !_.isUndefined(timeOverlayProps.endTime)) {
             var t1 = timeOverlayProps.startTime.format('LTS M/D/YY');
             var t2 = timeOverlayProps.endTime.format('LTS M/D/YY');
 
             var div = document.getElementById('control-panel');
             document.getElementById('start-time').innerHTML = 'Start:&nbsp&nbsp' + t1;
             document.getElementById('end-time').innerHTML = 'End:&nbsp&nbsp&nbsp&nbsp' + t2;
-
-            var playButton = document.getElementById('play');
-            playButton.onclick = function(){
-                playSelection();
-                console.log('play buttonClicked');
-            };
-            var timeButton = document.getElementById('time');
-            timeButton.onclick = function(){
-                console.log('time buttonClicked');
-            };
             div.style.display = 'block';
             timeOverlayDIV.appendChild(div);
         }
@@ -544,9 +531,63 @@ function initMapLeaflet() {
 
     timeOverlay.addTo(map);
 
+    var buttonDIV;
 
-    // create the control
-    //document.getElementById('countryOverlayControl').addEventListener('click', handleCountryOverlayControl, false);
+    buttonOverlay = L.control({position: 'topleft'});
+
+    buttonOverlay.onAdd = function () {
+        buttonDIV = L.DomUtil.create('div', 'buttonOverlay');
+
+        buttonOverlay.update();
+        return buttonDIV;
+    };
+
+    buttonOverlay.update = function () {
+
+
+        var div = document.getElementById('zoom-panel');
+        var zoomButton = document.getElementById('zoom-point');
+        zoomButton.onclick = function () {
+            zoomCurrentPoint();
+        };
+        div.style.display = 'block';
+        buttonDIV.appendChild(div);
+
+    };
+
+    buttonOverlay.addTo(map);
+
+    var animateOverlayDIV;
+
+    animateOverlay = L.control({position: 'bottomright'});
+
+    animateOverlay.onAdd = function () {
+        animateOverlayDIV = L.DomUtil.create('div', 'animateOverlay');
+
+        animateOverlay.update();
+        return animateOverlayDIV;
+    };
+
+    animateOverlay.update = function () {
+
+        if (!_.isUndefined(currentDataPoint)) {
+            var t1 = moment(currentDataPoint.timestamp).format('LTS M/D/YY');
+
+            var div = document.getElementById('animate-panel');
+            document.getElementById('current-time').innerHTML = 'Current Time:&nbsp&nbsp' + t1;
+
+
+            var playButton = document.getElementById('play');
+            playButton.onclick = function () {
+                playSelection();
+            };
+            div.style.display = 'block';
+            animateOverlayDIV.appendChild(div);
+        }
+
+    };
+
+    animateOverlay.addTo(map);
 
 }
 
@@ -555,8 +596,6 @@ function initMapLeaflet() {
  * Uses d3 to add counties to the overlay
  */
 function addCountryOverlay() {
-
-
     d3.json('KEN.topojson', function (error, collection) {
 
         //unknown error, check the console
@@ -628,103 +667,83 @@ function handleCountryOverlayControl() {
  *
  * @param items - that complete dataset
  3 */
-function createMainTimeline() {
+function createMainTimeline(flag) {
 
-    var margin = {top: 10, left: 15, bottom: 20, right: 20};
+    if (flag === 'init') {
+        var margin = {top: 10, left: 15, bottom: 20, right: 20};
         //width = wWidth - margin.left - margin.right,
-    var height = 100 - margin.top - margin.bottom;
+        var height = 100 - margin.top - margin.bottom;
 
 
-    var t2 = dateDimension.top(1)[0];
-    var t1 = dateDimension.bottom(1)[0];
+        var t2 = byDate.top(1)[0];
+        var t1 = byDate.bottom(1)[0];
 
-    var tStart = moment(t1.timestamp).toDate();
-    var tEnd = moment(t2.timestamp).toDate();
-    var t5 = moment(t1.timestamp).add(5, 'm').toDate();
+        var tStart = moment(t1.timestamp).toDate();
+        var tEnd = moment(t2.timestamp).toDate();
+        var t5 = moment(t1.timestamp).add(2, 'm').toDate();
 
-    //update the props
+        //update the props
 
-    timeOverlayProps.startTime = moment(t1.timestamp);
-    timeOverlayProps.endTime = moment(t1.timestamp).add(5, 'm');
-    timeOverlay.update();
+        timeOverlayProps.startTime = moment(tStart);
+        timeOverlayProps.endTime = moment(tEnd).add(5, 'm');
+        timeOverlay.update();
+
+        var combined = dc.compositeChart('#main-timeline');
+
+        var stackCharts = dc.lineChart(combined)
+            .ordinalColors([generalColorMap(0),generalColorMap(4),generalColorMap(6)])
+            .renderArea(true)
+            .group(countGroup)            
+            .stack(labelsGroup)
+            .stack(netsGroup)
+            .elasticX(true)
+            .elasticY(true)
+            .useRightYAxis(true)
+            .on('filtered', brushing);
+
+        combined
+            .width(wWidth)
+            .height(height)
+            .margins(margin)
+            .dimension(byDate)
+            .brushOn(true)
+            .x(d3.time.scale().domain([tStart, tEnd]));
+
+        combined.compose([stackCharts]);
+
+        //console.log('stackCharts.yAxisMax()',stackCharts.yAxisMax());
+        combined.compose([stackCharts]).rightYAxis().tickValues([stackCharts.yAxisMax()]);
+
+        combined.filter(dc.filters.RangedFilter(tStart, t5));
+
+        combined.on('filtered', brushing);
+
+        dc.renderAll();
+
+        updateLabelTimeline(tStart, t5);
+
+    } else if (flag === 'update') {
+
+    }
 
 
-    var byDate = xFilter.dimension(function (d) {
-        return d.date;
-    });
-
-
-    var countGroup = byDate.group().reduceSum(function (d) {
-        return d.count;
-    });
-
-    var labelGroup = byDate.group().reduceSum(function (d) {
-        if (d.labels === -1) {
-            return 0;
-        } else {
-            return 3;
-        }
-    });
-
-    var netsGroup = byDate.group().reduceSum(function (d) {
-        if (d.edges === undefined) {
-            return 0;
-        } else {
-            return d.edges.length;
-        }
-    });
-
-    //var countMax = countGroup.top(1)[0].value;
-    //var netsMax = netsGroup.top(1)[0].value;
-    //var labelMax = labelGroup.top(1)[0].value;
-    //
-    //Array.prototype.max = function () {
-    //    return Math.max.apply(null, this);
-    //};
-
-    //var yMax = [countMax, netsMax, labelMax].max();
-
-    var combined = dc.compositeChart('#main-timeline');
-
-    var stackCharts = dc.lineChart(combined)
-        .ordinalColors([nodeColorMap(0), nodeColorMap(11), nodeColorMap(12)])
-        .renderArea(true)
-        .group(labelGroup)
-        .stack(countGroup)
-        .stack(netsGroup)
-        .elasticX(true)
-        .elasticY(true)
-        .useRightYAxis(true)
-        .on('filtered', brushing);
-
-    combined
-        .width(wWidth)
-        .height(height)
-        .margins(margin)
-        .dimension(byDate)
-        .brushOn(true)
-        .x(d3.time.scale().domain([tStart, tEnd]));
-
-    combined.compose([stackCharts]).rightYAxis().tickValues([stackCharts.yAxisMax()]);
-
-    combined.filter(dc.filters.RangedFilter(tStart, t5));
-
-    combined.on('filtered', brushing);
-
-    dc.renderAll();
-
-    updateGroupLabelTimeline(tStart, t5);
+    
 
 
     function brushing(chart, filter) {
-        console.log('we are brushing', _.isNull(filter), _.isNull(chart));
+        // console.log('we are brushing', _.isNull(filter), _.isNull(chart));
 
         if (_.isNull(filter)) {
         } else {
 
+            var p = new Parallel(filter);
+
+            // Spawn a remote job (we'll see more on how to use then later)
+
             var t1 = filter[0];
             var t2 = filter[1];
-            brushFilteredDates = dateDimension.filterRange([t1, t2]);
+
+            brushFilteredDates = byDate.filterRange([t1, t2]);
 
             var point = brushFilteredDates.bottom(1)[0];
 
@@ -735,34 +754,44 @@ function createMainTimeline() {
             drawDataPointOverlay(point);
 
 
-            updateGroupLabelTimeline(t1, t2);
+            updateLabelTimeline(t1, t2);
         }
 
 
     }
 }
 
-function updateGroupLabelTimeline(tStart, tEnd) {
+function updateLabelTimeline(tStart, tEnd) {
 
     //get data for timeline
 
-    var defaultRangeFilter = dateDimension.filterRange([tStart, tEnd]);
+    var defaultRangeFilter = byDate.filterRange([tStart, tEnd]);
     var allDefaultRangeDates = defaultRangeFilter.bottom(Infinity);
 
     var labelsTuple = getLabelsInRange(allDefaultRangeDates);
 
     //do the group timeline
 
-
-    //tooltiop
-    //var div = d3.select('#tooltipLabel').append('div').attr('class', 'tooltipLabel').style('opacity', 0);
-
     var sDate = moment(tStart).valueOf();
     var eDate = moment(tEnd).valueOf();
+    var minutes = (eDate - sDate) / 1000 / 60;
+
+    var minutesTick = 1;
+    if (minutes > LIMIT_TICK && minutes <= LIMIT_TICK * 2) {
+        minutesTick = 5;
+    }
+    if (minutes > LIMIT_TICK * 2 && minutes <= LIMIT_TICK * 4) {
+        minutesTick = 15;
+    }
+    if (minutes > LIMIT_TICK * 4 && minutes <= LIMIT_TICK * 8) {
+        minutesTick = 30;
+    }
+    if (minutes > LIMIT_TICK * 8) {
+        minutesTick = 60;
+    }
+
 
     var groupLabels = labelsTuple[0];
-    //var individualLabels = labelsTuple[1];
-
     var customTimeFormat = d3.time.format.multi([
         ['.%L', function (d) {
             return d.getMilliseconds();
@@ -797,70 +826,126 @@ function updateGroupLabelTimeline(tStart, tEnd) {
 
     var groupLabelMargin = {top: 10, left: 10, bottom: 0, right: 15};
     var width = wWidth - margin.left - margin.right;
-
-
-    var l =  dictionary.filter(function(d) {
-       return d.labels;
-    });
+    var tooltip = d3.select('#tooltipLabel').append('div').attr('class', 'tooltipLabel').style('opacity', 0);
 
     // Chart
     var chart = d3.timeline()
         .beginning(sDate)
-         .ending(eDate)
+        .ending(eDate)
+        .orient('bottom')
+        .showTimeAxisTick()
+        .rowSeperators('#d9d9d9')
         .stack()
-         .tickFormat(
-            {format: customTimeFormat,
-            tickTime: d3.time.minutes,
-            tickInterval: 1,
-            tickSize: 20})
-        .margin({top: 10, left: 10, bottom: 0, right: 15});
+        .tickFormat(
+            {
+                format: customTimeFormat,
+                tickTime: d3.time.minutes,
+                tickInterval: minutesTick,
+                tickSize: 20
+            })
+        .margin({top: 10, left: 10, bottom: 0, right: 15})
+        .mouseover(function (d, i, datum) {
+
+            if (minutes < LIMIT_LABEL)
+                return;
+
+            tooltip.transition()
+                .duration(100)
+                .style('opacity', 0.9);
+            tooltip.html(datum['times'][i]['name'])
+                .style('left', (d3.event.pageX) + 'px')
+                .style('top', (d3.event.pageY - 28) + 'px');
+        })
+        .mouseout(function (d, i, datum) {
+
+            if (minutes < LIMIT_LABEL)
+                return;
+
+            tooltip.transition()
+                .duration(500)
+                .style('opacity', 0);
+        });
 
     //d3.selectAll('.timeline-label').attr('transform', 'translate(2px,0px)');
 
     d3.select('#grouplabels').append('svg')
-        .attr('width', width+groupLabelMargin.right)
-        .style('margin-left',5)
-        .style('margin-right',0)
+        .attr('width', width + groupLabelMargin.right)
+        .style('margin-left', 5)
+        .style('margin-right', 0)
         .datum(groupLabels).call(chart);
 
 }
 
+function zoomCurrentPoint() {
+    console.log('zoomCurrentPoint');
 
+    if (!_.isUndefined(currentDataPoint) && !_.isUndefined(currentDataPoint.items)) {
+        if (!_.isUndefined(currentDataPoint.items[0])) {
+            var item = currentDataPoint.items[0];
+            map.setZoom(19, {animate: true});
+            map.panTo(item.LatLng, {animate: true});
+        }
+    }
+}
 
 function playSelection() {
     //find the first one with points
     var ranged = brushFilteredDates.bottom(Infinity);
+    var interval = 175; // one second in milliseconds
 
-    for (var i = 0; i < ranged.length; i++) {
-        var d = ranged[i];
-        if (d.items !== undefined) {
-            //setInterval(function () {
-            //console.log('playing...', d.items);
-            drawDataPointOverlay(d);
-
-            //}, 250);
-
+    var i = 0;
+    var makeCallback = function () {
+        // note that we're returning a new callback function each time
+        return function () {
+            if (i < ranged.length) {
+                var d = ranged[i];
+                if (d.items !== undefined) {
+                    drawDataPointOverlay(d);
+                }
+                i++;
+                d3.timer(makeCallback(), interval);
+                return true;
+            }
+            return false;
 
         }
+    };
 
-    }
+    d3.timer(makeCallback(), interval);
     console.log('done');
 }
 
 /**
  * lookup for node colors
  */
-function nodeColorMap(index) {
-   // var colors = ['Red', 'Purple', 'Deep Purple', 'Ingio', 'Light Blue', 'Cyan', 'Green', 'Teal', 'Lime', 'Yellow', 'Orange', 'Deep Orange', 'Brown', 'Grey', 'Blue Grey'];
+function generalColorMap(index) {
+    // var colors = ['Red', 'Purple', 'Deep Purple', 'Ingio', 'Light Blue', 'Cyan', 'Green', 'Teal', 'Lime', 'Yellow', 'Orange', 'Deep Orange', 'Brown', 'Grey', 'Blue Grey'];
 
-    var brewer = ['#1f78b4','#a6cee3','#ccebc5','#33a02c','#fb8072','#fb9a99','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928','#F8B700'];
+    var brewer = ['#1f78b4', '#a6cee3', '#ccebc5', '#33a02c', '#fb8072', '#fb9a99', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#ffff99', '#b15928', '#F8B700'];
     //var c = colors[index];
 
-    if( index > brewer.length ) {
+    if (index > brewer.length) {
         index = 0;
     }
 
     return brewer[index];
 
 }
+
+function nodeColorMap(index) {
+    // var colors = ['Red', 'Purple', 'Deep Purple', 'Ingio', 'Light Blue', 'Cyan', 'Green', 'Teal', 'Lime', 'Yellow', 'Orange', 'Deep Orange', 'Brown', 'Grey', 'Blue Grey'];
+
+    var brewer = ['#33a02c', '#ffffb3', '#e31a1c', '#fb8072', '#80b1d3', '#fdb462', '#b3de69', '#fccde5', '#b15928', '#bc80bd', '#ccebc5', '#ffed6f', '#b15928', '#6a3d9a'];
+    ;
+    //var c = colors[index];
+
+    if (index > brewer.length) {
+        index = 0;
+    }
+
+    return brewer[index];
+
+}
+
+
 

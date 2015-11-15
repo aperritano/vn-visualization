@@ -59,11 +59,11 @@ body {
 
 /*node css*/
 
-.node {
-    /*shape-rendering: crispEdges;*/
-    stroke: #000;
-    stroke-width: 1px;
-}
+/*.node {*/
+    /*!*shape-rendering: crispEdges;*!*/
+    /*stroke: #000;*/
+    /*stroke-width: 1px;*/
+/*}*/
 
 
 path.line_label {
@@ -107,18 +107,18 @@ path.lineConnect {
     /*pointer-events: none;*/
 /*}*/
 
-/*div.tooltipLabel {*/
-    /*position: absolute;*/
-    /*text-align: center;*/
-    /*width: 100px;*/
-    /*height: 30px;*/
-    /*padding: 2px;*/
-    /*font: 12px sans-serif;*/
-    /*background: lightsteelblue;*/
-    /*border: 0px;*/
-    /*border-radius: 8px;*/
-    /*pointer-events: none;*/
-/*}*/
+div.tooltipLabel {
+    position: absolute;
+    text-align: center;
+    width: 100px;
+    height: 15px;
+    padding: 2px;
+    font: 12px sans-serif;
+    background: lightgrey;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+}
 
 .axis path,
 .axis line {
@@ -175,7 +175,22 @@ path.lineConnect {
     box-shadow: 0 0 15px rgba(0,0,0,0.2);
     border-radius: 5px;
 }
+
+.animateOverlay {
+    padding: 6px 8px;
+    font-size: 10px;
+    font-family: "Roboto";
+    background: white;
+    background: rgba(255,255,255,0.8);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+}
 .timeOverlay h4 {
+    margin: auto;
+    color: #404040;
+}
+
+.animateOverlay h4 {
     margin: auto;
     color: #404040;
 }
@@ -208,7 +223,8 @@ div.button-container {
     margin-right: auto;
 }
 
-div.play-button {
+
+div.zoom-button {
     -moz-appearance:button; /* Firefox */
     -webkit-appearance:button; /* Safari and Chrome */
     display: inline-block;
@@ -226,6 +242,32 @@ div.play-button {
     -webkit-border-radius: 2px;
     -webkit-box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
 
+}
+
+div.play-button {
+    -moz-appearance:button; /* Firefox */
+    -webkit-appearance:button; /* Safari and Chrome */
+    /*display: inline-block;*/
+    margin: auto;
+    /*padding: 1px 1px;*/
+    height: 24px;
+    width: 24px;
+    font-size: 24px;
+    line-height: 1px;
+    box-shadow: none;
+    border-radius: 10px;
+    background-color: red;
+    border: 1px solid red;
+    -webkit-appearance: button;
+    -webkit-border-radius: 2px;
+    -webkit-box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+
+}
+
+div.interval-text {
+    margin: auto;
+    width: 24px;
+    text-align: center;
 }
 
 div.blocks {
