@@ -14,6 +14,10 @@ var LIMIT_TICK = 15;
  */
 function getLabelsInRange(dataPoints) {
 
+    //var startTimestamp =  moment(dataPoints[0].timestamp).valueOf();
+    //var endTimestamp = moment(dataPoints[dataPoints.length - 1].timestamp).valueOf();
+    //var minutes = (endTimestamp - startTimestamp)/60;
+
     var startTimestamp = (dataPoints[0].milliseconds);
     var endTimestamp = (dataPoints[dataPoints.length - 1].milliseconds);
     var minutes = (endTimestamp - startTimestamp)/60;
@@ -110,10 +114,12 @@ function getLabelsInRange(dataPoints) {
                         gantGroupMapValue.starting_time = moment(ts.timestamp).valueOf();
                         gantGroupMapValue.ending_time = moment(ts.timestamp).valueOf();
                         gantGroupMapValue.color = ts.labels.color;
-                        if(minutes < LIMIT_LABEL)
+                        if(minutes < LIMIT_LABEL) {
                             gantGroupMapValue.label = ts.labels.label;
-                        else
+                        } else {
                             gantGroupMapValue.name = ts.labels.label;
+                        }
+
                         gantGroupMap.actual = gantGroupMapValue;
 
                     } else {

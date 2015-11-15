@@ -1,9 +1,9 @@
-/*global L, Firebase, timer, d3, moment, dc, _, crossfilter, async, topojson*/
+/*global L, Firebase, timer, d3, Parallel, moment, dc, _, crossfilter, async, topojson*/
 
 
 var mapContainer;
 
-var gpsDataset;
+
 
 //dimensions
 var wHeight = 'innerHeight' in window ? window.innerHeight : document.documentElement.offsetHeight;
@@ -17,9 +17,10 @@ var margin = {top: 10, left: 15, bottom: 20, right: 20};
 var mapSVG;
 var map;
 
-var timestampsDB = new Firebase('https://baboons.firebaseio.com/timestamps');
-var labelsDB = new Firebase('https://baboons.firebaseio.com/labels/0/labels');
-var dictionaryDB = new Firebase('https://baboons.firebaseio.com/labels/0/dictionary');
+// var infoDB = new Firebase('https://baboons.firebaseio.com/info');
+// var timestampsDB = new Firebase('https://baboons.firebaseio.com/timestamps');
+// var labelsDB = new Firebase('https://baboons.firebaseio.com/labels/0/labels');
+// var dictionaryDB = new Firebase('https://baboons.firebaseio.com/labels/0/dictionary');
 
 var dateFormat = '%Y-%m-%d %H:%M:%S';
 var parseDate =
@@ -27,11 +28,12 @@ var parseDate =
 
 var allSubjects;
 var xFilter;
-var dateDimension;
+var byDate;
 var brushFilteredDates;
 
-var labels;
-var dictionary;
+var labels = []
+var dictionary = [];
+var gpsDataset = [];
 
 //overlays for leaflet
 var timeOverlay;
@@ -41,47 +43,191 @@ var animateOverlay;
 
 var currentDataPoint;
 
+var byDate;
+
+var countGroup;
+
+var labelGroup;
+
+var netsGroup;
+
+var m = '500';
+
+var startTime;
+var endTime;
+
+var pgress = 0;
+
+var pbar = new ProgressBar.Line('#pbar', {color: '#BCD7E9'});
+//pbar.setValue(0);
+//pbar.animate(1.0, {
+//    duration: 40000
+//});
+//
+
+function getDictionary() {
+    oboe('https://baboons.firebaseio.com/labels/0/dictionary.json')
+        .node('!.*', function (dict) {
 
 
-var m = '10000';
-
-dictionaryDB.on('value', function (snapshot) {
-
-    if (snapshot.val() !== undefined) {
-        //remove the last object
-        console.log('labels fetched:', new Date());
-        updateDictionaryFromDB(snapshot.val());
-        labelsDB.orderByKey().startAt('0').endAt(m).on('value', function (snapshot) {
-
-            if (snapshot.val() !== undefined) {
-                console.log('labels fetched:',new Date());
-                //remove the last object
-                updateLabelsFromDB(snapshot.val());
+            if (dict !== undefined) {
+                var index = dict.code - 1;
+                dict.color = nodeColorMap(index);
+                dictionary.push(dict);
             }
 
-            timestampsDB.orderByKey().startAt('0').endAt(m).on('value', function (snapshot) {
-                console.log('Timestamp fetched:', new Date());
-                if (snapshot.val() !== undefined) {
-                    //remove the last object
 
-                    updateDataFromDB(snapshot.val());
+            return oboe.drop;
+        })
+        .done(function (finaljson) {
+            //console.log('dictionary',dictionary);
+            console.log('done with dict, starting timestamps');
+        });
+}
 
+function getLabels() {
+    oboe('https://baboons.firebaseio.com/labels/0/labels.json')
+        .node('!.*', function (label) {
+            labels.push(label);
+            return oboe.drop;
+        })
+        .done(function (finaljson) {
+            //console.log('labels',labels);
+            console.log('done with labels, starting timestamps');
+            doTimestampFetch();
+        });
+}
+
+function doTimestampFetch() {
+
+    var pgress = 0;
+    oboe('https://baboons.firebaseio.com/timestamps.json')
+        .node('!.*', function (t) {
+            if (t.timestamp === undefined) {
+            } else {
+
+                pgress = pgress + .00005;
+                console.log(pgress);
+                pbar.animate(pgress);
+                try {             
+                    if (t.items !== null || t.items !== undefined || t.items[0] !== undefined && t.items[0] !== null) {
+                        if (isNaN(+t.items.length) === true) {
+                            t.items = [];
+                            t.count = 0;
+                            t.edges = [];
+                            t.labels = {};
+                        } else {
+                            t.count = +t.items.length;
+                            var found = FindItemBinarySearch(labels, t.timestamp);
+                            if( found !== -1 ) {
+                                var label = labels[found];
+                                t.labels = label;
+                                var index = t.labels.label - 1;
+                                var dictionaryLabel = dictionary[index];
+                                //merge
+                                t.labels.code = dictionaryLabel.code;
+                                t.labels.color = dictionaryLabel.color;
+                                t.labels.label = dictionaryLabel.label;
+                            }  else {
+                                t.labels = {};
+                            }
+                            if( _.isUndefined(t.edges) || _.isEmpty(t.edges) ) {
+                                t.edges = [];
+                            }                                       
+                        }
+                    } else {
+                        t.items = [];
+                        t.count = 0;
+                        t.labels = {};
+                        t.edges = [];
+                    }
+                                        
+                    t.timestamp = parseDate(t.timestamp);
+
+                    gpsDataset.push(t);
+                    //console.log(t);
+                } catch (e) {
+                    if (e instanceof TypeError) {
+                        t.count = 0;
+                        t.items = [];
+                        t.labels = {};
+                        t.edges = [];
+                        gpsDataset.push(t);
+                        //console.log(t);
+                        //console.info('datum TypeError Exception timestamp: ', d.timestamp);
+                    }
                 }
+            }
 
-            }, function (errorObject) {
-                console.log('The read failed: ' + errorObject.code);
+            return oboe.drop;
+        })
+        .done(function (finaljson) {
+            pbar.animate(1);
+            pbar.destroy();
+            console.log('all done');
+            xFilter = crossfilter(gpsDataset);
+
+
+            allSubjects = xFilter.groupAll();
+
+            byDate = xFilter.dimension(function (d) {
+
+                return d.timestamp;
             });
 
-        }, function (errorObject) {
-            console.log('The read failed: ' + errorObject.code);
+            countGroup = byDate.group().reduceSum(function (d) {
+                return d.count;
+            });
+
+            labelsGroup = byDate.group().reduceSum(function (d) {
+                if( !_.isEmpty(d.labels)) {
+                    return 5;
+                }
+                return 0;
+            });
+
+
+            netsGroup = byDate.group().reduceSum(function (d) {
+                if(d.edges.length !== 0) {
+                    return d.edges.length/2;
+                }
+                return 0;
+            });
+
+
+
+            initMapLeaflet();
+            createMainTimeline('init');
+
+
         });
+}
+
+function FindItemBinarySearch(items, value) {
+    var startIndex  = 0,
+        stopIndex   = items.length - 1,
+        middle      = Math.floor((stopIndex + startIndex)/2);
+
+    while(items[middle].timestamp != value && startIndex < stopIndex){
+
+        //adjust search area
+        if (value < items[middle].timestamp){
+            stopIndex = middle - 1;
+        } else if (value > items[middle].timestamp){
+            startIndex = middle + 1;
+        }
+
+        //recalculate middle
+        middle = Math.floor((stopIndex + startIndex)/2);
     }
-}, function (errorObject) {
-    console.log('The read failed: ' + errorObject.code);
-});
 
+    //make sure it's the right value
+    return (items[middle].timestamp != value) ? -1 : middle;
 
-initMapLeaflet();
+}
+
+getDictionary();
+getLabels();
 
 //var k = 1;
 //readStartEndValue();
@@ -96,119 +242,7 @@ initMapLeaflet();
 
 /*** functions ******/
 
-function updateDictionaryFromDB(d) {
-    //console.log('D',d);
-    for(var i = 0; i < d.length; i++) {
-        if(!_.isUndefined(d[i])) {
-            d[i].color = generalColorMap(i);
-        }
-    }
-    dictionary = d;
-    console.log('dictionary',dictionary);
-}
 
-function updateLabelsFromDB(l) {
-    labels = l;
-    console.log('LABELS',labels);
-}
-
-
-/**
- * updates when firebase returns
- *
- * @param items
- */
-function updateDataFromDB(items) {
-
-    var i = 0;
-
-    //there is no timeline available create one
-    if (gpsDataset === undefined || gpsDataset[0] === undefined) {
-        gpsDataset = items;
-        async.each(gpsDataset, function (d, callback) {
-            try {
-                if (d.timestamp === undefined) {
-                } else {
-
-                    //finds the label that matches the timestamp
-                    var foundTimestamps = labels.filter(function (l) {
-                        if (l.timestamp === d.timestamp) {
-                            return true;
-                        }
-                        return false;
-
-                    });
-
-                    //if we found a matching timestamp
-                    if (foundTimestamps[0] !== undefined) {
-                        //finds the dictionary l
-                        var foundDictionary = dictionary.filter(function (k) {
-
-                            if (foundTimestamps[0].label === k.code) {
-
-                               // console.log('FOUND label ', k.code, k);
-                                return true;
-                            }
-
-                            return false;
-
-                        });
-                        //if we found a dictionary entry
-                        if (foundDictionary[0] !== undefined) {
-                            d.labels = foundDictionary[0];
-                        }
-                    } else {
-                        d.labels = {};
-                    }
-                    d.date = parseDate(d.timestamp);
-                }
-                if (d.items !== null || d.items !== undefined || d.items[0] !== undefined && d.items[0] !== null) {
-                    if (isNaN(+d.items.length) === true) {
-                        d.items = [];
-                        d.count = 0;
-                    } else {
-                        d.count = +d.items.length;
-                    }
-                } else {
-                    d.items = [];
-                    d.count = 0;
-                    ///d.label
-                }
-
-                if (d.edges === null || d.edges === undefined || d.edges[0] === undefined && d.edges[0] === null) {
-                    d.edges = [];
-                }
-            } catch (e) {
-                if (e instanceof TypeError) {
-                    d.items = [];
-                    //console.info('datum TypeError Exception timestamp: ', d.timestamp);
-                    d.count = 0;
-                }
-            }
-            callback();
-        }, function (err) {
-
-            // if any of the file processing produced an error, err would equal that error
-            xFilter = crossfilter(gpsDataset);
-
-            allSubjects = xFilter.groupAll();
-
-            dateDimension = xFilter.dimension(function (d) {
-                return d.date;
-            });
-
-
-            //create map
-            initLeafletOverlays();
-            //create timeline
-            createMainTimeline();
-        });
-    } else {
-        //update timeline
-        //update map
-    }
-
-}
 
 
 /**
@@ -223,7 +257,7 @@ function initLeafletOverlays() {
 
 function initDataPointOverlay() {
 
-    var firstPoint = dateDimension.bottom(1)[0];
+    var firstPoint = byDate.bottom(1)[0];
 
 
     if (firstPoint.items !== undefined) {
@@ -282,8 +316,6 @@ function drawDataPointOverlay(dataPoint) {
     });
 
 
-
-
     var toLine = d3.svg.line()
         .interpolate('linear')
         .x(function (d) {
@@ -294,17 +326,7 @@ function drawDataPointOverlay(dataPoint) {
         });
 
 
-
-
-
     // Define the div for the tooltip
-    var div = d3.select('#tooltip').append('div')
-        .attr('class', 'tooltip')
-        .style('opacity', 0);
-
-
-
-
 
 
     //remove old ones
@@ -342,7 +364,7 @@ function drawDataPointOverlay(dataPoint) {
 
         circles.enter().append('circle')
             .attr('class', 'node')
-            .attr('id', function(d) {
+            .attr('id', function (d) {
                 return d.id;
             })
             .attr('lon', function (d) {
@@ -353,28 +375,33 @@ function drawDataPointOverlay(dataPoint) {
             })
             .attr('r', 6)
             .style('stroke-width', function (d) {
-                if(_.isEmpty(d.labels)) {
+                if (_.isEmpty(d.labels)) {
                     return 2;
                 } else {
                     return 4;
                 }
             })
             .style('stroke', function (d, i) {
-                if(_.isEmpty(d.labels)) {
+                if (_.isEmpty(d.labels)) {
                     return nodeColorMap(i);
                 } else {
                     return d.labels.color;
                 }
 
             })
-            .style('fill', function(d, i) {
+            .style('fill', function (d, i) {
                 return nodeColorMap(i);
             })
             .style('fill-opacity', 1.0)
             .on('mouseover', function (d) {
+
+                var div = d3.select('#tooltip').append('div')
+                    .attr('class', 'tooltip')
+                    .style('opacity', 0);
+
                 div.transition()
                     .duration(100)
-                    .style('opacity', 0.9);
+                    .style('opacity', 1.0);
                 div.html(d.id + '<br/>' + d3.format('.4g')(d.lat) + ',' + d3.format('.4g')(d.lon))
                     .style('left', (d3.event.pageX) + 'px')
                     .style('top', (d3.event.pageY - 28) + 'px');
@@ -385,8 +412,8 @@ function drawDataPointOverlay(dataPoint) {
                     .style('opacity', 0);
             });
 
-            //.transition()
-            //.duration(500);
+        //.transition()
+        //.duration(500);
 
 
         d3.transition(circles)
@@ -412,7 +439,6 @@ function drawDataPointOverlay(dataPoint) {
         //}
 
 
-
     }
 
 }
@@ -424,9 +450,10 @@ function drawDataPointOverlay(dataPoint) {
 function initMapLeaflet() {
 
     var m = document.getElementById('map');
+    m.style.display = 'block';
 
     var width = wWidth - margin.right - margin.left;
-    var height = wHeight * 0.6;
+    var height = wHeight * 0.5;
 
 
     var mapLeafletWidth = width;
@@ -449,7 +476,11 @@ function initMapLeaflet() {
     //map.keyboard.disable();
     //map.dragging.disable();
 
-    L.tileLayer('http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
+    //var Esri_WorldImagery = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    //    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    //});
+
+    L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 18,
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
@@ -476,16 +507,16 @@ function initMapLeaflet() {
 
     timeOverlay = L.control({position: 'bottomleft'});
 
-    timeOverlay.onAdd = function() {
+    timeOverlay.onAdd = function () {
         timeOverlayDIV = L.DomUtil.create('div', 'timeOverlay');
 
         timeOverlay.update();
         return timeOverlayDIV;
     };
 
-    timeOverlay.update = function() {
+    timeOverlay.update = function () {
 
-        if( !_.isUndefined(timeOverlayProps.startTime) || !_.isUndefined(timeOverlayProps.endTime) ) {
+        if (!_.isUndefined(timeOverlayProps.startTime) || !_.isUndefined(timeOverlayProps.endTime)) {
             var t1 = timeOverlayProps.startTime.format('LTS M/D/YY');
             var t2 = timeOverlayProps.endTime.format('LTS M/D/YY');
 
@@ -504,23 +535,23 @@ function initMapLeaflet() {
 
     buttonOverlay = L.control({position: 'topleft'});
 
-    buttonOverlay.onAdd = function() {
+    buttonOverlay.onAdd = function () {
         buttonDIV = L.DomUtil.create('div', 'buttonOverlay');
 
         buttonOverlay.update();
         return buttonDIV;
     };
 
-    buttonOverlay.update = function() {
+    buttonOverlay.update = function () {
 
 
-            var div = document.getElementById('zoom-panel');
-            var zoomButton = document.getElementById('zoom-point');
-            zoomButton.onclick = function(){
-                zoomCurrentPoint();
-            };
-            div.style.display = 'block';
-            buttonDIV.appendChild(div);
+        var div = document.getElementById('zoom-panel');
+        var zoomButton = document.getElementById('zoom-point');
+        zoomButton.onclick = function () {
+            zoomCurrentPoint();
+        };
+        div.style.display = 'block';
+        buttonDIV.appendChild(div);
 
     };
 
@@ -530,16 +561,16 @@ function initMapLeaflet() {
 
     animateOverlay = L.control({position: 'bottomright'});
 
-    animateOverlay.onAdd = function() {
+    animateOverlay.onAdd = function () {
         animateOverlayDIV = L.DomUtil.create('div', 'animateOverlay');
 
         animateOverlay.update();
         return animateOverlayDIV;
     };
 
-    animateOverlay.update = function() {
+    animateOverlay.update = function () {
 
-        if( !_.isUndefined(currentDataPoint)) {
+        if (!_.isUndefined(currentDataPoint)) {
             var t1 = moment(currentDataPoint.timestamp).format('LTS M/D/YY');
 
             var div = document.getElementById('animate-panel');
@@ -547,7 +578,7 @@ function initMapLeaflet() {
 
 
             var playButton = document.getElementById('play');
-            playButton.onclick = function(){
+            playButton.onclick = function () {
                 playSelection();
             };
             div.style.display = 'block';
@@ -636,93 +667,83 @@ function handleCountryOverlayControl() {
  *
  * @param items - that complete dataset
  3 */
-function createMainTimeline() {
+function createMainTimeline(flag) {
 
-    var margin = {top: 10, left: 15, bottom: 20, right: 20};
+    if (flag === 'init') {
+        var margin = {top: 10, left: 15, bottom: 20, right: 20};
         //width = wWidth - margin.left - margin.right,
-    var height = 100 - margin.top - margin.bottom;
+        var height = 100 - margin.top - margin.bottom;
 
 
-    var t2 = dateDimension.top(1)[0];
-    var t1 = dateDimension.bottom(1)[0];
+        var t2 = byDate.top(1)[0];
+        var t1 = byDate.bottom(1)[0];
 
-    var tStart = moment(t1.timestamp).toDate();
-    var tEnd = moment(t2.timestamp).toDate();
-    var t5 = moment(t1.timestamp).add(2, 'm').toDate();
+        var tStart = moment(t1.timestamp).toDate();
+        var tEnd = moment(t2.timestamp).toDate();
+        var t5 = moment(t1.timestamp).add(2, 'm').toDate();
 
-    //update the props
+        //update the props
 
-    timeOverlayProps.startTime = moment(t1.timestamp);
-    timeOverlayProps.endTime = moment(t1.timestamp).add(5, 'm');
-    timeOverlay.update();
+        timeOverlayProps.startTime = moment(tStart);
+        timeOverlayProps.endTime = moment(tEnd).add(5, 'm');
+        timeOverlay.update();
+
+        var combined = dc.compositeChart('#main-timeline');
+
+        var stackCharts = dc.lineChart(combined)
+            .ordinalColors([generalColorMap(0),generalColorMap(4),generalColorMap(6)])
+            .renderArea(true)
+            .group(countGroup)            
+            .stack(labelsGroup)
+            .stack(netsGroup)
+            .elasticX(true)
+            .elasticY(true)
+            .useRightYAxis(true)
+            .on('filtered', brushing);
+
+        combined
+            .width(wWidth)
+            .height(height)
+            .margins(margin)
+            .dimension(byDate)
+            .brushOn(true)
+            .x(d3.time.scale().domain([tStart, tEnd]));
+
+        combined.compose([stackCharts]);
+
+        //console.log('stackCharts.yAxisMax()',stackCharts.yAxisMax());
+        combined.compose([stackCharts]).rightYAxis().tickValues([stackCharts.yAxisMax()]);
+
+        combined.filter(dc.filters.RangedFilter(tStart, t5));
+
+        combined.on('filtered', brushing);
+
+        dc.renderAll();
+
+        updateLabelTimeline(tStart, t5);
+
+    } else if (flag === 'update') {
+
+    }
 
 
-    var byDate = xFilter.dimension(function (d) {
-        return d.date;
-    });
-
-
-    var countGroup = byDate.group().reduceSum(function (d) {
-        return d.count;
-    });
-
-    var labelGroup = byDate.group().reduceSum(function (d) {
-        if (_.isEmpty(d.labels)) {
-            return 0;
-        } else {
-            return 3;
-        }
-    });
-
-    var netsGroup = byDate.group().reduceSum(function (d) {
-        if (d.edges === undefined) {
-            return 0;
-        } else {
-            return d.edges.length;
-        }
-    });
-
-    var combined = dc.compositeChart('#main-timeline');
-
-    var stackCharts = dc.lineChart(combined)
-        .ordinalColors([generalColorMap(0), generalColorMap(11), generalColorMap(12)])
-        .renderArea(true)
-        .group(labelGroup)
-        .stack(countGroup)
-        .stack(netsGroup)
-        .elasticX(true)
-        .elasticY(true)
-        .useRightYAxis(true)
-        .on('filtered', brushing);
-
-    combined
-        .width(wWidth)
-        .height(height)
-        .margins(margin)
-        .dimension(byDate)
-        .brushOn(true)
-        .x(d3.time.scale().domain([tStart, tEnd]));
-
-    combined.compose([stackCharts]).rightYAxis().tickValues([stackCharts.yAxisMax()]);
-
-    combined.filter(dc.filters.RangedFilter(tStart, t5));
-
-    combined.on('filtered', brushing);
-
-    dc.renderAll();
-
-    updateLabelTimeline(tStart, t5);
+    
 
 
     function brushing(chart, filter) {
-       // console.log('we are brushing', _.isNull(filter), _.isNull(chart));
+        // console.log('we are brushing', _.isNull(filter), _.isNull(chart));
 
         if (_.isNull(filter)) {
         } else {
 
+            var p = new Parallel(filter);
+
+            // Spawn a remote job (we'll see more on how to use then later)
+
             var t1 = filter[0];
             var t2 = filter[1];
-            brushFilteredDates = dateDimension.filterRange([t1, t2]);
+
+            brushFilteredDates = byDate.filterRange([t1, t2]);
 
             var point = brushFilteredDates.bottom(1)[0];
 
@@ -744,7 +765,7 @@ function updateLabelTimeline(tStart, tEnd) {
 
     //get data for timeline
 
-    var defaultRangeFilter = dateDimension.filterRange([tStart, tEnd]);
+    var defaultRangeFilter = byDate.filterRange([tStart, tEnd]);
     var allDefaultRangeDates = defaultRangeFilter.bottom(Infinity);
 
     var labelsTuple = getLabelsInRange(allDefaultRangeDates);
@@ -753,19 +774,19 @@ function updateLabelTimeline(tStart, tEnd) {
 
     var sDate = moment(tStart).valueOf();
     var eDate = moment(tEnd).valueOf();
-    var minutes = (eDate - sDate)/1000/60;
+    var minutes = (eDate - sDate) / 1000 / 60;
 
     var minutesTick = 1;
-    if (minutes > LIMIT_TICK && minutes <= LIMIT_TICK*2) {
+    if (minutes > LIMIT_TICK && minutes <= LIMIT_TICK * 2) {
         minutesTick = 5;
     }
-    if (minutes > LIMIT_TICK*2 && minutes <= LIMIT_TICK*4) {
+    if (minutes > LIMIT_TICK * 2 && minutes <= LIMIT_TICK * 4) {
         minutesTick = 15;
     }
-    if (minutes > LIMIT_TICK*4 && minutes <= LIMIT_TICK*8) {
+    if (minutes > LIMIT_TICK * 4 && minutes <= LIMIT_TICK * 8) {
         minutesTick = 30;
     }
-    if (minutes > LIMIT_TICK*8) {
+    if (minutes > LIMIT_TICK * 8) {
         minutesTick = 60;
     }
 
@@ -810,17 +831,22 @@ function updateLabelTimeline(tStart, tEnd) {
     // Chart
     var chart = d3.timeline()
         .beginning(sDate)
-         .ending(eDate)
+        .ending(eDate)
+        .orient('bottom')
+        .showTimeAxisTick()
+        .rowSeperators('#d9d9d9')
         .stack()
-         .tickFormat(
-            {format: customTimeFormat,
-            tickTime: d3.time.minutes,
-            tickInterval: minutesTick,
-            tickSize: 20})
+        .tickFormat(
+            {
+                format: customTimeFormat,
+                tickTime: d3.time.minutes,
+                tickInterval: minutesTick,
+                tickSize: 20
+            })
         .margin({top: 10, left: 10, bottom: 0, right: 15})
         .mouseover(function (d, i, datum) {
 
-            if(minutes < LIMIT_LABEL)
+            if (minutes < LIMIT_LABEL)
                 return;
 
             tooltip.transition()
@@ -832,7 +858,7 @@ function updateLabelTimeline(tStart, tEnd) {
         })
         .mouseout(function (d, i, datum) {
 
-            if(minutes < LIMIT_LABEL)
+            if (minutes < LIMIT_LABEL)
                 return;
 
             tooltip.transition()
@@ -843,9 +869,9 @@ function updateLabelTimeline(tStart, tEnd) {
     //d3.selectAll('.timeline-label').attr('transform', 'translate(2px,0px)');
 
     d3.select('#grouplabels').append('svg')
-        .attr('width', width+groupLabelMargin.right)
-        .style('margin-left',5)
-        .style('margin-right',0)
+        .attr('width', width + groupLabelMargin.right)
+        .style('margin-left', 5)
+        .style('margin-right', 0)
         .datum(groupLabels).call(chart);
 
 }
@@ -853,10 +879,10 @@ function updateLabelTimeline(tStart, tEnd) {
 function zoomCurrentPoint() {
     console.log('zoomCurrentPoint');
 
-    if(!_.isUndefined(currentDataPoint) && !_.isUndefined(currentDataPoint.items)) {
-        if( !_.isUndefined(currentDataPoint.items[0]) ) {
+    if (!_.isUndefined(currentDataPoint) && !_.isUndefined(currentDataPoint.items)) {
+        if (!_.isUndefined(currentDataPoint.items[0])) {
             var item = currentDataPoint.items[0];
-                map.setZoom(19, {animate: true});
+            map.setZoom(19, {animate: true});
             map.panTo(item.LatLng, {animate: true});
         }
     }
@@ -868,10 +894,10 @@ function playSelection() {
     var interval = 175; // one second in milliseconds
 
     var i = 0;
-    var makeCallback = function() {
+    var makeCallback = function () {
         // note that we're returning a new callback function each time
-        return function() {
-            if( i < ranged.length) {
+        return function () {
+            if (i < ranged.length) {
                 var d = ranged[i];
                 if (d.items !== undefined) {
                     drawDataPointOverlay(d);
@@ -895,10 +921,10 @@ function playSelection() {
 function generalColorMap(index) {
     // var colors = ['Red', 'Purple', 'Deep Purple', 'Ingio', 'Light Blue', 'Cyan', 'Green', 'Teal', 'Lime', 'Yellow', 'Orange', 'Deep Orange', 'Brown', 'Grey', 'Blue Grey'];
 
-    var brewer = ['#1f78b4','#a6cee3','#ccebc5','#33a02c','#fb8072','#fb9a99','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928','#F8B700'];
+    var brewer = ['#1f78b4', '#a6cee3', '#ccebc5', '#33a02c', '#fb8072', '#fb9a99', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#ffff99', '#b15928', '#F8B700'];
     //var c = colors[index];
 
-    if( index > brewer.length ) {
+    if (index > brewer.length) {
         index = 0;
     }
 
@@ -909,11 +935,11 @@ function generalColorMap(index) {
 function nodeColorMap(index) {
     // var colors = ['Red', 'Purple', 'Deep Purple', 'Ingio', 'Light Blue', 'Cyan', 'Green', 'Teal', 'Lime', 'Yellow', 'Orange', 'Deep Orange', 'Brown', 'Grey', 'Blue Grey'];
 
-    var brewer = ['#33a02c','#ffffb3','#e31a1c','#fb8072','#80b1d3','#fdb462','#b3de69','#fccde5','#ff7f00','#bc80bd','#ccebc5','#ffed6f','#b15928','#6a3d9a'];
-;
+    var brewer = ['#33a02c', '#ffffb3', '#e31a1c', '#fb8072', '#80b1d3', '#fdb462', '#b3de69', '#fccde5', '#b15928', '#bc80bd', '#ccebc5', '#ffed6f', '#b15928', '#6a3d9a'];
+    ;
     //var c = colors[index];
 
-    if( index > brewer.length ) {
+    if (index > brewer.length) {
         index = 0;
     }
 
