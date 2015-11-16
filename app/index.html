@@ -19,6 +19,7 @@
 </head>
 <body>
 <span id="browser-sync-binding"></span>
+<div id="pbar"></div>
 <div id="control-panel" style="display: none">
     <h4 align="center">Brush Range</h4>
     <span id="start-time">Start:&nbsp</span><br>
@@ -36,7 +37,7 @@
     <div id="zoom-point" class="zoom-button"><i class="material-icons">explore</i></div>
 </div>
 <div id="tooltip"></div>
-<div id="map"></div>
+<div id="map" style="display: none"></div>
 
 <div id="main-timeline"></div>
 <div id="grouplabels"></div>
@@ -60,10 +61,12 @@
 <script src="../bower_components/firebase/firebase.js"></script>
 <script src="../bower_components/crossfilter2/crossfilter.min.js"></script>
 <script src="../bower_components/underscore/underscore-min.js"></script>
+<script src="../bower_components/progressbar.js/dist/progressbar.min.js "></script>
+<script src='../bower_components/oboe/dist/oboe-browser.min.js'></script>
+
 <script src="dcjs/d3-timeline.js"></script>
 <script src="dcjs/dc.js"></script>
-<script src="../bower_components/reductio/reductio.min.js"></script>
-
+<script src="../node_modules/paralleljs/lib/parallel.js"></script>
 <script src="../bower_components/leaflet/dist/leaflet.js"></script>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
