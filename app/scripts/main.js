@@ -1,4 +1,4 @@
-/*global L, Firebase, timer, d3, Parallel, moment, dc, _, crossfilter, async, topojson*/
+/*global L, Firebase, timer, d3, oboe, Parallel, moment, dc, _, crossfilter, async, topojson*/
 
 
 var mapContainer;
@@ -57,6 +57,7 @@ var startTime;
 var endTime;
 
 var pgress = 0;
+var isPlaying = false;
 
 var pbar = new ProgressBar.Line('#pbar', {color: '#BCD7E9'});
 //pbar.setValue(0);
@@ -81,6 +82,8 @@ function getDictionary() {
         })
         .done(function (finaljson) {
             //console.log('dictionary',dictionary);
+            pgress = pgress + .1;
+            pbar.animate(pgress);
             console.log('done with dict, starting timestamps');
         });
 }
@@ -94,19 +97,34 @@ function getLabels() {
         .done(function (finaljson) {
             //console.log('labels',labels);
             console.log('done with labels, starting timestamps');
+            pgress = pgress + .1;
+            pbar.animate(pgress);
             doTimestampFetch();
         });
 }
 
+var max = 500;
+var counter = 0;
+
 function doTimestampFetch() {
 
-    var pgress = 0;
+
     oboe('https://baboons.firebaseio.com/timestamps.json')
         .node('!.*', function (t) {
+
+            counter++;
+            console.log(counter);
+            if( counter === max) {
+
+
+                doneTimestamps();
+                this.abort();
+                return;
+            }
             if (t.timestamp === undefined) {
             } else {
 
-                pgress = pgress + .00005;
+                pgress = pgress + .000042;
                 console.log(pgress);
                 pbar.animate(pgress);
                 try {             
@@ -162,45 +180,49 @@ function doTimestampFetch() {
             return oboe.drop;
         })
         .done(function (finaljson) {
-            pbar.animate(1);
-            pbar.destroy();
-            console.log('all done');
-            xFilter = crossfilter(gpsDataset);
 
-
-            allSubjects = xFilter.groupAll();
-
-            byDate = xFilter.dimension(function (d) {
-
-                return d.timestamp;
-            });
-
-            countGroup = byDate.group().reduceSum(function (d) {
-                return d.count;
-            });
-
-            labelsGroup = byDate.group().reduceSum(function (d) {
-                if( !_.isEmpty(d.labels)) {
-                    return 5;
-                }
-                return 0;
-            });
-
-
-            netsGroup = byDate.group().reduceSum(function (d) {
-                if(d.edges.length !== 0) {
-                    return d.edges.length/2;
-                }
-                return 0;
-            });
-
-
-
-            initMapLeaflet();
-            createMainTimeline('init');
-
-
+            doneTimestamps();
         });
+}
+
+function doneTimestamps() {
+    pbar.animate(1);
+    pbar.destroy();
+    console.log('all done');
+    xFilter = crossfilter(gpsDataset);
+
+
+    allSubjects = xFilter.groupAll();
+
+    byDate = xFilter.dimension(function (d) {
+
+        return d.timestamp;
+    });
+
+    countGroup = byDate.group().reduceSum(function (d) {
+        return d.count;
+    });
+
+    labelsGroup = byDate.group().reduceSum(function (d) {
+        if( !_.isEmpty(d.labels)) {
+            return 5;
+        }
+        return 0;
+    });
+
+
+    netsGroup = byDate.group().reduceSum(function (d) {
+        if(d.edges.length !== 0) {
+            return d.edges.length/2;
+        }
+        return 0;
+    });
+
+
+
+    initMapLeaflet();
+    createMainTimeline('init');
+
 }
 
 function FindItemBinarySearch(items, value) {
@@ -268,25 +290,23 @@ function initDataPointOverlay() {
 }
 
 function drawDataPointOverlay(dataPoint) {
-
     currentDataPoint = dataPoint;
-
     animateOverlay.update();
 
-    if (_.isUndefined(dataPoint) || _.isUndefined(dataPoint.items)) {
+    if (_.isUndefined(currentDataPoint) || _.isUndefined(currentDataPoint.items)) {
         console.log('undefined datapoint');
         return;
     }
 
     var links = [];
-    if (dataPoint.edges !== undefined) {
-        dataPoint.edges.forEach(function (net) {
+    if (currentDataPoint.edges !== undefined) {
+        currentDataPoint.edges.forEach(function (net) {
 
-            var s = dataPoint.items.filter(function (d) {
+            var s = currentDataPoint.items.filter(function (d) {
                 return d.id === net[0];
             });
 
-            var t = dataPoint.items.filter(function (d) {
+            var t = currentDataPoint.items.filter(function (d) {
                 return d.id === net[1];
             });
 
@@ -308,10 +328,10 @@ function drawDataPointOverlay(dataPoint) {
     }
 
 
-    var targets = dataPoint.items;
+    var targets = currentDataPoint.items;
 
     targets.forEach(function (d, i) {
-        d.labels = dataPoint.labels;
+        d.labels = currentDataPoint.labels;
         d.LatLng = new L.LatLng(d.lat, d.lon);
     });
 
@@ -537,6 +557,7 @@ function initMapLeaflet() {
 
     buttonOverlay.onAdd = function () {
         buttonDIV = L.DomUtil.create('div', 'buttonOverlay');
+        L.DomEvent.disableClickPropagation(buttonDIV);
 
         buttonOverlay.update();
         return buttonDIV;
@@ -564,7 +585,8 @@ function initMapLeaflet() {
     animateOverlay.onAdd = function () {
         animateOverlayDIV = L.DomUtil.create('div', 'animateOverlay');
 
-        animateOverlay.update();
+        L.DomEvent.disableClickPropagation(animateOverlayDIV);
+        //animateOverlay.update();
         return animateOverlayDIV;
     };
 
@@ -577,10 +599,23 @@ function initMapLeaflet() {
             document.getElementById('current-time').innerHTML = 'Current Time:&nbsp&nbsp' + t1;
 
 
+            //var icon = $('.play');
+            //icon.click(function() {
+            //    icon.toggleClass('active');
+            //    return false;
+            //});
+            //
             var playButton = document.getElementById('play');
             playButton.onclick = function () {
+                playButton.classList.toggle('active');
+                console.log('PLAY');
                 playSelection();
             };
+
+
+
+
+
             div.style.display = 'block';
             animateOverlayDIV.appendChild(div);
         }
@@ -678,6 +713,10 @@ function createMainTimeline(flag) {
         var t2 = byDate.top(1)[0];
         var t1 = byDate.bottom(1)[0];
 
+        //init
+        brushFilteredDates = byDate.filterRange([t1, t2]);
+
+
         var tStart = moment(t1.timestamp).toDate();
         var tEnd = moment(t2.timestamp).toDate();
         var t5 = moment(t1.timestamp).add(2, 'm').toDate();
@@ -721,6 +760,8 @@ function createMainTimeline(flag) {
         dc.renderAll();
 
         updateLabelTimeline(tStart, t5);
+        drawDataPointOverlay(t1);
+
 
     } else if (flag === 'update') {
 
@@ -745,15 +786,14 @@ function createMainTimeline(flag) {
 
             brushFilteredDates = byDate.filterRange([t1, t2]);
 
-            var point = brushFilteredDates.bottom(1)[0];
+            var dataPoint = brushFilteredDates.bottom(1)[0];
 
             timeOverlayProps.startTime = moment(t1);
             timeOverlayProps.endTime = moment(t2);
             timeOverlay.update();
 
-            drawDataPointOverlay(point);
-
-
+            drawDataPointOverlay(dataPoint);
+            zoomCurrentPoint();
             updateLabelTimeline(t1, t2);
         }
 
@@ -882,8 +922,10 @@ function zoomCurrentPoint() {
     if (!_.isUndefined(currentDataPoint) && !_.isUndefined(currentDataPoint.items)) {
         if (!_.isUndefined(currentDataPoint.items[0])) {
             var item = currentDataPoint.items[0];
-            map.setZoom(19, {animate: true});
-            map.panTo(item.LatLng, {animate: true});
+            if( !_.isUndefined(item)) {
+                map.setZoom(19, {animate: true});
+                map.panTo(item.LatLng, {animate: true});
+            }
         }
     }
 }

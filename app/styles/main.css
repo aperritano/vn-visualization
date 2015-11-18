@@ -145,26 +145,9 @@ div.tooltipLabel {
     background-color: gray;
 
 }
-/*.group-labels {*/
-    /*position: relative;*/
-    /*background-color: #e8e8e8;*/
-    /*height: 50px;*/
-    /*top: 50px;*/
-    /*left: 20px;*/
-/*}*/
-/*#timeline2 .axis {*/
-    /*transform: translate(0px,40px);*/
-    /*-ms-transform: translate(0px,40px); !* IE 9 *!*/
-    /*-webkit-transform: translate(0px,40px); !* Safari and Chrome *!*/
-    /*-o-transform: translate(0px,40px); !* Opera *!*/
-    /*-moz-transform: translate(0px,40px); !* Firefox *!*/
-/*}*/
 
-.coloredDiv {
-    height:20px; width:20px; float:left;
-}
 /**
- * Leaflet TimeOverLay
+ * Leaflet overlays
  */
 .timeOverlay {
     padding: 6px 8px;
@@ -176,21 +159,8 @@ div.tooltipLabel {
     border-radius: 5px;
 }
 
-.animateOverlay {
-    padding: 6px 8px;
-    font-size: 10px;
-    font-family: "Roboto";
-    background: white;
-    background: rgba(255,255,255,0.8);
-    box-shadow: 0 0 15px rgba(0,0,0,0.2);
-    border-radius: 5px;
-}
-.timeOverlay h4 {
-    margin: auto;
-    color: #404040;
-}
 
-.animateOverlay h4 {
+.timeOverlay h4 {
     margin: auto;
     color: #404040;
 }
@@ -207,13 +177,6 @@ hr {
     height: 1px;
     background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
 }
-
-/*#play-button {*/
-/*height: 40px;*/
-/*width: 40px;*/
-/*background: #34696f;*/
-/*border: 2px solid rgba(33, 68, 72, 0.59);*/
-/*}*/
 
 div.button-container {
     text-align: left;
@@ -244,24 +207,9 @@ div.zoom-button {
 
 }
 
-div.play-button {
-    -moz-appearance:button; /* Firefox */
-    -webkit-appearance:button; /* Safari and Chrome */
-    /*display: inline-block;*/
-    margin: auto;
-    /*padding: 1px 1px;*/
-    height: 24px;
-    width: 24px;
-    font-size: 24px;
-    line-height: 1px;
-    box-shadow: none;
-    border-radius: 10px;
-    background-color: red;
-    border: 1px solid red;
-    -webkit-appearance: button;
-    -webkit-border-radius: 2px;
-    -webkit-box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
-
+span.interval-line {
+    /* margin-left: 30px; */
+    vertical-align: middle;
 }
 
 div.interval-text {
@@ -277,10 +225,106 @@ div.blocks {
     width: 100px;
 }
 
-/*.play-button:active {*/
-/*display: inline-block;*/
-/*margin: 5px;*/
-/*height: 24px;*/
-/*width: 24px;*/
-/*border: 1px solid grey;*/
-/*}*/
+.animateOverlay h4 {
+    margin: auto;
+    color: #404040;
+}
+
+.animateOverlay {
+    padding: 6px 8px;
+    font-size: 10px;
+    font-family: "Roboto";
+    background: white;
+    background: rgba(255,255,255,0.8);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+}
+
+.play {
+    display: block;
+    width: 0;
+    height: 0;
+    border-top: 17px solid transparent;
+    border-bottom: 17px solid transparent;
+    border-left: 20px solid #404040;
+    margin-top: 15px;
+    /* margin-left: 10px; */
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s;
+    -webkit-transition: all 0.3s;
+    -moz-transition: all 0.3s;
+    /* left: 10px; */
+}
+.play:before {
+    content: '';
+    position: absolute;
+    top: -25px;
+    left: -38.0px;
+    bottom: -25px;
+    right: -12px;
+    border-radius: 50%;
+    border: 3px solid #404040;
+    z-index: 2;
+    transition: all 0.3s;
+    -webkit-transition: all 0.3s;
+    -moz-transition: all 0.3s;
+}
+.play:after {
+    content: '';
+    opacity: 0;
+    transition: opacity 0.6s;
+    -webkit-transition: opacity 0.6s;
+    -moz-transition: opacity 0.6s;
+}
+.play:hover:before, .play:focus:before {
+    transform: scale(1.1);
+    -webkit-transform: scale(1.1);
+    -moz-transform: scale(1.1);
+}
+.play.active {
+    border-color: transparent;
+}
+.play.active:after {
+    content: '';
+    opacity: 1;
+    width: 17px;
+    height: 27px;
+    background: #404040;
+    position: absolute;
+    right: 1px;
+    /* left: 2px; */
+    top: -13px;
+    border-left: 7px solid #404040;
+    box-shadow: inset 10px 0 0 0 #404040;
+}
+
+input[type=text], textarea {
+    -moz-transition: all 0.3s ease-in-out;
+    -o-transition: all 0.3s ease-in-out;
+    -webkit-transition: all 0.3s ease-in-out;
+    transition: all 0.3s ease-in-out;
+    outline: none;
+    padding: 3px 3px 3px 3px;
+    margin: 3px 3px 3px 3px;
+    border: 1px solid #DDDDDD;
+    vertical-align: middle;
+    /* text-align: right; */
+}
+
+input[type=text]:focus, textarea:focus {
+    -moz-box-shadow: 0 0 5px #51cbee;
+    -webkit-box-shadow: 0 0 5px #51cbee;
+    box-shadow: 0 0 5px #51cbee;
+    padding: 3px 3px 3px 3px;
+    margin: 3px 3px 3px 3px;
+    border: 1px solid #51cbee;
+}
+
+label {
+    /* width: 150px; */
+    /* float: left; */
+    line-height: 2.4;
+    vertical-align: middle;
+}

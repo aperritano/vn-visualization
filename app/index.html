@@ -28,10 +28,16 @@
 </div>
 <div id="animate-panel" style="display: none">
     <h4 align="center">Animate Range</h4>
-    <span id="current-time">Current:&nbsp</span><br>
+    <div align="center">
+    <a  id="play" href="#" title="Play video" class="play"></a>
+    </div>
     <hr>
-    <span><div id="play" class="play-button"><i class="material-icons">play_arrow</i></div></span>
-    <span><div id="interval-text">1 sec (interval)</div></span>
+
+    <span class="interval-line"><label for="interval">Interval Time (sec):</label><input type="text" name="interval" id="interval" value="1" tabindex="1" size="7" maxlength="7" autocomplete="off"/>
+
+</span>
+    <br>
+    <span id="current-time">Current:&nbsp</span><br>
 </div>
 <div id="zoom-panel" style="display: none">
     <div id="zoom-point" class="zoom-button"><i class="material-icons">explore</i></div>
@@ -68,6 +74,15 @@
 <script src="dcjs/dc.js"></script>
 <script src="../node_modules/paralleljs/lib/parallel.js"></script>
 <script src="../bower_components/leaflet/dist/leaflet.js"></script>
+
+<!--ESRI-->
+<!--<script src="../bower_components/esri-leaflet/dist/esri-leaflet.js"></script>-->
+<!--<script src="../bower_components/esri-leaflet/dist/builds/map-service/esri-leaflet-map-service.js"></script>-->
+<!--<script src="../bower_components/esri-leaflet/dist/builds/basemaps/esri-leaflet-basemaps.js"></script>-->
+<!--<script src="../bower_components/esri-leaflet/dist/builds/core/esri-leaflet-core.js"></script>-->
+<!--<script src="../bower_components/esri-leaflet/dist/builds/image-service/esri-leaflet-image-service.js"></script>-->
+
+
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
