@@ -4,7 +4,6 @@
   "description": "visualizing networks",
   "main": "gulp.js",
   "dependencies": {
-    "d3-timer": "0.0.5",
     "gulp-plumber": "^1.0.1",
     "paralleljs": "^0.2.1",
     "predicate": "^0.12.0"

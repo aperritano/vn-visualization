@@ -1,8 +1,7 @@
-/*global L, Firebase, timer, d3, oboe, Parallel, moment, dc, _, crossfilter, async, topojson*/
+/*global L, Firebase, d3, oboe, Parallel, moment, dc, _, crossfilter, async, topojson*/
 
 
 var mapContainer;
-
 
 
 //dimensions
@@ -31,7 +30,7 @@ var xFilter;
 var byDate;
 var brushFilteredDates;
 
-var labels = []
+var labels = [];
 var dictionary = [];
 var gpsDataset = [];
 
@@ -58,6 +57,7 @@ var endTime;
 
 var pgress = 0;
 var isPlaying = false;
+var animateTimer;
 
 var pbar = new ProgressBar.Line('#pbar', {color: '#BCD7E9'});
 //pbar.setValue(0);
@@ -112,9 +112,9 @@ function doTimestampFetch() {
     oboe('https://baboons.firebaseio.com/timestamps.json')
         .node('!.*', function (t) {
 
-            counter++;
+
             console.log(counter);
-            if( counter === max) {
+            if (counter === max) {
 
 
                 doneTimestamps();
@@ -127,7 +127,7 @@ function doTimestampFetch() {
                 pgress = pgress + .000042;
                 console.log(pgress);
                 pbar.animate(pgress);
-                try {             
+                try {
                     if (t.items !== null || t.items !== undefined || t.items[0] !== undefined && t.items[0] !== null) {
                         if (isNaN(+t.items.length) === true) {
                             t.items = [];
@@ -137,7 +137,7 @@ function doTimestampFetch() {
                         } else {
                             t.count = +t.items.length;
                             var found = FindItemBinarySearch(labels, t.timestamp);
-                            if( found !== -1 ) {
+                            if (found !== -1) {
                                 var label = labels[found];
                                 t.labels = label;
                                 var index = t.labels.label - 1;
@@ -146,12 +146,12 @@ function doTimestampFetch() {
                                 t.labels.code = dictionaryLabel.code;
                                 t.labels.color = dictionaryLabel.color;
                                 t.labels.label = dictionaryLabel.label;
-                            }  else {
+                            } else {
                                 t.labels = {};
                             }
-                            if( _.isUndefined(t.edges) || _.isEmpty(t.edges) ) {
+                            if (_.isUndefined(t.edges) || _.isEmpty(t.edges)) {
                                 t.edges = [];
-                            }                                       
+                            }
                         }
                     } else {
                         t.items = [];
@@ -159,7 +159,7 @@ function doTimestampFetch() {
                         t.labels = {};
                         t.edges = [];
                     }
-                                        
+
                     t.timestamp = parseDate(t.timestamp);
 
                     gpsDataset.push(t);
@@ -176,6 +176,7 @@ function doTimestampFetch() {
                     }
                 }
             }
+            counter++;
 
             return oboe.drop;
         })
@@ -204,7 +205,7 @@ function doneTimestamps() {
     });
 
     labelsGroup = byDate.group().reduceSum(function (d) {
-        if( !_.isEmpty(d.labels)) {
+        if (!_.isEmpty(d.labels)) {
             return 5;
         }
         return 0;
@@ -212,12 +213,11 @@ function doneTimestamps() {
 
 
     netsGroup = byDate.group().reduceSum(function (d) {
-        if(d.edges.length !== 0) {
-            return d.edges.length/2;
+        if (d.edges.length !== 0) {
+            return d.edges.length / 2;
         }
         return 0;
     });
-
 
 
     initMapLeaflet();
@@ -226,21 +226,21 @@ function doneTimestamps() {
 }
 
 function FindItemBinarySearch(items, value) {
-    var startIndex  = 0,
-        stopIndex   = items.length - 1,
-        middle      = Math.floor((stopIndex + startIndex)/2);
+    var startIndex = 0,
+        stopIndex = items.length - 1,
+        middle = Math.floor((stopIndex + startIndex) / 2);
 
-    while(items[middle].timestamp != value && startIndex < stopIndex){
+    while (items[middle].timestamp != value && startIndex < stopIndex) {
 
         //adjust search area
-        if (value < items[middle].timestamp){
+        if (value < items[middle].timestamp) {
             stopIndex = middle - 1;
-        } else if (value > items[middle].timestamp){
+        } else if (value > items[middle].timestamp) {
             startIndex = middle + 1;
         }
 
         //recalculate middle
-        middle = Math.floor((stopIndex + startIndex)/2);
+        middle = Math.floor((stopIndex + startIndex) / 2);
     }
 
     //make sure it's the right value
@@ -263,8 +263,6 @@ getLabels();
 
 
 /*** functions ******/
-
-
 
 
 /**
@@ -606,14 +604,22 @@ function initMapLeaflet() {
             //});
             //
             var playButton = document.getElementById('play');
-            playButton.onclick = function () {
-                playButton.classList.toggle('active');
-                console.log('PLAY');
-                playSelection();
+            playButton.onclick = function (e) {
+
+                var timeInterval = document.getElementById('interval').value;
+
+                var i = parseInt(timeInterval);
+                if (_.isNaN(i) || i === 0) {
+                    Toast.defaults.displayDuration=3000;
+                    Toast.error('Input must be a number great than zero.','Invalid Time Interval.');
+                    document.getElementById('interval').value = 1;
+                } else {
+                    playButton.classList.toggle('active');
+                    console.log('PLAY');
+                    playSelection(i);
+                }
+
             };
-
-
-
 
 
             div.style.display = 'block';
@@ -730,9 +736,9 @@ function createMainTimeline(flag) {
         var combined = dc.compositeChart('#main-timeline');
 
         var stackCharts = dc.lineChart(combined)
-            .ordinalColors([generalColorMap(0),generalColorMap(4),generalColorMap(6)])
+            .ordinalColors([generalColorMap(0), generalColorMap(4), generalColorMap(6)])
             .renderArea(true)
-            .group(countGroup)            
+            .group(countGroup)
             .stack(labelsGroup)
             .stack(netsGroup)
             .elasticX(true)
@@ -766,9 +772,6 @@ function createMainTimeline(flag) {
     } else if (flag === 'update') {
 
     }
-
-
-    
 
 
     function brushing(chart, filter) {
@@ -922,7 +925,7 @@ function zoomCurrentPoint() {
     if (!_.isUndefined(currentDataPoint) && !_.isUndefined(currentDataPoint.items)) {
         if (!_.isUndefined(currentDataPoint.items[0])) {
             var item = currentDataPoint.items[0];
-            if( !_.isUndefined(item)) {
+            if (!_.isUndefined(item)) {
                 map.setZoom(19, {animate: true});
                 map.panTo(item.LatLng, {animate: true});
             }
@@ -930,31 +933,56 @@ function zoomCurrentPoint() {
     }
 }
 
-function playSelection() {
+function playSelection(seconds) {
     //find the first one with points
-    var ranged = brushFilteredDates.bottom(Infinity);
-    var interval = 175; // one second in milliseconds
 
-    var i = 0;
-    var makeCallback = function () {
-        // note that we're returning a new callback function each time
-        return function () {
-            if (i < ranged.length) {
-                var d = ranged[i];
-                if (d.items !== undefined) {
-                    drawDataPointOverlay(d);
-                }
-                i++;
-                d3.timer(makeCallback(), interval);
-                return true;
+    isPlaying = !isPlaying;
+
+    if( isPlaying ) {
+        var ranged = brushFilteredDates.bottom(Infinity);
+        var speed = 175; // animatation speed
+
+        var i = 0;
+
+        var r1 = ranged[0];
+        var hasZoomedToFirstPoint = false;
+
+        animateTimer = setInterval(function() {
+            if( i >= ranged.length) {
+                var playButton = document.getElementById('play');
+                playButton.classList.toggle('active');
+                isPlaying = false;
+                clearInterval(animateTimer);
             }
-            return false;
 
-        }
-    };
+            var d = ranged[i];
+            if (!_.isUndefined(d) && !_.isUndefined(d.items)) {
+                if (d.items !== undefined) {
+                    console.log('actual' + d.timestamp);
+                    drawDataPointOverlay(d);
+                    if( hasZoomedToFirstPoint ===  false ) {
+                        zoomCurrentPoint();
+                        hasZoomedToFirstPoint = true;
+                    }
 
-    d3.timer(makeCallback(), interval);
-    console.log('done');
+                     //increase interval
+                i = i + seconds;
+                //t1 = t1.add('i', i);
+                 console.log('moment ' + i);
+                isPlaying = true;
+                }
+               
+            }
+
+        }, speed);
+    } else {
+        clearInterval(animateTimer);
+//         var playButton = document.getElementById('play');
+//         playButton.classList.toggle('active');
+    }
+}
+
+function updateAnimation() {
 }
 
 /**

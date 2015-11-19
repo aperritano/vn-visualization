@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../bower_components/roboto-fontface/css/roboto-fontface.css" type="text/css" charset="utf-8" media="all">
     <link rel="stylesheet" href="../bower_components/google-material-color/dist/palette.css" type="text/css" charset="utf-8" media="all">
     <link rel="stylesheet" href="../bower_components/leaflet/dist/leaflet.css" type="text/css" charset="utf-8" media="all"/>
@@ -13,48 +14,174 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
           rel="stylesheet">
 
-    <!--<link rel="stylesheet" href="../bower_components/tether-drop/dist/css/drop-theme-arrows.css" type="text/css" charset="utf-8" media="all"/>-->
+    <link rel="stylesheet" href="../bower_components/material-design-lite/material.min.css">
 
+    <link href="dcjs/toast.css" rel="stylesheet"/>
+
+    <!--<link rel="stylesheet" href="../bower_components/tether-drop/dist/css/drop-theme-arrows.css" type="text/css" charset="utf-8" media="all"/>-->
+<style>
+    /*.mdl-layout__header {*/
+
+        /*height: 25px;*/
+        /*width: 100%;*/
+        /*margin: 0;*/
+        /*padding: 0;*/
+        /*border: none;*/
+        /*min-height: 15px;*/
+        /*max-height: 1000px;*/
+        /*z-index: 3;*/
+        /*background-color: rgb(63, 81, 181);*/
+        /*color: rgb(255, 255, 255);*/
+        /*box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12);*/
+    /*}*/
+    /*.mdl-layout__header-row {*/
+        /*min-height: 10px;*/
+        /*height: 10px;*/
+    /*}*/
+
+    header.custom-header {
+        background: #111;
+        height: 15px;
+        min-height: 50px;
+        box-shadow: 0 1px 1px 0 rgba(0,0,0,.14),0 0px 0px 0px rgba(0,0,0,.2),0 1px 1px 0 rgba(0,0,0,.12);
+    }
+
+    .mdl-layout__header--transparent.mdl-layout__header--transparent {
+        background-color: transparent;
+        box-shadow: none;
+    }
+
+    .mdl-layout__header-row span.mdl-layout-title {
+        color: #ffb648;
+        text-transform: uppercase;
+        height: 15px;
+        line-height: 5px;
+
+    }
+
+    .mdl-layout__drawer-button {
+        height: 30px;
+        line-height: 40px;
+    }
+
+
+    .custom-header .material-icons {
+        color: #fff;
+        min-height: 15px;
+    }
+
+    .custom-header a.mdl-navigation__link {
+        color: #eee;
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    .custom-header a.mdl-navigation__link:hover {
+        color: #fff;
+    }
+
+    .custom-header .mdl-layout__title, .mdl-layout-title {
+        font-size: 14px;
+    }
+
+    .mdl-layout__drawer span.mdl-layout-title {
+        background: #111;
+        color: #ffb648;
+        font-size: 14px;
+        text-transform: uppercase;
+        height: 50px;
+        line-height: 50px;
+    }
+
+    .mdl-layout__drawer a.mdl-navigation__link {
+        color: #eee;
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    .mdl-layout__drawer a.mdl-navigation__link:hover {
+        color: #000;
+    }
+
+</style>
 
 </head>
 <body>
 <span id="browser-sync-binding"></span>
 <div id="pbar"></div>
-<div id="control-panel" style="display: none">
-    <h4 align="center">Brush Range</h4>
-    <span id="start-time">Start:&nbsp</span><br>
-    <span id="end-time">End:&nbsp&nbsp&nbsp&nbsp</span>
-    <hr>
-</div>
-<div id="animate-panel" style="display: none">
-    <h4 align="center">Animate Range</h4>
-    <div align="center">
-    <a  id="play" href="#" title="Play video" class="play"></a>
+<!-- Always shows a header, even in smaller screens. -->
+<div class=" mdl-layout mdl-js-layout mdl-layout--fixed-header">
+    <header class="custom-header mdl-layout__header">
+        <div class="mdl-layout__header-row">
+            <!-- Title -->
+            <span class="custom-header mdl-layout-title">Visualizing Animal Networks</span>
+            <!-- Add spacer, to align navigation to the right -->
+            <div class="mdl-layout-spacer"></div>
+            <!-- Navigation. We hide it in small screens. -->
+        </div>
+    </header>
+    <div class="mdl-layout__drawer">
+        <span class="mdl-layout-title">Dictionary</span>
+        <nav class="mdl-navigation">
+            <a class="mdl-navigation__link" href="">Link</a>
+            <a class="mdl-navigation__link" href="">Link</a>
+            <a class="mdl-navigation__link" href="">Link</a>
+            <a class="mdl-navigation__link" href="">Link</a>
+        </nav>
     </div>
-    <hr>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            <br>
+            <!-- Your content goes here -->
+            <div id="control-panel" style="display: none">
+                <h4 align="center">Brush Range</h4>
+                <span id="start-time">Start:&nbsp</span><br>
+                <span id="end-time">End:&nbsp&nbsp&nbsp&nbsp</span>
+            </div>
+            <div id="animate-panel" style="display: none">
+                <h4 align="center">Animate Range</h4>
+                <div align="center">
+                    <a  id="play" href="#" title="Play video" class="play"></a>
+                </div>
+                <hr>
 
+                <!--<form action="#">-->
+                    <!--<div class="mdl-textfield mdl-js-textfield">-->
+                        <!--<input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="sample2">-->
+                        <!--<label class="mdl-textfield__label" for="sample2">Number...</label>-->
+                        <!--<span class="mdl-textfield__error">Input is not a number!</span>-->
+                    <!--</div>-->
+                <!--</form>-->
     <span class="interval-line"><label for="interval">Interval Time (sec):</label><input type="text" name="interval" id="interval" value="1" tabindex="1" size="7" maxlength="7" autocomplete="off"/>
 
 </span>
-    <br>
-    <span id="current-time">Current:&nbsp</span><br>
-</div>
-<div id="zoom-panel" style="display: none">
-    <div id="zoom-point" class="zoom-button"><i class="material-icons">explore</i></div>
-</div>
-<div id="tooltip"></div>
-<div id="map" style="display: none"></div>
+                <br>
+                <span id="current-time">Current:&nbsp</span><br>
+            </div>
+            <div id="zoom-panel" style="display: none">
+                <div id="zoom-point" class="zoom-button"><i class="material-icons">explore</i></div>
+            </div>
+            <div id="tooltip"></div>
+            <div id="map" style="display: none"></div>
 
-<div id="main-timeline"></div>
-<div id="grouplabels"></div>
-<div id="tooltipLabel"></div>
+            <div id="main-timeline"></div>
+            <div id="grouplabels"></div>
+            <div id="tooltipLabel"></div>
+        </div>
+    </main>
+</div>
+
+
 
 
 
 <!--<div id="labelsIndividuals"></div>-->
 <!--<div id="tooltipLabel"></div>-->
 
+<script src="../bower_components/material-design-lite/material.min.js"></script>
+
 <script src="../bower_components/d3/d3.min.js"></script>
+
 <!--util-->
 <script src="../bower_components/moment/min/moment.min.js"></script>
 
@@ -69,9 +196,10 @@
 <script src="../bower_components/underscore/underscore-min.js"></script>
 <script src="../bower_components/progressbar.js/dist/progressbar.min.js "></script>
 <script src='../bower_components/oboe/dist/oboe-browser.min.js'></script>
-
+<script src="dcjs/toast.min.js"></script>
 <script src="dcjs/d3-timeline.js"></script>
 <script src="dcjs/dc.js"></script>
+
 <script src="../node_modules/paralleljs/lib/parallel.js"></script>
 <script src="../bower_components/leaflet/dist/leaflet.js"></script>
 
