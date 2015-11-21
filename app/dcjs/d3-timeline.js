@@ -26,7 +26,7 @@
         beginning = 0,
         labelMargin = 0,
         ending = 0,
-        margin = {left: 30, right:30, top: 30, bottom:30},
+        margin = {left: 30, right:30, top: 50, bottom:30},
         stacked = false,
         rotateTicks = false,
         timeIsRelative = false,
@@ -57,7 +57,7 @@
 
       var axis = g.append("g")
         .attr("class", "axis")
-        .attr("transform", "translate(" + 0 + "," + yPosition + ")")
+        .attr("transform", "translate(" + 0 + "," + margin.top + ")")
         .call(xAxis);
     };
 
@@ -125,7 +125,7 @@
     var appendTimeAxisTick = function(g, xAxis, maxStack) {
       g.append("g")
         .attr("class", "axis")
-        .attr("transform", "translate(" + 0 + "," + (margin.top + (itemHeight + itemMargin) * maxStack) + ")")
+        .attr("transform", "translate(" + 0 + "," + margin.top + ")")
         .attr(timeAxisTickFormat.stroke, timeAxisTickFormat.spacing)
         .call(xAxis.tickFormat("").tickSize(-(margin.top + (itemHeight + itemMargin) * (maxStack - 1) + 3), 0, 0));
     };
@@ -145,7 +145,7 @@
 
     var appendLabel = function (gParent, yAxisMapping, index, hasLabel, datum) {
       var fullItemHeight    = itemHeight + itemMargin;
-      var rowsDown          = fullItemHeight + fullItemHeight * (yAxisMapping[index] || 1);
+      var rowsDown          = fullItemHeight + fullItemHeight * (yAxisMapping[index] || 1) + margin.top - (itemHeight/2);
 
       gParent.append("text")
         .attr("class", "timeline-label")

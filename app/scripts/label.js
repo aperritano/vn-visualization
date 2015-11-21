@@ -14,12 +14,8 @@ var LIMIT_TICK = 15;
  */
 function getLabelsInRange(dataPoints) {
 
-  //var startTimestamp =  moment(dataPoints[0].timestamp).valueOf();
-  //var endTimestamp = moment(dataPoints[dataPoints.length - 1].timestamp).valueOf();
-  //var minutes = (endTimestamp - startTimestamp)/60;
-
-  var startTimestamp = (dataPoints[0].milliseconds);
-  var endTimestamp = (dataPoints[dataPoints.length - 1].milliseconds);
+  var startTimestamp =  moment(dataPoints[0].timestamp).valueOf()/1000;
+  var endTimestamp = moment(dataPoints[dataPoints.length - 1].timestamp).valueOf()/1000;
   var minutes = (endTimestamp - startTimestamp) / 60;
 
   /**
@@ -43,6 +39,61 @@ function getLabelsInRange(dataPoints) {
       return;
     }
 
+    /**
+     * Groups Labels.
+     */
+    if (gantGroupMap.class === undefined) {
+      gantGroupMap.class = 'Class';
+      //Lets short this
+      gantGroupMap.label = 'G ';
+      gantGroupMap.times = [];
+      gantGroupMap.actual = null;
+
+    }
+
+    // Take the group label
+    var label = ts.group_label;
+    if (label !== undefined) {
+
+      // Take the last gantt rect
+      var actual = gantGroupMap.actual;
+
+      //The group is created if it not exist already.
+      if (actual === null) {
+        // If the last rectangle has been finished
+        var gantGroupMapValue = {};
+        //moment.js valueOf does a better unix time conversion
+        gantGroupMapValue.starting_time = moment(ts.timestamp).valueOf();
+        gantGroupMapValue.ending_time = moment(ts.timestamp).valueOf();
+        gantGroupMapValue.color = label.color;
+        if (minutes < LIMIT_LABEL) {
+          gantGroupMapValue.label = label.name;
+        } else {
+          gantGroupMapValue.name = label.name;
+        }
+
+        gantGroupMap.actual = gantGroupMapValue;
+
+      } else {
+
+        gantGroupMap.actual.ending_time = moment(ts.timestamp).valueOf();
+
+      }
+
+    } else {
+
+      var actualValue = gantGroupMap.actual;
+      if (actualValue !== null) {
+        gantGroupMap.times.push(actualValue);
+        gantGroupMap.actual = null;
+
+      }
+
+    }
+
+    /**
+     * End Group Labels.
+     */
 
     /**
      * If there are nets analyze them.
@@ -56,16 +107,13 @@ function getLabelsInRange(dataPoints) {
 
         var item = ts.items[iKey];
 
+        if (item === null){
+            continue;
+        }
+
         // Compose the key
         var key = item.id;
 
-
-        //[
-        //    {label: "person a", times: [{"color":"green", "label":"Weeee", "starting_time": 1355752800000, "ending_time": 1355759900000},
-        //        {"color":"blue", "label":"Weeee", "starting_time": 1355767900000, "ending_time": 1355774400000}]},
-        //    {label: "person b", times: [{"color":"pink", "label":"Weeee", "starting_time": 1355759910000, "ending_time": 1355761900000}, ]},
-        //    {label: "person c", times: [{"color":"yellow", "label":"Weeee", "starting_time": 1355761910000, "ending_time": 1355763910000}]},
-        //];
         /**
          * If the individual doesn't exist create the structure related to the individual.
          */
@@ -73,7 +121,7 @@ function getLabelsInRange(dataPoints) {
           var gantMapValue = {};
           gantMapValue.class = key.toString();
           //s for subject
-          gantMapValue.label = 'S ' + key;
+          gantMapValue.label = 'S ' + key.toString();
           gantMapValue.times = [];
           gantMapValue.actual = null;
           gantMap[key] = gantMapValue;
@@ -81,57 +129,14 @@ function getLabelsInRange(dataPoints) {
         }
 
         /**
-         * Groups.
-         */
-        if (gantGroupMap.class === undefined) {
-          gantGroupMap.class = key.toString();
-          //Lets short this
-          gantGroupMap.label = 'G ' + key.toString();
-          gantGroupMap.times = [];
-          gantGroupMap.actual = null;
-
-        }
-
-        var label = ts.labels.label;
-
-        /**
          * If the label of the current TS is different from undefined create an item for the current group.
          */
+        var label = item.individual_label;
         if (label !== undefined) {
-
-          /**
-           * Groups.
-           */
-
-          // Take the last gantt rect
-          var actual = gantGroupMap.actual;
-
-          //The group is created if it not exist already.
-          if (actual === null) {
-            // If the last rectangle has been finished
-            var gantGroupMapValue = {};
-            //moment.js valueOf does a better unix time conversion
-            gantGroupMapValue.starting_time = moment(ts.timestamp).valueOf();
-            gantGroupMapValue.ending_time = moment(ts.timestamp).valueOf();
-            gantGroupMapValue.color = ts.labels.color;
-            if (minutes < LIMIT_LABEL) {
-              gantGroupMapValue.label = ts.labels.label;
-            } else {
-              gantGroupMapValue.name = ts.labels.label;
-            }
-
-            gantGroupMap.actual = gantGroupMapValue;
-
-          } else {
-
-            gantGroupMap.actual.ending_time = moment(ts.timestamp).valueOf();
-
-          }
 
           /**
            * Individuals
            */
-
           // Take the last gantt rect
           var actualLast = gantMap[key].actual;
 
@@ -141,11 +146,11 @@ function getLabelsInRange(dataPoints) {
             var groupValue = {};
             groupValue.starting_time = moment(ts.timestamp).valueOf();
             groupValue.ending_time = moment(ts.timestamp).valueOf();
-            groupValue.color = ts.labels.color;
+            groupValue.color = label.color;
             if (minutes < LIMIT_LABEL)
-              groupValue.label = ts.labels.label;
+              groupValue.label = label.name;
             else
-              groupValue.name = ts.labels.label;
+              groupValue.name = label.name;
             gantMap[key].actual = groupValue;
           } else {
             gantMap[key].actual.ending_time = moment(ts.timestamp).valueOf();
@@ -154,29 +159,13 @@ function getLabelsInRange(dataPoints) {
         } else {
 
           /**
-           * Groups.
-           */
-          var actualValue = gantGroupMap.actual;
-          if (actualValue !== null) {
-            gantGroupMap.times.push(actualValue);
-            gantGroupMap.actual = null;
-
-          }
-
-          /**
            * Individuals.
            */
 
-          //The label is undefined, end all the items.
-          for (var i in gantMap) {
-
-            var endValue = gantMap[i].actual;
-            if (endValue !== null) {
-              gantMap[i].times.push(endValue);
-              gantMap[i].actual = null;
-
-            }
-
+          var actualLast = gantMap[key].actual;
+          if (actualLast != null){
+            gantMap[key].times.push(actualLast);
+            gantMap[key].actual = null;
           }
 
         }
@@ -223,8 +212,6 @@ function getLabelsInRange(dataPoints) {
   }
 
   return [gantGroupList.concat(gantIndividualList)];
-  //setUpTimelineGroup(gantGroupList, startTimestamp, endTimestamp);
-  //setUpTimelineIndividuals(gantList, startTimestamp, endTimestamp);
 
 }
 
