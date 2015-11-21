@@ -1,8 +1,0 @@
-1,Sleeping,#82B058
-2,Hanging Out,#556270
-3,Uncoordinate Moovement,#FF6B6B
-4,Coordinated Pause,#F38630
-5,Coordinate Prograssion,#8C2318
-6,Coordinate Non-Prograssion,#81A8B8
-7,Startle,#981213
-8,Mixed,#E5DD03
