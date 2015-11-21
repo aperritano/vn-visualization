@@ -1,207 +1,275 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../bower_components/roboto-fontface/css/roboto-fontface.css" type="text/css" charset="utf-8" media="all">
-    <link rel="stylesheet" href="../bower_components/google-material-color/dist/palette.css" type="text/css" charset="utf-8" media="all">
-    <link rel="stylesheet" href="../bower_components/leaflet/dist/leaflet.css" type="text/css" charset="utf-8" media="all"/>
-    <!--<link rel="stylesheet" href="../bower_components/dcjs/dc.min.css"/>-->
-    <link rel="stylesheet" href="dcjs/dc.min.css"/>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="A front-end template that helps you build fast, modern mobile web apps.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visualizing Networks</title>
 
-    <link rel="stylesheet" href="tooltip/css/d3-bootstrap-plugins.min.css" type="text/css" charset="utf-8" media="all"/>
-    <link rel="stylesheet" href="styles/main.css" />
+  <!-- Disable tap highlight on IE -->
+  <meta name="msapplication-tap-highlight" content="no">
 
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
-          rel="stylesheet">
+  <!-- Web Application Manifest -->
+  <link rel="manifest" href="manifest.json">
 
-    <link rel="stylesheet" href="../bower_components/material-design-lite/material.min.css">
+  <!-- Add to homescreen for Chrome on Android -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Web Starter Kit">
+  <link rel="icon" sizes="192x192" href="images/touch/chrome-touch-icon-192x192.png">
 
-    <link href="dcjs/toast.css" rel="stylesheet"/>
+  <!-- Add to homescreen for Safari on iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Web Starter Kit">
+  <link rel="apple-touch-icon" href="images/touch/apple-touch-icon.png">
 
-    <!--<link rel="stylesheet" href="../bower_components/tether-drop/dist/css/drop-theme-arrows.css" type="text/css" charset="utf-8" media="all"/>-->
-<style>
+  <!-- Tile icon for Win8 (144x144 + tile color) -->
+  <meta name="msapplication-TileImage" content="images/touch/ms-touch-icon-144x144-precomposed.png">
+  <meta name="msapplication-TileColor" content="#2F3BA2">
+
+  <meta name="theme-color" content="#2F3BA2">
+  <!-- Page styles:
+You can choose other color schemes from the CDN, more info here http://www.getmdl.io/customize/index.html
+Format: material.color1-color2.min.css, some examples:
+material.red-teal.min.css
+material.blue-orange.min.css
+material.purple-indigo.min.css
+-->
+  <link rel="stylesheet" href="https://storage.googleapis.com/code.getmdl.io/1.0.5/material.blue-red.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/vn.css">
+
+
+  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css"/>
+
+  <!--<link rel="stylesheet" href="../bower_components/dcjs/dc.min.css"/>-->
+  <link rel="stylesheet" href="dcjs/dc.min.css"/>
+
+
+  <link href="dcjs/toast.css" rel="stylesheet"/>
+
+  <link href="styles/material-modal.css" rel="stylesheet"/>
+
+
+  <style>
     /*.mdl-layout__header {*/
 
-        /*height: 25px;*/
-        /*width: 100%;*/
-        /*margin: 0;*/
-        /*padding: 0;*/
-        /*border: none;*/
-        /*min-height: 15px;*/
-        /*max-height: 1000px;*/
-        /*z-index: 3;*/
-        /*background-color: rgb(63, 81, 181);*/
-        /*color: rgb(255, 255, 255);*/
-        /*box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12);*/
+    /*height: 25px;*/
+    /*width: 100%;*/
+    /*margin: 0;*/
+    /*padding: 0;*/
+    /*border: none;*/
+    /*min-height: 15px;*/
+    /*max-height: 1000px;*/
+    /*z-index: 3;*/
+    /*background-color: rgb(63, 81, 181);*/
+    /*color: rgb(255, 255, 255);*/
+    /*box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12);*/
     /*}*/
     /*.mdl-layout__header-row {*/
-        /*min-height: 10px;*/
-        /*height: 10px;*/
+    /*min-height: 10px;*/
+    /*height: 10px;*/
     /*}*/
 
     header.custom-header {
-        background: #111;
-        height: 15px;
-        min-height: 50px;
-        box-shadow: 0 1px 1px 0 rgba(0,0,0,.14),0 0px 0px 0px rgba(0,0,0,.2),0 1px 1px 0 rgba(0,0,0,.12);
+      background: #ffffff;
+      height: 15px;
+      min-height: 50px;
+      box-shadow: none;
     }
 
     .mdl-layout__header--transparent.mdl-layout__header--transparent {
-        background-color: transparent;
-        box-shadow: none;
+      background-color: transparent;
+      box-shadow: none;
     }
 
     .mdl-layout__header-row span.mdl-layout-title {
-        color: #ffb648;
-        text-transform: uppercase;
-        height: 15px;
-        line-height: 5px;
+      color: #616161;
+      text-transform: uppercase;
+      height: 15px;
+      line-height: 10px;
 
     }
 
     .mdl-layout__drawer-button {
-        height: 30px;
-        line-height: 40px;
+      height: 30px;
+      line-height: 50px;
     }
 
-
     .custom-header .material-icons {
-        color: #fff;
-        min-height: 15px;
+      color: #616161;
+      min-height: 15px;
     }
 
     .custom-header a.mdl-navigation__link {
-        color: #eee;
-        font-weight: 700;
-        font-size: 14px;
+      color: #616161;
+      font-weight: 700;
+      font-size: 14px;
     }
 
     .custom-header a.mdl-navigation__link:hover {
-        color: #fff;
+      color: #616161;
     }
 
     .custom-header .mdl-layout__title, .mdl-layout-title {
-        font-size: 14px;
+      font-size: 14px;
     }
 
     .mdl-layout__drawer span.mdl-layout-title {
-        background: #111;
-        color: #ffb648;
-        font-size: 14px;
-        text-transform: uppercase;
-        height: 50px;
-        line-height: 50px;
+      background: #fff;
+      color: #616161;
+      font-size: 14px;
+      text-transform: uppercase;
+      height: 50px;
+      line-height: 50px;
     }
 
     .mdl-layout__drawer a.mdl-navigation__link {
-        color: #eee;
-        font-weight: 700;
-        font-size: 14px;
+      color: #616161;
+      font-weight: 700;
+      font-size: 14px;
     }
 
     .mdl-layout__drawer a.mdl-navigation__link:hover {
-        color: #000;
+      color: #111;
     }
 
-</style>
+    .mdl-textfield {
+      width: 80px;
+      font-size: 12px;
+    }
+
+  </style>
 
 </head>
-<body>
+<body id="main-body">
 <span id="browser-sync-binding"></span>
-<div id="pbar"></div>
 <!-- Always shows a header, even in smaller screens. -->
 <div class=" mdl-layout mdl-js-layout mdl-layout--fixed-header">
-    <header class="custom-header mdl-layout__header">
-        <div class="mdl-layout__header-row">
-            <!-- Title -->
-            <span class="custom-header mdl-layout-title">Visualizing Animal Networks</span>
-            <!-- Add spacer, to align navigation to the right -->
-            <div class="mdl-layout-spacer"></div>
-            <!-- Navigation. We hide it in small screens. -->
-        </div>
-    </header>
-    <div class="mdl-layout__drawer">
-        <span class="mdl-layout-title">Dictionary</span>
-        <nav class="mdl-navigation">
-            <a class="mdl-navigation__link" href="">Link</a>
-            <a class="mdl-navigation__link" href="">Link</a>
-            <a class="mdl-navigation__link" href="">Link</a>
-            <a class="mdl-navigation__link" href="">Link</a>
-        </nav>
+  <header class="custom-header mdl-layout__header">
+    <div class="mdl-layout__header-row">
+      <!-- Title -->
+      <span class="custom-header mdl-layout-title">Visualizing Animal Networks</span>
+      <!-- Add spacer, to align navigation to the right -->
+      <div class="mdl-layout-spacer"></div>
+      <!-- Navigation. We hide it in small screens. -->
     </div>
-    <main class="mdl-layout__content">
-        <div class="page-content">
-            <br>
-            <!-- Your content goes here -->
-            <div id="control-panel" style="display: none">
-                <h4 align="center">Brush Range</h4>
-                <span id="start-time">Start:&nbsp</span><br>
-                <span id="end-time">End:&nbsp&nbsp&nbsp&nbsp</span>
-            </div>
-            <div id="animate-panel" style="display: none">
-                <h4 align="center">Animate Range</h4>
-                <div align="center">
-                    <a  id="play" href="#" title="Play video" class="play"></a>
-                </div>
-                <hr>
+  </header>
+  <div class="mdl-layout__drawer">
+    <span class="mdl-layout-title">Dictionary</span>
+    <nav class="mdl-navigation">
+      <a class="mdl-navigation__link" href="">Link</a>
+      <a class="mdl-navigation__link" href="">Link</a>
+      <a class="mdl-navigation__link" href="">Link</a>
+      <a class="mdl-navigation__link" href="">Link</a>
+    </nav>
+  </div>
 
-                <!--<form action="#">-->
-                    <!--<div class="mdl-textfield mdl-js-textfield">-->
-                        <!--<input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="sample2">-->
-                        <!--<label class="mdl-textfield__label" for="sample2">Number...</label>-->
-                        <!--<span class="mdl-textfield__error">Input is not a number!</span>-->
-                    <!--</div>-->
-                <!--</form>-->
-    <span class="interval-line"><label for="interval">Interval Time (sec):</label><input type="text" name="interval" id="interval" value="1" tabindex="1" size="7" maxlength="7" autocomplete="off"/>
+  <main class="mdl-layout__content">
+    <div id="progressBar" style="width: 100%; display:none"
+         class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>
 
-</span>
-                <br>
-                <span id="current-time">Current:&nbsp</span><br>
+    <div class="page-content">
+      <!-- Content wrapper -->
+      <div id="dialog" class="wrapperOutside">
+        <div class="wrapperInside">
+          <!-- Dialog -->
+          <div class="dialogContainer">
+            <!-- Dialog title and body -->
+            <div class="dialogContent">
+              <div class="dialogContentTitle">Select Visualization Session</div>
+              <div class="dialogContentBody">
+                <table id="sessions-table" class="mdl-data-table mdl-js-data-table">
+                  <thead>
+                  <tr>
+                    <th class="custom-title" style="padding-left: 30px">Session Name</th>
+                    <th class="custom-title">Author</th>
+                    <th class="custom-title" style="padding-left: 30px">Creation Date</th>
+                  </tr>
+                  </thead>
+                  <tbody id="select-body">
+                  <!-- create row programmically -->
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div id="zoom-panel" style="display: none">
-                <div id="zoom-point" class="zoom-button"><i class="material-icons">explore</i></div>
+            <!-- Dialog action bar -->
+            <div class="dialogActionBar">
+              <a class="buttonTouchTarget" id="buttonTwoTouchTarget" href="#">
+                <div class="buttonFlat" id="buttonTwo">SELECT</div>
+              </a>
             </div>
-            <div id="tooltip"></div>
-            <div id="map" style="display: none"></div>
-
-            <div id="main-timeline"></div>
-            <div id="grouplabels"></div>
-            <div id="tooltipLabel"></div>
+          </div>
         </div>
-    </main>
+      </div>
+
+      <!-- Your content goes here -->
+      <div id="control-panel" style="display: none">
+        <h6 align="center">Brush Range</h6>
+        <span align="center" id="start-time">Start:&nbsp</span><br>
+        <span align="center" id="end-time">End:&nbsp&nbsp&nbsp&nbsp</span>
+      </div>
+      <div id="animate-panel" style="display: none">
+        <h6 align="center">Animate Range</h6>
+
+        <div align="center">
+          <button id="play" class="mdl-button mdl-js-button mdl-button--icon">
+            <i id="play-icon" class="material-icons">play_circle_outline</i>
+          </button>
+          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <input class="mdl-textfield__input" value="1" maxlength="7" type="text" pattern="-?[0-9]*(\.[0-9]+)?"
+                   id="time-step">
+            <label class="mdl-textfield__label" for="time-step">time step (sec)</label>
+            <span class="mdl-textfield__error">Input is not a number!</span>
+          </div>
+        </div>
+        <hr>
+        <span id="current-time">Current:&nbsp</span><br>
+      </div>
+      <div id="zoom-panel" style="display: none">
+        <div id="zoom-point" class="zoom-button"><i class="material-icons">explore</i></div>
+      </div>
+      <div id="tooltip"></div>
+      <div id="map" style="display: none"></div>
+
+      <div id="main-timeline"></div>
+      <div id="grouplabels"></div>
+      <div id="tooltipLabel"></div>
+    </div>
+  </main>
 </div>
-
-
-
 
 
 <!--<div id="labelsIndividuals"></div>-->
 <!--<div id="tooltipLabel"></div>-->
 
-<script src="../bower_components/material-design-lite/material.min.js"></script>
+<script src="https://cdn.firebase.com/js/client/2.3.2/firebase.js"></script>
 
-<script src="../bower_components/d3/d3.min.js"></script>
+<script src="d3/d3.min.js"></script>
 
 <!--util-->
-<script src="../bower_components/moment/min/moment.min.js"></script>
+<script src="moment/min/moment.min.js"></script>
 
-<script src="../bower_components/async/dist/async.min.js"></script>
-<script src="../bower_components/topojson/topojson.js"></script>
+<script src="async/dist/async.min.js"></script>
+<script src="topojson/topojson.js"></script>
 
+<script src="crossfilter/crossfilter.min.js"></script>
+<script src="underscore/underscore-min.js"></script>
 
-<script src="../bower_components/google-material-color/dist/palette.js"></script>
+<script src="progressbar.js/dist/progressbar.min.js"></script>
+<script src="paralleljs/lib/parallel.js"></script>
 
-<script src="../bower_components/firebase/firebase.js"></script>
-<script src="../bower_components/crossfilter2/crossfilter.min.js"></script>
-<script src="../bower_components/underscore/underscore-min.js"></script>
-<script src="../bower_components/progressbar.js/dist/progressbar.min.js "></script>
-<script src='../bower_components/oboe/dist/oboe-browser.min.js'></script>
+<script src='oboe/dist/oboe-browser.min.js'></script>
+
 <script src="dcjs/toast.min.js"></script>
 <script src="dcjs/d3-timeline.js"></script>
-<script src="dcjs/dc.js"></script>
+<script src="dcjs/dc.min.js"></script>
 
-<script src="../node_modules/paralleljs/lib/parallel.js"></script>
-<script src="../bower_components/leaflet/dist/leaflet.js"></script>
+<script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
 
 <!--ESRI-->
 <!--<script src="../bower_components/esri-leaflet/dist/esri-leaflet.js"></script>-->
@@ -211,20 +279,18 @@
 <!--<script src="../bower_components/esri-leaflet/dist/builds/image-service/esri-leaflet-image-service.js"></script>-->
 
 
-
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
 
+<script src="scripts/material-modal.js"></script>
 
-<!--<script src="../bower_components/tether-drop/dist/js/drop.min.js"></script>-->
-<!--<script src="../bower_components/tether/dist/js/tether.min.js"></script>-->
-
-
-
-<!--our scripts-->
+<script src="https://storage.googleapis.com/code.getmdl.io/1.0.5/material.min.js"></script>
+<!-- build:js(app/) ../../scripts/main.min.js -->
 <script src="scripts/main.js"></script>
+<script src="scripts/vn.js"></script>
 <script src="scripts/label.js"></script>
-<!--<script src="scripts/session.js"></script>-->
+<!-- endbuild -->
+
 
 </body>
 </html>

@@ -1,0 +1,210 @@
+/*main timeline css*/
+.axis text {
+  font-size: 10px;
+  font-family: "Roboto";
+  fill: #000; }
+
+.axis line {
+  fill: none;
+  stroke: black;
+  stroke-width: 1px;
+  shape-rendering: crispEdges; }
+
+.axis path {
+  fill: none;
+  stroke: black;
+  stroke-width: 1px;
+  shape-rendering: crispEdges; }
+
+.grid-background {
+  fill: #ffffff;
+  fill-opacity: 0.2; }
+
+.brush .extent {
+  stroke: grey;
+  fill-opacity: .1;
+  stroke-width: 1px;
+  shape-rendering: crispEdges; }
+
+.leaflet-container {
+  cursor: default !important; }
+
+#map {
+  border: 1px solid;
+  stroke: #939393;
+  fill-opacity: .125;
+  /*shape-rendering: crispEdges;*/ }
+
+/*node css*/
+/*.node {*/
+/*!*shape-rendering: crispEdges;*!*/
+/*stroke: #000;*/
+/*stroke-width: 1px;*/
+/*}*/
+path.line_label {
+  fill: none;
+  stroke-width: 1px;
+  stroke: #03A9F4;
+  shape-rendering: auto;
+  /*shape-rendering: crispEdges;*/ }
+
+path.area_label {
+  fill: #03A9F4;
+  fill-opacity: 0.5;
+  shape-rendering: auto; }
+
+path.lineConnect {
+  fill: none;
+  stroke: black;
+  stroke-width: 5px;
+  opacity: 1; }
+
+.link_line {
+  stroke: black;
+  stroke-width: 1; }
+
+/*div.tooltip {*/
+/*position: absolute;*/
+/*text-align: center;*/
+/*width: 100px;*/
+/*height: 30px;*/
+/*padding: 2px;*/
+/*font-size: 12px;*/
+/*font-family: "Roboto";*/
+/*background: lightsteelblue;*/
+/*border: 0px;*/
+/*border-radius: 8px;*/
+/*pointer-events: none;*/
+/*}*/
+div.tooltipLabel {
+  position: absolute;
+  text-align: center;
+  width: 100px;
+  height: 15px;
+  padding: 2px;
+  font-size: 12px;
+  font-family: "Roboto";
+  background: lightgrey;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none; }
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: black;
+  shape-rendering: crispEdges; }
+
+.axis text {
+  font-family: "Roboto";
+  font-size: 10px;
+  fill: #000; }
+
+/*text style of the label*/
+.timeline-label {
+  fill: #000000;
+  font-family: "Roboto";
+  font-size: 10px; }
+
+.spacer {
+  position: relative;
+  float: top;
+  background-color: gray; }
+
+/**
+ * Leaflet overlays
+ */
+.timeOverlay {
+  padding: 6px 8px;
+  font-size: 10px;
+  font-family: "Roboto";
+  background: white;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  border-radius: 5px; }
+
+.timeOverlay h4 {
+  margin: auto;
+  color: #404040; }
+
+.timeOverlay p {
+  /*margin: 0 0 5px;*/
+  font-size: 10px;
+  font-family: "Roboto";
+  color: #939393; }
+
+hr {
+  border: 0px;
+  height: 1px;
+  background-image: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.75), transparent);
+  padding: 0px;
+  margin: 0px;
+}
+
+div.button-container {
+  text-align: left;
+  display: block;
+  line-height: 2;
+  margin-left: auto;
+  margin-right: auto; }
+
+div.zoom-button {
+  -moz-appearance: button;
+  /* Firefox */
+  -webkit-appearance: button;
+  /* Safari and Chrome */
+  display: inline-block;
+  margin: 2px;
+  /*padding: 1px 1px;*/
+  height: 24px;
+  width: 24px;
+  font-size: 24px;
+  line-height: 1px;
+  box-shadow: none;
+  border-radius: 10px;
+  background-color: red;
+  border: 1px solid red;
+  -webkit-appearance: button;
+  -webkit-border-radius: 2px;
+  -webkit-box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1); }
+
+span.interval-line {
+  /* margin-left: 30px; */
+  vertical-align: middle; }
+
+div.interval-text {
+  margin: auto;
+  width: 24px;
+  text-align: center; }
+
+div.blocks {
+  display: inline-block;
+  height: 24px;
+  border: solid 1px red;
+  width: 100px; }
+
+.animateOverlay h4 {
+  margin: auto;
+  color: #404040; }
+
+.animateOverlay {
+  padding: 6px 8px;
+  font-size: 10px;
+  font-family: "Roboto";
+  background: white;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  border-radius: 5px; }
+
+.custom .mdl-textfield {
+  margin-top: 10px;
+  margin-bottom: 0px;
+  padding-bottom: 0px;
+
+}
+
+label {
+  /* width: 150px; */
+  /* float: left; */
+  line-height: 2.4;
+  vertical-align: middle; }

@@ -14,217 +14,217 @@ var LIMIT_TICK = 15;
  */
 function getLabelsInRange(dataPoints) {
 
-    //var startTimestamp =  moment(dataPoints[0].timestamp).valueOf();
-    //var endTimestamp = moment(dataPoints[dataPoints.length - 1].timestamp).valueOf();
-    //var minutes = (endTimestamp - startTimestamp)/60;
+  //var startTimestamp =  moment(dataPoints[0].timestamp).valueOf();
+  //var endTimestamp = moment(dataPoints[dataPoints.length - 1].timestamp).valueOf();
+  //var minutes = (endTimestamp - startTimestamp)/60;
 
-    var startTimestamp = (dataPoints[0].milliseconds);
-    var endTimestamp = (dataPoints[dataPoints.length - 1].milliseconds);
-    var minutes = (endTimestamp - startTimestamp)/60;
+  var startTimestamp = (dataPoints[0].milliseconds);
+  var endTimestamp = (dataPoints[dataPoints.length - 1].milliseconds);
+  var minutes = (endTimestamp - startTimestamp) / 60;
+
+  /**
+   * Structure used to create the lanes and the items.
+   */
+  var gantGroupMap = {};
+  var gantGroupList = [];
+
+  var gantMap = {};
+  var gantIndividualList = [];
+
+  /**
+   * Iterate over each timestamp.
+   */
+  for (var vKey in dataPoints) {
+
+    var ts = dataPoints[vKey];
+
+    // Skip missing data
+    if (ts === undefined) {
+      return;
+    }
+
 
     /**
-     * Structure used to create the lanes and the items.
+     * If there are nets analyze them.
      */
-    var gantGroupMap = {};
-    var gantGroupList = [];
+    if (ts.items !== undefined) {
 
-    var gantMap = {};
-    var gantIndividualList = [];
+      /**
+       * Go into all the nets.
+       */
+      for (var iKey = 0; iKey < ts.items.length; iKey++) {
 
-    /**
-     * Iterate over each timestamp.
-     */
-    for (var vKey in dataPoints) {
+        var item = ts.items[iKey];
 
-        var ts = dataPoints[vKey];
+        // Compose the key
+        var key = item.id;
 
-        // Skip missing data
-        if (ts === undefined) {
-            return;
+
+        //[
+        //    {label: "person a", times: [{"color":"green", "label":"Weeee", "starting_time": 1355752800000, "ending_time": 1355759900000},
+        //        {"color":"blue", "label":"Weeee", "starting_time": 1355767900000, "ending_time": 1355774400000}]},
+        //    {label: "person b", times: [{"color":"pink", "label":"Weeee", "starting_time": 1355759910000, "ending_time": 1355761900000}, ]},
+        //    {label: "person c", times: [{"color":"yellow", "label":"Weeee", "starting_time": 1355761910000, "ending_time": 1355763910000}]},
+        //];
+        /**
+         * If the individual doesn't exist create the structure related to the individual.
+         */
+        if (gantMap[key] === undefined) {
+          var gantMapValue = {};
+          gantMapValue.class = key.toString();
+          //s for subject
+          gantMapValue.label = 'S ' + key;
+          gantMapValue.times = [];
+          gantMapValue.actual = null;
+          gantMap[key] = gantMapValue;
+
         }
-
 
         /**
-         * If there are nets analyze them.
+         * Groups.
          */
-        if (ts.items !== undefined) {
-
-            /**
-             * Go into all the nets.
-             */
-            for (var iKey = 0; iKey < ts.items.length; iKey++) {
-
-                var item = ts.items[iKey];
-
-                // Compose the key
-                var key = item.id;
-
-
-                //[
-                //    {label: "person a", times: [{"color":"green", "label":"Weeee", "starting_time": 1355752800000, "ending_time": 1355759900000},
-                //        {"color":"blue", "label":"Weeee", "starting_time": 1355767900000, "ending_time": 1355774400000}]},
-                //    {label: "person b", times: [{"color":"pink", "label":"Weeee", "starting_time": 1355759910000, "ending_time": 1355761900000}, ]},
-                //    {label: "person c", times: [{"color":"yellow", "label":"Weeee", "starting_time": 1355761910000, "ending_time": 1355763910000}]},
-                //];
-                /**
-                 * If the individual doesn't exist create the structure related to the individual.
-                 */
-                if (gantMap[key] === undefined) {
-                    var gantMapValue = {};
-                    gantMapValue.class = key.toString();
-                    //s for subject
-                    gantMapValue.label = 'S ' + key;
-                    gantMapValue.times = [];
-                    gantMapValue.actual = null;
-                    gantMap[key] = gantMapValue;
-
-                }
-
-                /**
-                 * Groups.
-                 */
-                if (gantGroupMap.class === undefined) {
-                    gantGroupMap.class = key.toString();
-                    //Lets short this
-                    gantGroupMap.label = 'G ' + key.toString();
-                    gantGroupMap.times = [];
-                    gantGroupMap.actual = null;
-
-                }
-
-                var label = ts.labels.label;
-
-                /**
-                 * If the label of the current TS is different from undefined create an item for the current group.
-                 */
-                if (label !== undefined) {
-
-                    /**
-                     * Groups.
-                     */
-
-                    // Take the last gantt rect
-                    var actual = gantGroupMap.actual;
-
-                    //The group is created if it not exist already.
-                    if (actual === null) {
-                        // If the last rectangle has been finished
-                        var gantGroupMapValue = {};
-                        //moment.js valueOf does a better unix time conversion
-                        gantGroupMapValue.starting_time = moment(ts.timestamp).valueOf();
-                        gantGroupMapValue.ending_time = moment(ts.timestamp).valueOf();
-                        gantGroupMapValue.color = ts.labels.color;
-                        if(minutes < LIMIT_LABEL) {
-                            gantGroupMapValue.label = ts.labels.label;
-                        } else {
-                            gantGroupMapValue.name = ts.labels.label;
-                        }
-
-                        gantGroupMap.actual = gantGroupMapValue;
-
-                    } else {
-
-                        gantGroupMap.actual.ending_time = moment(ts.timestamp).valueOf();
-
-                    }
-
-                    /**
-                     * Individuals
-                     */
-
-                    // Take the last gantt rect
-                    var actualLast = gantMap[key].actual;
-
-                    //The group is created if it not exist already.
-                    if (actualLast === null) {
-                        // If the last rectangle has been finished
-                        var groupValue = {};
-                        groupValue.starting_time = moment(ts.timestamp).valueOf();
-                        groupValue.ending_time = moment(ts.timestamp).valueOf();
-                        groupValue.color = ts.labels.color;
-                        if(minutes < LIMIT_LABEL)
-                            groupValue.label = ts.labels.label;
-                        else
-                            groupValue.name = ts.labels.label;
-                        gantMap[key].actual = groupValue;
-                    } else {
-                        gantMap[key].actual.ending_time = moment(ts.timestamp).valueOf();
-                    }
-
-                } else {
-
-                    /**
-                     * Groups.
-                     */
-                    var actualValue = gantGroupMap.actual;
-                    if (actualValue !== null) {
-                        gantGroupMap.times.push(actualValue);
-                        gantGroupMap.actual = null;
-
-                    }
-
-                    /**
-                     * Individuals.
-                     */
-
-                    //The label is undefined, end all the items.
-                    for (var i in gantMap) {
-
-                        var endValue = gantMap[i].actual;
-                        if (endValue !== null) {
-                            gantMap[i].times.push(endValue);
-                            gantMap[i].actual = null;
-
-                        }
-
-                    }
-
-                }
-
-            } // End for for each INDIVIDUAL
+        if (gantGroupMap.class === undefined) {
+          gantGroupMap.class = key.toString();
+          //Lets short this
+          gantGroupMap.label = 'G ' + key.toString();
+          gantGroupMap.times = [];
+          gantGroupMap.actual = null;
 
         }
 
-    } // End for on TIMESTAMPS
+        var label = ts.labels.label;
 
-    /**
-     * Groups;
-     */
-    var gValue = gantGroupMap.actual;
-    if (gValue !== null) {
+        /**
+         * If the label of the current TS is different from undefined create an item for the current group.
+         */
+        if (label !== undefined) {
 
-        gantGroupMap.times.push(gValue);
-        gantGroupMap.actual = null;
+          /**
+           * Groups.
+           */
 
-    }
+          // Take the last gantt rect
+          var actual = gantGroupMap.actual;
 
-    /**
-     * All the remaining data in the startTIme should create an item.
-     */
-    for (var k in gantMap) {
+          //The group is created if it not exist already.
+          if (actual === null) {
+            // If the last rectangle has been finished
+            var gantGroupMapValue = {};
+            //moment.js valueOf does a better unix time conversion
+            gantGroupMapValue.starting_time = moment(ts.timestamp).valueOf();
+            gantGroupMapValue.ending_time = moment(ts.timestamp).valueOf();
+            gantGroupMapValue.color = ts.labels.color;
+            if (minutes < LIMIT_LABEL) {
+              gantGroupMapValue.label = ts.labels.label;
+            } else {
+              gantGroupMapValue.name = ts.labels.label;
+            }
 
-        var sValue = gantMap[k].actual;
-        if (sValue !== null) {
+            gantGroupMap.actual = gantGroupMapValue;
 
-            gantMap[k].times.push(sValue);
-            gantMap[k].actual = null;
+          } else {
+
+            gantGroupMap.actual.ending_time = moment(ts.timestamp).valueOf();
+
+          }
+
+          /**
+           * Individuals
+           */
+
+          // Take the last gantt rect
+          var actualLast = gantMap[key].actual;
+
+          //The group is created if it not exist already.
+          if (actualLast === null) {
+            // If the last rectangle has been finished
+            var groupValue = {};
+            groupValue.starting_time = moment(ts.timestamp).valueOf();
+            groupValue.ending_time = moment(ts.timestamp).valueOf();
+            groupValue.color = ts.labels.color;
+            if (minutes < LIMIT_LABEL)
+              groupValue.label = ts.labels.label;
+            else
+              groupValue.name = ts.labels.label;
+            gantMap[key].actual = groupValue;
+          } else {
+            gantMap[key].actual.ending_time = moment(ts.timestamp).valueOf();
+          }
+
+        } else {
+
+          /**
+           * Groups.
+           */
+          var actualValue = gantGroupMap.actual;
+          if (actualValue !== null) {
+            gantGroupMap.times.push(actualValue);
+            gantGroupMap.actual = null;
+
+          }
+
+          /**
+           * Individuals.
+           */
+
+          //The label is undefined, end all the items.
+          for (var i in gantMap) {
+
+            var endValue = gantMap[i].actual;
+            if (endValue !== null) {
+              gantMap[i].times.push(endValue);
+              gantMap[i].actual = null;
+
+            }
+
+          }
 
         }
 
+      } // End for for each INDIVIDUAL
+
     }
 
-    delete gantGroupMap.actual;
-    gantGroupList.push(gantGroupMap);
+  } // End for on TIMESTAMPS
 
-    // Convert MAP into LIST
-    for (var j in gantMap) {
-        delete gantMap[j].actual;
-        gantIndividualList.push(gantMap[j]);
+  /**
+   * Groups;
+   */
+  var gValue = gantGroupMap.actual;
+  if (gValue !== null) {
+
+    gantGroupMap.times.push(gValue);
+    gantGroupMap.actual = null;
+
+  }
+
+  /**
+   * All the remaining data in the startTIme should create an item.
+   */
+  for (var k in gantMap) {
+
+    var sValue = gantMap[k].actual;
+    if (sValue !== null) {
+
+      gantMap[k].times.push(sValue);
+      gantMap[k].actual = null;
+
     }
 
-    return [gantGroupList.concat(gantIndividualList)];
-    //setUpTimelineGroup(gantGroupList, startTimestamp, endTimestamp);
-    //setUpTimelineIndividuals(gantList, startTimestamp, endTimestamp);
+  }
+
+  delete gantGroupMap.actual;
+  gantGroupList.push(gantGroupMap);
+
+  // Convert MAP into LIST
+  for (var j in gantMap) {
+    delete gantMap[j].actual;
+    gantIndividualList.push(gantMap[j]);
+  }
+
+  return [gantGroupList.concat(gantIndividualList)];
+  //setUpTimelineGroup(gantGroupList, startTimestamp, endTimestamp);
+  //setUpTimelineIndividuals(gantList, startTimestamp, endTimestamp);
 
 }
 
