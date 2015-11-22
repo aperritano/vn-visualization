@@ -4,49 +4,49 @@
     var DISPLAY_TYPES = ["circle", "rect"];
 
     var hover = function () {},
-        mouseover = function () {},
-        mouseout = function () {},
-        click = function () {},
-        scroll = function () {},
-        labelFunction = function(label) { return label; },
-        navigateLeft = function () {},
-        navigateRight = function () {},
-        orient = "bottom",
-        width = null,
-        height = null,
-        rowSeperatorsColor = null,
-        backgroundColor = null,
-        tickFormat = { format: d3.time.format("%I %p"),
-          tickTime: d3.time.hours,
-          tickInterval: 1,
-          tickSize: 6 },
-        colorCycle = d3.scale.category20(),
-        colorPropertyName = null,
-        display = "rect",
-        beginning = 0,
-        labelMargin = 0,
-        ending = 0,
-        margin = {left: 30, right:30, top: 30, bottom:30},
-        stacked = false,
-        rotateTicks = false,
-        timeIsRelative = false,
-        fullLengthBackgrounds = false,
-        itemHeight = 20,
-        itemMargin = 5,
-        navMargin = 60,
-        showTimeAxis = true,
-        showAxisTop = false,
-        showTodayLine = false,
-        timeAxisTick = false,
-        timeAxisTickFormat = {stroke: "stroke-dasharray", spacing: "4 10"},
-        showTodayFormat = {marginTop: 25, marginBottom: 0, width: 1, color: colorCycle},
-        showBorderLine = false,
-        showBorderFormat = {marginTop: 25, marginBottom: 0, width: 1, color: colorCycle},
-        showAxisHeaderBackground = false,
-        showAxisNav = false,
-        showAxisCalendarYear = false,
-        axisBgColor = "white",
-        chartData = {}
+      mouseover = function () {},
+      mouseout = function () {},
+      click = function () {},
+      scroll = function () {},
+      labelFunction = function(label) { return label; },
+      navigateLeft = function () {},
+      navigateRight = function () {},
+      orient = "bottom",
+      width = null,
+      height = null,
+      rowSeperatorsColor = null,
+      backgroundColor = null,
+      tickFormat = { format: d3.time.format("%I %p"),
+        tickTime: d3.time.hours,
+        tickInterval: 1,
+        tickSize: 6 },
+      colorCycle = d3.scale.category20(),
+      colorPropertyName = null,
+      display = "rect",
+      beginning = 0,
+      labelMargin = 0,
+      ending = 0,
+      margin = {left: 30, right:30, top: 50, bottom:30},
+      stacked = false,
+      rotateTicks = false,
+      timeIsRelative = false,
+      fullLengthBackgrounds = false,
+      itemHeight = 20,
+      itemMargin = 5,
+      navMargin = 60,
+      showTimeAxis = true,
+      showAxisTop = false,
+      showTodayLine = false,
+      timeAxisTick = false,
+      timeAxisTickFormat = {stroke: "stroke-dasharray", spacing: "4 10"},
+      showTodayFormat = {marginTop: 25, marginBottom: 0, width: 1, color: colorCycle},
+      showBorderLine = false,
+      showBorderFormat = {marginTop: 25, marginBottom: 0, width: 1, color: colorCycle},
+      showAxisHeaderBackground = false,
+      showAxisNav = false,
+      showAxisCalendarYear = false,
+      axisBgColor = "white",
+      chartData = {}
       ;
 
     var appendTimeAxis = function(g, xAxis, yPosition) {
@@ -57,7 +57,7 @@
 
       var axis = g.append("g")
         .attr("class", "axis")
-        .attr("transform", "translate(" + 0 + "," + yPosition + ")")
+        .attr("transform", "translate(" + 0 + "," + margin.top + ")")
         .call(xAxis);
     };
 
@@ -125,7 +125,7 @@
     var appendTimeAxisTick = function(g, xAxis, maxStack) {
       g.append("g")
         .attr("class", "axis")
-        .attr("transform", "translate(" + 0 + "," + (margin.top + (itemHeight + itemMargin) * maxStack) + ")")
+        .attr("transform", "translate(" + 0 + "," + margin.top + ")")
         .attr(timeAxisTickFormat.stroke, timeAxisTickFormat.spacing)
         .call(xAxis.tickFormat("").tickSize(-(margin.top + (itemHeight + itemMargin) * (maxStack - 1) + 3), 0, 0));
     };
@@ -145,7 +145,7 @@
 
     var appendLabel = function (gParent, yAxisMapping, index, hasLabel, datum) {
       var fullItemHeight    = itemHeight + itemMargin;
-      var rowsDown          = fullItemHeight + fullItemHeight * (yAxisMapping[index] || 1);
+      var rowsDown          = fullItemHeight + fullItemHeight * (yAxisMapping[index] || 1) + margin.top - (itemHeight/2);
 
       gParent.append("text")
         .attr("class", "timeline-label")
@@ -248,7 +248,7 @@
 
           g.selectAll("svg").data(data).enter()
             .append(function(d, i) {
-                return document.createElementNS(d3.ns.prefix.svg, "display" in d? d.display:display);
+              return document.createElementNS(d3.ns.prefix.svg, "display" in d? d.display:display);
             })
             .attr("x", getXPos)
             .attr("y", getStackPosition)
@@ -256,7 +256,7 @@
               return (d.ending_time - d.starting_time) * scaleFactor;
             })
             .attr("cy", function(d, i) {
-                return getStackPosition(d, i) + itemHeight/2;
+              return getStackPosition(d, i) + itemHeight/2;
             })
             .attr("cx", getXPos)
             .attr("r", itemHeight / 2)

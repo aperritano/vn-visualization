@@ -10,7 +10,7 @@ var wWidth = 'innerWidth' in window ? window.innerWidth : document.documentEleme
 
 //var mainOffset = 15;
 
-var margin = {top: 10, left: 15, bottom: 20, right: 20};
+var margin = {top: 10, left: 20, bottom: 20, right: 20};
 
 
 var mapSVG;
@@ -58,7 +58,7 @@ var animateTimer;
 var pBar = document.querySelector('#progressBar');
 
 function getSessionInfo() {
-  oboe('https://baboons.firebaseio.com/sessions_info.json')
+  oboe('https://labeldatababoons.firebaseio.com/sessions_info.json')
     .node('!.*', function (sess) {
       if (sess !== undefined) {
         sessions.push(sess);
@@ -165,7 +165,7 @@ function fetchSession(value) {
   console.log('fetching session', value);
   pBar.style.display = 'block';
 
-  oboe('https://baboons.firebaseio.com/sessions/' + value + '/dictionary.json')
+  oboe('https://labeldatababoons.firebaseio.com/sessions/' + value + '/dictionary.json')
     .node('!.*', function (dict) {
 
 
@@ -180,7 +180,7 @@ function fetchSession(value) {
       doneDictionary();
     });
 
-  oboe('https://baboons.firebaseio.com/sessions/' + value + '/session_info.json')
+  oboe('https://labeldatababoons.firebaseio.com/sessions/' + value + '/session_info.json')
     .node('!.*', function (sessionInfo) {
 
 
@@ -198,7 +198,7 @@ function fetchSession(value) {
   var recordCount = 0;
 
 
-  oboe('https://baboons.firebaseio.com/sessions/' + value + '/timestamps.json')
+  oboe('https://labeldatababoons.firebaseio.com/sessions/' + value + '/timestamps.json')
     .node('!.*', function (t) {
 
       if (recordCount === 0) {
@@ -374,7 +374,7 @@ function initDataPointOverlay() {
 
 
   if (firstPoint.items !== undefined) {
-    drawDataPointOverlay(firstPoint);
+    //drawDataPointOverlay(firstPoint);
   } else {
     //this point doesn't have subjects
   }
@@ -811,7 +811,7 @@ function handleCountryOverlayControl() {
 function createMainTimeline(flag) {
 
   if (flag === 'init') {
-    var margin = {top: 10, left: 15, bottom: 20, right: 20};
+    var margin = {top: 10, left: 20, bottom: 20, right: 20};
     //width = wWidth - margin.left - margin.right,
     var height = 100 - margin.top - margin.bottom;
 
@@ -865,8 +865,8 @@ function createMainTimeline(flag) {
 
     dc.renderAll();
 
-    //updateLabelTimeline(tStart, t5);
-    drawDataPointOverlay(t1);
+    updateLabelTimeline(tStart, t5);
+    //drawDataPointOverlay(t1);
 
 
   } else if (flag === 'update') {
@@ -895,9 +895,9 @@ function createMainTimeline(flag) {
       timeOverlayProps.endTime = moment(t2);
       timeOverlay.update();
 
-      drawDataPointOverlay(dataPoint);
+      //drawDataPointOverlay(dataPoint);
       zoomCurrentPoint();
-      //updateLabelTimeline(t1, t2);
+      updateLabelTimeline(t1, t2);
     }
 
 
@@ -967,7 +967,7 @@ function updateLabelTimeline(tStart, tEnd) {
     svgLabel.remove();
   }
 
-  var groupLabelMargin = {top: 10, left: 10, bottom: 0, right: 15};
+  var groupLabelMargin = {top: 50, left: 20, bottom: 0, right: 15};
   var width = wWidth - margin.left - margin.right;
   var tooltip = d3.select('#tooltipLabel').append('div').attr('class', 'tooltipLabel').style('opacity', 0);
 
@@ -975,7 +975,7 @@ function updateLabelTimeline(tStart, tEnd) {
   var chart = d3.timeline()
     .beginning(sDate)
     .ending(eDate)
-    .orient('bottom')
+    .orient('top')
     .showTimeAxisTick()
     .rowSeperators('#d9d9d9')
     .stack()
@@ -986,7 +986,7 @@ function updateLabelTimeline(tStart, tEnd) {
         tickInterval: minutesTick,
         tickSize: 20
       })
-    .margin({top: 10, left: 10, bottom: 0, right: 15})
+    .margin(groupLabelMargin)
     .mouseover(function (d, i, datum) {
 
       if (minutes < LIMIT_LABEL)
@@ -1059,7 +1059,7 @@ function playSelection(seconds) {
       if (!_.isUndefined(d) && !_.isUndefined(d.items)) {
         if (d.items !== undefined) {
           console.log('actual' + d.timestamp);
-          drawDataPointOverlay(d);
+          //drawDataPointOverlay(d);
           if (hasZoomedToFirstPoint === false) {
             zoomCurrentPoint();
             hasZoomedToFirstPoint = true;
