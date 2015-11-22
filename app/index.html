@@ -203,24 +203,25 @@ material.purple-indigo.min.css
       <!-- Your content goes here -->
       <div id="control-panel" style="display: none">
         <h6 align="center">Brush Range</h6>
+        <hr>
         <span align="center" id="start-time">Start:&nbsp</span><br>
         <span align="center" id="end-time">End:&nbsp&nbsp&nbsp&nbsp</span>
       </div>
       <div id="animate-panel" style="display: none">
         <h6 align="center">Animate Range</h6>
-
+        <hr>
         <div align="center">
           <button id="play" class="mdl-button mdl-js-button mdl-button--icon">
             <i id="play-icon" class="material-icons">play_circle_outline</i>
           </button>
           <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="mdl-textfield__input" value="1" maxlength="7" type="text" pattern="-?[0-9]*(\.[0-9]+)?"
+            <input class="custom mdl-textfield__input" value="1" maxlength="7" type="text" pattern="-?[0-9]*(\.[0-9]+)?"
                    id="time-step">
             <label class="mdl-textfield__label" for="time-step">time step (sec)</label>
             <span class="mdl-textfield__error">Input is not a number!</span>
           </div>
         </div>
-        <hr>
+
         <span id="current-time">Current:&nbsp</span><br>
       </div>
       <div id="zoom-panel" style="display: none">
