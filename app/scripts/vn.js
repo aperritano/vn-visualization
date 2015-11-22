@@ -58,7 +58,7 @@ var animateTimer;
 var pBar = document.querySelector('#progressBar');
 
 function getSessionInfo() {
-  oboe('https://labeldatababoons.firebaseio.com/sessions_info.json')
+  oboe('https://baboons.firebaseio.com/sessions_info.json')
     .node('!.*', function (sess) {
       if (sess !== undefined) {
         sessions.push(sess);
@@ -165,7 +165,7 @@ function fetchSession(value) {
   console.log('fetching session', value);
   pBar.style.display = 'block';
 
-  oboe('https://labeldatababoons.firebaseio.com/sessions/' + value + '/dictionary.json')
+  oboe('https://baboons.firebaseio.com/sessions/' + value + '/dictionary.json')
     .node('!.*', function (dict) {
 
 
@@ -180,7 +180,7 @@ function fetchSession(value) {
       doneDictionary();
     });
 
-  oboe('https://labeldatababoons.firebaseio.com/sessions/' + value + '/session_info.json')
+  oboe('https://baboons.firebaseio.com/sessions/' + value + '/session_info.json')
     .node('!.*', function (sessionInfo) {
 
 
@@ -198,7 +198,7 @@ function fetchSession(value) {
   var recordCount = 0;
 
 
-  oboe('https://labeldatababoons.firebaseio.com/sessions/' + value + '/timestamps.json')
+  oboe('https://baboons.firebaseio.com/sessions/' + value + '/timestamps.json')
     .node('!.*', function (t) {
 
       if (recordCount === 0) {
