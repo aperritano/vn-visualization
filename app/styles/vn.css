@@ -128,9 +128,10 @@ div.tooltipLabel {
   border-radius: 5px;
 }
 
-.timeOverlay h4 {
-  margin: auto;
-  color: #404040;
+#control-panel > h6 {
+  margin: 0px 0px 5px 0px;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .timeOverlay p {
@@ -178,6 +179,15 @@ div.zoom-button {
 }
 
 /*animate overlay*/
+
+#animate-panel > h6 {
+  margin: 0px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+
 .animateOverlay h4 {
   margin: auto;
   color: #404040;
@@ -185,7 +195,7 @@ div.zoom-button {
 
 .animateOverlay {
   padding: 6px 8px;
-  font-size: 10px;
+  font-size: 12px;
   font-family: "Roboto";
   background: white;
   background: rgba(255, 255, 255, 0.8);
@@ -193,7 +203,7 @@ div.zoom-button {
   border-radius: 5px;
 }
 
-.custom .mdl-textfield {
+.custom .mdl-textfield__input {
   margin-top: 10px;
   margin-bottom: 0px;
   padding-bottom: 0px;
