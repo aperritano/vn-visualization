@@ -55,7 +55,7 @@ var pBar = document.querySelector('#progressBar');
 function getSessionInfo() {
   oboe('https://baboons.firebaseio.com/sessions_info.json')
     .node('!.*', function (sess) {
-      if (sess !== undefined) {
+      if (!_.isUndefined(sess) || !_.isNull(sess)) {
         sessions.push(sess);
       }
       return oboe.drop;
@@ -160,14 +160,15 @@ function fetchSession(value) {
   console.log('fetching session', value);
   pBar.style.display = 'block';
 
+  var recordProgressText = document.querySelector('#progressText');
+  recordProgressText.style.display = 'block';
+  recordProgressText.innerHTML = 'Connecting...';
+
   oboe('https://baboons.firebaseio.com/sessions/' + value + '/dictionary.json')
     .node('!.*', function (dict) {
-
-
-      if (dict !== undefined) {
+      if (!_.isUndefined(dict) || !_.isNull(dict)) {
         dictionary.push(dict);
       }
-
       return oboe.drop;
     })
     .done(function (finaljson) {
@@ -178,29 +179,26 @@ function fetchSession(value) {
   oboe('https://baboons.firebaseio.com/sessions/' + value + '/session_info.json')
     .node('!.*', function (sessionInfo) {
 
-
+      if (!_.isUndefined(sessionInfo) || !_.isNull(sessionInfo)) {
+        dictionary.push(sessionInfo);
+      }
       console.log('sessionInfo', sessionInfo);
-
-
       return oboe.drop;
     })
     .done(function (finaljson) {
       console.log('done with sessionInfo');
     });
 
-  var recordProgressText = document.querySelector('#progressText');
-
   var recordCount = 0;
-
 
   oboe('https://baboons.firebaseio.com/sessions/' + value + '/timestamps.json')
     .node('!.*', function (t) {
 
-      if (recordCount === 0) {
-        recordProgressText.style.display = 'block';
+      if ( _.isUndefined(t) || _.isNull(t) ) {
+        return oboe.drop;
       }
 
-      if (t.timestamp === undefined) {
+      if ( _.isUndefined(t.timestamp) || _.isNull(t.timestamp)) {
       } else {
         try {
           if (t.items !== null || t.items !== undefined || t.items[0] !== undefined && t.items[0] !== null) {
@@ -240,8 +238,6 @@ function fetchSession(value) {
     })
     .done(function (finaljson) {
       console.log('done with timestamps, starting timestamps', gpsDataset.length);
-      recordProgressText.innerHTML = 'Retrieving Record 21600 of 21600';
-      var pBar = document.querySelector('#progressBar');
       recordProgressText.style.display = 'none';
       pBar.style.display = 'none';
       doneTimestamps();
@@ -369,7 +365,7 @@ function initDataPointOverlay() {
 
 
   if (firstPoint.items !== undefined) {
-    //drawDataPointOverlay(firstPoint);
+    drawDataPointOverlay(firstPoint);
   } else {
     //this point doesn't have subjects
   }
@@ -379,21 +375,21 @@ function drawDataPointOverlay(dataPoint) {
   currentDataPoint = dataPoint;
   animateOverlay.update();
 
-  if (_.isUndefined(currentDataPoint) || _.isUndefined(currentDataPoint.items)) {
+  if (_.isUndefined(currentDataPoint) || _.isEmpty(currentDataPoint.items)) {
     console.log('undefined datapoint');
     return;
   }
 
   var links = [];
-  if (currentDataPoint.edges !== undefined) {
+  if ( !_.isEmpty(currentDataPoint.edges)) {
     currentDataPoint.edges.forEach(function (net) {
 
       var s = currentDataPoint.items.filter(function (d) {
-        return d.baboon_info.id === net[0];
+        return d.id === net[0];
       });
 
       var t = currentDataPoint.items.filter(function (d) {
-        return d.baboon_info.id === net[1];
+        return d.id === net[1];
       });
 
       var p1 = createLineJSON(s[0]);
@@ -401,11 +397,11 @@ function drawDataPointOverlay(dataPoint) {
       //links.push(p1);
       var p2 = createLineJSON(t[0]);
 
-      var link = [{x: p1.baboon_info.lon, y: p1.baboon_info.lat}, {x: p2.baboon_info.lon, y: p2.baboon_info.lat}];
+      var link = [{x: p1.lon, y: p1.lat}, {x: p2.lon, y: p2.lat}];
       links.push(link);
 
       function createLineJSON(source) {
-        var geoLine = {lon: source.baboon_info.lon, lat: source.baboon_info.lat};
+        var geoLine = {lon: source.lon, lat: source.lat};
 
         return geoLine;
       }
@@ -417,8 +413,8 @@ function drawDataPointOverlay(dataPoint) {
   var targets = currentDataPoint.items;
 
   targets.forEach(function (d, i) {
-    // d.labels = currentDataPoint.labels;
-    //d.LatLng = new L.LatLng(d.lat, d.lon);
+    //d.labels = currentDataPoint.labels;
+    d.LatLng = new L.LatLng(d.lat, d.lon);
   });
 
 
@@ -861,7 +857,7 @@ function createMainTimeline(flag) {
     dc.renderAll();
 
     updateLabelTimeline(tStart, t5);
-    //drawDataPointOverlay(t1);
+    drawDataPointOverlay(t1);
 
 
   } else if (flag === 'update') {
@@ -890,8 +886,8 @@ function createMainTimeline(flag) {
       timeOverlayProps.endTime = moment(t2);
       timeOverlay.update();
 
-      //drawDataPointOverlay(dataPoint);
-      //zoomCurrentPoint();
+      drawDataPointOverlay(dataPoint);
+      zoomCurrentPoint();
       updateLabelTimeline(t1, t2);
     }
 
