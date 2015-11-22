@@ -2,6 +2,7 @@
 var LIMIT_LABEL = 45;
 var LIMIT_TICK = 15;
 
+
 /**
  * Function used to extract all the lanes (groups) and the items of each group.
  * @param dataPoints, data that come from the DB.
