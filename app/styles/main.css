@@ -20,11 +20,11 @@ will be correctly compiled during `gulp serve` and `gulp`
 html, body {
   font-family: 'Roboto', 'Helvetica', sans-serif;
   margin: 0px;
-  padding: 0px; }
+  /* padding: 0px; */
+  }
 
 h5, h6 {
   font-family: 'Roboto', 'Helvetica', sans-serif;
   margin: 0px;
   padding: 0px;
-  font-size: 10px;
-  }
+  font-size: 10px; }

@@ -1,12 +1,7 @@
-/*************************************************
- *              VARIABLES
- *************************************************/
+
 var LIMIT_LABEL = 45;
 var LIMIT_TICK = 15;
 
-/*************************************************
- *              COMPUTE DATA
- *************************************************/
 
 /**
  * Function used to extract all the lanes (groups) and the items of each group.
