@@ -1,94 +1,47 @@
-
+@charset "UTF-8";
 body {
   background-color: #616161;
   /* Remove space around window edge */
   /*margin-top: 0;*/
   /*margin-left: 0;*/
   /*margin-right: 0;*/
-  /*margin-bottom: 0;*/
-}
+  /*margin-bottom: 0;*/ }
 
 /*
 The attributes below style the css
 property transitions.
 */
-
 /*div {*/
-  /*-webkit-transition-property: all;*/
-  /*-webkit-transition-duration: 0.2s;*/
-  /*-webkit-transition-timing-function: ease;*/
-  /*-webkit-transition-delay: 0s;*/
+/*-webkit-transition-property: all;*/
+/*-webkit-transition-duration: 0.2s;*/
+/*-webkit-transition-timing-function: ease;*/
+/*-webkit-transition-delay: 0s;*/
 /*}*/
-
 /*
 The two classes below work together
 to center the content vertically and
 horizontally on the screen.
 */
-
 table {
   width: 100%;
   margin-top: auto;
   margin-left: auto;
-  margin-right: auto;
-}
-
-.mdl-data-table {
-  border: none;
-  border-collapse: collapse;
-}
-
-th.custom-title {
-  padding: 0 0px 0 0px;
-  text-align: left;
-  position: relative;
-  vertical-align: bottom;
-  text-overflow: ellipsis;
-  font-weight: 700;
-  line-height: 24px;
-  letter-spacing: 0;
-  height: 48px;
-  font-size: 12px;
-  padding-bottom: 8px;
-  box-sizing: border-box;
-}
-
-td.custom-row{
-  padding: 0 0px 0 0px;
-  text-align: left;
-  position: relative;
-  vertical-align: bottom;
-  text-overflow: ellipsis;
-  line-height: 24px;
-  letter-spacing: 0;
-  height: 48px;
-  font-size: 12px;
-  padding-bottom: 8px;
-  box-sizing: border-box;
-}
-.mdl-radio__label {
-  font-size: 12px;
-}
-
-
+  margin-right: auto; }
 
 .wrapperOutside {
   display: table;
   width: 100vw;
-  height: 100vh;
-}
+  height: 100vh; }
 
 .wrapperInside {
   display: table-cell;
   text-align: center;
-  vertical-align: middle;
-}
+  vertical-align: middle; }
 
 /*
 The attributes below style the css
 dialog window, and content.
 */
-
 .dialogContainer {
   /* Form */
   width: 500px;
@@ -112,8 +65,7 @@ dialog window, and content.
   margin-top: 0;
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: 0;
-}
+  margin-bottom: 0; }
 
 .dialogContent {
   /* Form */
@@ -121,10 +73,10 @@ dialog window, and content.
   height: auto;
   background-color: #FFFFFF;
   /* Corner radius */
-  border-top-left-radius:2px;
-  border-top-right-radius:2px;
-  border-bottom-right-radius:0;
-  border-bottom-left-radius:0;
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
   /* Internal padding */
   padding-top: 21px;
   padding-left: 24px;
@@ -134,8 +86,7 @@ dialog window, and content.
   margin-top: 0;
   margin-left: 0;
   margin-right: 0;
-  margin-bottom: 0;
-}
+  margin-bottom: 0; }
 
 .dialogContentTitle {
   /* Form */
@@ -144,7 +95,7 @@ dialog window, and content.
   font-family: 'Roboto', sans-serif;
   font-weight: 500;
   font-size: 20px;
-  color: rgba(0,0,0,.8);
+  color: rgba(0, 0, 0, 0.8);
   line-height: 24px;
   text-align: left;
   letter-spacing: 0.03px;
@@ -157,15 +108,14 @@ dialog window, and content.
   margin-top: 0;
   margin-left: 0;
   margin-right: 0;
-  margin-bottom: 0;
-}
+  margin-bottom: 0; }
 
 .dialogContentBody {
   /* Typography */
   font-family: 'Roboto', sans-serif;
   font-weight: 400;
   font-size: 16px;
-  color: rgba(0,0,0,.5);
+  color: rgba(0, 0, 0, 0.5);
   line-height: 24px;
   text-align: left;
   letter-spacing: 0.03px;
@@ -178,8 +128,7 @@ dialog window, and content.
   margin-top: 0;
   margin-left: 0;
   margin-right: 0;
-  margin-bottom: 0;
-}
+  margin-bottom: 0; }
 
 .dialogActionBar {
   /* Form */
@@ -188,10 +137,10 @@ dialog window, and content.
   background-color: #FFFFFF;
   text-align: right;
   /* Corner radius */
-  border-top-left-radius:0;
-  border-top-right-radius:0;
-  border-bottom-right-radius:2px;
-  border-bottom-left-radius:2px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 2px;
+  border-bottom-left-radius: 2px;
   /* Internal padding */
   padding-top: 0;
   padding-left: 16px;
@@ -201,37 +150,33 @@ dialog window, and content.
   margin-top: 0;
   margin-left: 0;
   margin-right: 0;
-  margin-bottom: 0;
-}
+  margin-bottom: 0; }
 
 /*
 The attributes below style the
 hit target.
 */
-
 .buttonTouchTarget {
   display: inline-block;
-  background-color: rgba(0,0,0,0);
+  background-color: transparent;
   /* Remove grey background on link clicked in ios safari */
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-}
+  -webkit-tap-highlight-color: transparent; }
 
 /*
 The attributes below style the
 flat button based on the Google
 material design language.
 */
-
 .buttonFlat {
   /* Form */
   display: inline-block;
   height: 36px;
-  background-color: rgba(9,9,9,0);
+  background-color: rgba(9, 9, 9, 0);
   /* Typography */
   font-family: 'Roboto', sans-serif;
   font-weight: 500;
   font-size: 14px;
-  color: rgba(33,150,243,0.9);
+  color: rgba(33, 150, 243, 0.9);
   line-height: 36px;
   text-align: center;
   letter-spacing: 0.4px;
@@ -244,5 +189,4 @@ material design language.
   margin-top: 6px;
   margin-left: 4px;
   margin-right: 4px;
-  margin-bottom: 6px;
-}
+  margin-bottom: 6px; }

@@ -47,38 +47,20 @@ material.purple-indigo.min.css
   <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css"/>
 
   <!--<link rel="stylesheet" href="../bower_components/dcjs/dc.min.css"/>-->
-  <link rel="stylesheet" href="dcjs/dc.min.css"/>
+  <link rel="stylesheet" href="scripts/dcjs/dc.css"/>
 
 
-  <link href="dcjs/toast.css" rel="stylesheet"/>
+  <link href="scripts/dcjs/toast.css" rel="stylesheet"/>
 
   <link href="styles/material-modal.css" rel="stylesheet"/>
 
 
   <style>
-    /*.mdl-layout__header {*/
-
-    /*height: 25px;*/
-    /*width: 100%;*/
-    /*margin: 0;*/
-    /*padding: 0;*/
-    /*border: none;*/
-    /*min-height: 15px;*/
-    /*max-height: 1000px;*/
-    /*z-index: 3;*/
-    /*background-color: rgb(63, 81, 181);*/
-    /*color: rgb(255, 255, 255);*/
-    /*box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12);*/
-    /*}*/
-    /*.mdl-layout__header-row {*/
-    /*min-height: 10px;*/
-    /*height: 10px;*/
-    /*}*/
 
     header.custom-header {
       background: #ffffff;
       height: 15px;
-      min-height: 50px;
+      /*//min-height: 50px;*/
       box-shadow: none;
     }
 
@@ -90,18 +72,20 @@ material.purple-indigo.min.css
     .mdl-layout__header-row span.mdl-layout-title {
       color: #616161;
       text-transform: uppercase;
-      height: 15px;
-      line-height: 10px;
+      /*height: 15px;*/
+      /*line-height: .3em;*/
 
     }
 
     .mdl-layout__drawer-button {
-      height: 30px;
-      line-height: 50px;
+
+      /*height: 30px;*/
+      /*line-height: 1.5em;*/
     }
 
     .custom-header .material-icons {
-      color: #616161;
+      /*color: #616161;*/
+      color: white;
       min-height: 15px;
     }
 
@@ -109,10 +93,6 @@ material.purple-indigo.min.css
       color: #616161;
       font-weight: 700;
       font-size: 14px;
-    }
-
-    .custom-header a.mdl-navigation__link:hover {
-      color: #616161;
     }
 
     .custom-header .mdl-layout__title, .mdl-layout-title {
@@ -124,18 +104,8 @@ material.purple-indigo.min.css
       color: #616161;
       font-size: 14px;
       text-transform: uppercase;
-      height: 50px;
-      line-height: 50px;
-    }
-
-    .mdl-layout__drawer a.mdl-navigation__link {
-      color: #616161;
-      font-weight: 700;
-      font-size: 14px;
-    }
-
-    .mdl-layout__drawer a.mdl-navigation__link:hover {
-      color: #111;
+      /*height: 50px;*/
+      /*line-height: 4em;*/
     }
 
     .mdl-textfield {
@@ -159,20 +129,43 @@ material.purple-indigo.min.css
       <!-- Navigation. We hide it in small screens. -->
     </div>
   </header>
-  <div class="mdl-layout__drawer">
-    <span class="mdl-layout-title">Dictionary</span>
-    <nav class="mdl-navigation">
-      <a class="mdl-navigation__link" href="">Link</a>
-      <a class="mdl-navigation__link" href="">Link</a>
-      <a class="mdl-navigation__link" href="">Link</a>
-      <a class="mdl-navigation__link" href="">Link</a>
-    </nav>
+  <div id="dict-drawer" class="mdl-layout__drawer">
+    <span class="mdl-layout-title custom-dict-header">Dictionary</span>
+    <div class="dict-table-container">
+    <table id="dict-table" class="mdl-data-table mdl-js-data-table dict-table">
+      <thead>
+      <tr>
+        <th id="name" class="dict-title" style="
+    padding-left: 24px; text-align: left;
+">Name</th>
+
+        <th id="code" class="dict-title" style="
+    padding-left: 0px;
+">Code</th>
+        <th id="color" class="dict-title" style="
+    padding-left: 0px;
+">Color</th>
+      </tr>
+      </thead>
+      <tbody id="dict-body">
+      <!-- create row programmically -->
+
+      </tbody>
+    </table>
+    </div>
   </div>
+
+
+
+
+
 
   <main class="mdl-layout__content">
     <div id="progressBar" style="width: 100%; display:none"
          class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>
-
+    <div  id="progressText" class="center" style="display:none" >
+      Retrieving Record 0 of 21600
+    </div>
     <div class="page-content">
       <!-- Content wrapper -->
       <div id="dialog" class="wrapperOutside">
@@ -187,11 +180,11 @@ material.purple-indigo.min.css
                   <thead>
                   <tr>
                     <th class="custom-title" style="padding-left: 30px">Session Name</th>
-                    <th class="custom-title">Author</th>
-                    <th class="custom-title" style="padding-left: 30px">Creation Date</th>
+                    <th class="custom-title2">Author</th>
+                    <th class="custom-title2">Creation Date</th>
                   </tr>
                   </thead>
-                  <tbody id="select-body">
+                  <tbody id="sessions-body">
                   <!-- create row programmically -->
                   </tbody>
                 </table>
@@ -243,7 +236,17 @@ material.purple-indigo.min.css
   </main>
 </div>
 
-
+<!--tooltips-->
+<!--dictionary-->
+<div class="mdl-tooltip mdl-tooltip--large" for="name">
+  Label identifier
+</div>
+<div class="mdl-tooltip mdl-tooltip--large" for="code">
+Each label has an associated code
+</div>
+<div class="mdl-tooltip mdl-tooltip--large" for="color">
+The visual encoding of the label
+</div>
 <!--<div id="labelsIndividuals"></div>-->
 <!--<div id="tooltipLabel"></div>-->
 
@@ -254,7 +257,7 @@ material.purple-indigo.min.css
 <!--util-->
 <script src="moment/min/moment.min.js"></script>
 
-<script src="async/dist/async.min.js"></script>
+<script src="async/dist/async.js"></script>
 <script src="topojson/topojson.js"></script>
 
 <script src="crossfilter/crossfilter.min.js"></script>
@@ -265,9 +268,9 @@ material.purple-indigo.min.css
 
 <script src='oboe/dist/oboe-browser.min.js'></script>
 
-<script src="dcjs/toast.min.js"></script>
-<script src="dcjs/d3-timeline.js"></script>
-<script src="dcjs/dc.min.js"></script>
+<script src="scripts/dcjs/toast.min.js"></script>
+<script src="scripts/dcjs/d3-timeline.js"></script>
+<script src="scripts/dcjs/dc.js"></script>
 
 <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
 

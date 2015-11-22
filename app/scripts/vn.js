@@ -1,4 +1,4 @@
-/*global L, Firebase, d3, oboe, Parallel, moment, dc, _, crossfilter, async, topojson*/
+/*global L, d3, oboe, Parallel, moment, dc, _, crossfilter, topojson*/
 
 
 var mapContainer;
@@ -25,11 +25,6 @@ var dateFormat = '%Y-%m-%d %H:%M:%S';
 var parseDate =
   d3.time.format(dateFormat).parse;
 
-var allSubjects;
-var xFilter;
-var byDate;
-var brushFilteredDates;
-
 var sessionInfo = {};
 var sessions = [];
 var labels = [];
@@ -42,23 +37,22 @@ var timeOverlayProps = {};
 var buttonOverlay;
 var animateOverlay;
 
-var currentDataPoint;
 
+
+//crossfilter
 var byDate;
-
 var countGroup;
-
 var labelGroup;
-
 var netsGroup;
-
-var m = '500';
+var allSubjects;
+var xFilter;
+var brushFilteredDates;
 
 var startTime;
 var endTime;
 
-var pgress = 0;
 var isPlaying = false;
+var currentDataPoint;
 var animateTimer;
 
 var pBar = document.querySelector('#progressBar');
@@ -76,7 +70,7 @@ function getSessionInfo() {
 
       //update the textbox
       if (sessions.length > 0) {
-        var tableBodyRef = document.getElementById('sessions-table').getElementsByTagName('tbody')[0];
+        var tableBodyRef = document.getElementById('sessions-body');
 
         for (var i = 0; i < sessions.length; i++) {
 
@@ -86,14 +80,18 @@ function getSessionInfo() {
           cellOption.className = 'custom-row';
 
           //option button
-          var labelRef = document.createElement('label', 'mdl-radio mdl-js-radio mdl-js-ripple-effect');
+          var labelRef = document.createElement('label');
+          labelRef.className = 'mdl-radio mdl-js-radio mdl-js-ripple-effect';
+
           labelRef.setAttribute('for', 'option-' + i);
-          componentHandler.upgradeElement(labelRef);
           cellOption.appendChild(labelRef);
 
-          var inputRef = document.createElement('input', 'mdl-radio__button');
+
+          var inputRef = document.createElement('input');
+          inputRef.className = 'mdl-radio__button';
+
           inputRef.setAttribute('type', 'radio');
-          inputRef.setAttribute('id', 'option' + i);
+          inputRef.setAttribute('id', 'option-' + i);
           inputRef.setAttribute('name', 'options');
           inputRef.setAttribute('value', sess.id);
 
@@ -105,28 +103,36 @@ function getSessionInfo() {
 
           labelRef.appendChild(inputRef);
 
-          var spanRef = document.createElement('span', 'mdl-radio__label');
+          var spanRef = document.createElement('span');
+          spanRef.className = 'mdl-radio__label';
           spanRef.innerHTML = ' Session ' + (i + 1);
 
           labelRef.appendChild(spanRef);
 
-          componentHandler.upgradeElement(rowRef);
-          componentHandler.upgradeElement(inputRef);
-          componentHandler.upgradeElement(spanRef);
+          //componentHandler.upgradeElement(rowRef);
+          //componentHandler.upgradeElement(inputRef);
+          //componentHandler.upgradeElement(spanRef);
+
 
           var cellAuthor = rowRef.insertCell(1);
-          cellAuthor.className = 'custom-row';
+          cellAuthor.className = 'custom-row2';
           var authorText = document.createTextNode(sess.name);
           cellAuthor.appendChild(authorText);
 
           var cellDate = rowRef.insertCell(2);
-          cellDate.className = 'custom-row';
+          cellDate.className = 'custom-row2';
 
           var dateText = document.createTextNode(sess.date);
           cellDate.appendChild(dateText);
 
+          componentHandler.upgradeElement(labelRef);
+          componentHandler.upgradeElement(inputRef);
+          componentHandler.upgradeElement(spanRef);
+
+
           var selectButtonTouchTarget = "buttonTwoTouchTarget";
           var selectButton = "buttonTwo";
+
 
           // Declare function to manage mouse over event.
           var modalSelectButton = document.getElementById(selectButtonTouchTarget);
@@ -148,7 +154,8 @@ function getSessionInfo() {
                 }
               }
             }
-          }
+          };
+
         }
       }
     });
@@ -157,19 +164,7 @@ function getSessionInfo() {
 function fetchSession(value) {
   console.log('fetching session', value);
   pBar.style.display = 'block';
-  oboe('https://baboons.firebaseio.com/sessions/' + value + '/session_info.json')
-    .node('!.*', function (sessionInfo) {
 
-
-      console.log('sessionInfo', sessionInfo);
-
-
-      return oboe.drop;
-    })
-    .done(function (finaljson) {
-      console.log('done with sessionInfo');
-      //updateDictionaryTable();
-    });
   oboe('https://baboons.firebaseio.com/sessions/' + value + '/dictionary.json')
     .node('!.*', function (dict) {
 
@@ -182,9 +177,34 @@ function fetchSession(value) {
     })
     .done(function (finaljson) {
       console.log('done with dicts');
+      doneDictionary();
     });
+
+  oboe('https://baboons.firebaseio.com/sessions/' + value + '/session_info.json')
+    .node('!.*', function (sessionInfo) {
+
+
+      console.log('sessionInfo', sessionInfo);
+
+
+      return oboe.drop;
+    })
+    .done(function (finaljson) {
+      console.log('done with sessionInfo');
+    });
+
+  var recordProgressText = document.querySelector('#progressText');
+
+  var recordCount = 0;
+
+
   oboe('https://baboons.firebaseio.com/sessions/' + value + '/timestamps.json')
     .node('!.*', function (t) {
+
+      if (recordCount === 0) {
+        recordProgressText.style.display = 'block';
+      }
+
       if (t.timestamp === undefined) {
       } else {
         try {
@@ -205,32 +225,101 @@ function fetchSession(value) {
             t.count = 0;
             t.edges = [];
           }
-          //t.timestamp = parseDate(t.timestamp);
+          t.timestamp = parseDate(t.timestamp);
+          gpsDataset.push(t);
 
         } catch (e) {
           if (e instanceof TypeError) {
             t.count = 0;
             t.items = [];
             t.edges = [];
+            t.timestamp = parseDate(t.timestamp);
+            gpsDataset.push(t);
           }
         }
-        t.timestamp = parseDate(t.timestamp);
-        gpsDataset.push(t);
+
       }
       //console.log('done with dict, starting timestamps', t);
 
       return oboe.drop;
     })
     .done(function (finaljson) {
-      //console.log('done with timestamps, starting timestamps', gpsDataset.length);
+      console.log('done with timestamps, starting timestamps', gpsDataset.length);
+      recordProgressText.innerHTML = 'Retrieving Record 21600 of 21600';
       var pBar = document.querySelector('#progressBar');
+      recordProgressText.style.display = 'none';
       pBar.style.display = 'none';
       doneTimestamps();
     });
 }
 
-var max = 500;
-var counter = 0;
+function doneDictionary() {
+
+  var drawerIcon = document.querySelector('.custom-header .material-icons');
+  drawerIcon.style.color = '#616161';
+
+
+  //update the textbox
+  if (dictionary.length > 0) {
+    var dictBodyRef = document.getElementById('dict-body');
+
+    var newDictionary = _.filter(dictionary, function (val) {
+      return val !== null;
+    });
+    for (var i = 0; i < newDictionary.length; i++) {
+
+      var dict = newDictionary[i];
+      if (!_.isNull(dict)) {
+        var rowDictRef = dictBodyRef.insertRow(i);
+
+        componentHandler.upgradeElement(rowDictRef);
+
+        var nameCell = rowDictRef.insertCell(0);
+        nameCell.className = 'dict-row';
+        nameCell.style.paddingLeft = '24px';
+        nameCell.style.textAlign = 'left';
+
+        var dictName = document.createTextNode(dict.name);
+        nameCell.appendChild(dictName);
+
+        componentHandler.upgradeElement(nameCell);
+
+        var codeCell = rowDictRef.insertCell(1);
+        codeCell.className = 'dict-row';
+        codeCell.style.paddingLeft = '0px';
+
+
+        var dictCode = document.createTextNode(dict.code);
+        codeCell.appendChild(dictCode);
+
+        componentHandler.upgradeElement(codeCell);
+
+        var colorCell = rowDictRef.insertCell(2);
+        colorCell.className = 'dict-row';
+        colorCell.style.paddingLeft = '0px';
+
+        var div = document.createElement('div');
+        div.id = 'code-' + dict.code;
+        div.className = 'filler';
+        div.style.background = dict.color;
+
+        colorCell.appendChild(div);
+
+        componentHandler.upgradeElement(colorCell);
+
+        var tooltip = document.createElement('div');
+        tooltip.setAttribute('for', 'code-' + dict.code);
+        tooltip.className = 'mdl-tooltip mdl-tooltip--large';
+        var toolText = document.createTextNode(dict.color);
+        tooltip.appendChild(toolText);
+        colorCell.appendChild(tooltip);
+
+        componentHandler.upgradeElement(tooltip);
+      }
+
+    }
+  }
+}
 
 function doneTimestamps() {
   console.log('all done');
@@ -333,7 +422,7 @@ function drawDataPointOverlay(dataPoint) {
   var targets = currentDataPoint.items;
 
   targets.forEach(function (d, i) {
-   // d.labels = currentDataPoint.labels;
+    // d.labels = currentDataPoint.labels;
     d.LatLng = new L.LatLng(d.lat, d.lon);
   });
 
@@ -1014,7 +1103,6 @@ function nodeColorMap(index) {
   // var colors = ['Red', 'Purple', 'Deep Purple', 'Ingio', 'Light Blue', 'Cyan', 'Green', 'Teal', 'Lime', 'Yellow', 'Orange', 'Deep Orange', 'Brown', 'Grey', 'Blue Grey'];
 
   var brewer = ['#33a02c', '#ffffb3', '#e31a1c', '#fb8072', '#80b1d3', '#fdb462', '#b3de69', '#fccde5', '#b15928', '#bc80bd', '#ccebc5', '#ffed6f', '#b15928', '#6a3d9a'];
-  ;
   //var c = colors[index];
 
   if (index > brewer.length) {
