@@ -16,11 +16,6 @@ var margin = {top: 10, left: 15, bottom: 20, right: 20};
 var mapSVG;
 var map;
 
-// var infoDB = new Firebase('https://baboons.firebaseio.com/info');
-// var timestampsDB = new Firebase('https://baboons.firebaseio.com/timestamps');
-// var labelsDB = new Firebase('https://baboons.firebaseio.com/labels/0/labels');
-// var dictionaryDB = new Firebase('https://baboons.firebaseio.com/labels/0/dictionary');
-
 var dateFormat = '%Y-%m-%d %H:%M:%S';
 var parseDate =
   d3.time.format(dateFormat).parse;
@@ -394,11 +389,11 @@ function drawDataPointOverlay(dataPoint) {
     currentDataPoint.edges.forEach(function (net) {
 
       var s = currentDataPoint.items.filter(function (d) {
-        return d.id === net[0];
+        return d.baboon_info.id === net[0];
       });
 
       var t = currentDataPoint.items.filter(function (d) {
-        return d.id === net[1];
+        return d.baboon_info.id === net[1];
       });
 
       var p1 = createLineJSON(s[0]);
@@ -406,11 +401,11 @@ function drawDataPointOverlay(dataPoint) {
       //links.push(p1);
       var p2 = createLineJSON(t[0]);
 
-      var link = [{x: p1.lon, y: p1.lat}, {x: p2.lon, y: p2.lat}];
+      var link = [{x: p1.baboon_info.lon, y: p1.baboon_info.lat}, {x: p2.baboon_info.lon, y: p2.baboon_info.lat}];
       links.push(link);
 
       function createLineJSON(source) {
-        var geoLine = {lon: source.lon, lat: source.lat};
+        var geoLine = {lon: source.baboon_info.lon, lat: source.baboon_info.lat};
 
         return geoLine;
       }
@@ -423,7 +418,7 @@ function drawDataPointOverlay(dataPoint) {
 
   targets.forEach(function (d, i) {
     // d.labels = currentDataPoint.labels;
-    d.LatLng = new L.LatLng(d.lat, d.lon);
+    //d.LatLng = new L.LatLng(d.lat, d.lon);
   });
 
 
@@ -896,7 +891,7 @@ function createMainTimeline(flag) {
       timeOverlay.update();
 
       drawDataPointOverlay(dataPoint);
-      zoomCurrentPoint();
+      //zoomCurrentPoint();
       //updateLabelTimeline(t1, t2);
     }
 
