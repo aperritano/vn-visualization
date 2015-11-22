@@ -239,7 +239,8 @@ function fetchSession(value) {
         }
 
       }
-      //console.log('done with dict, starting timestamps', t);
+      recordCount++;
+      recordProgressText.innerHTML = 'Retrieving Record ' + recordCount + ' of 21600';
 
       return oboe.drop;
     })
