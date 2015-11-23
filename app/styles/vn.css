@@ -129,7 +129,7 @@ div.tooltipLabel {
 }
 
 #control-panel > h6 {
-  margin: 0px 0px 5px 0px;
+  margin: 0px;
   font-size: 13px;
   font-weight: 700;
 }
@@ -146,7 +146,7 @@ hr {
   height: 1px;
   background-image: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.75), transparent);
   padding: 0px;
-  margin: 0px;
+  margin: 0px 0px 5px 0px;
 }
 
 div.button-container {
@@ -179,14 +179,64 @@ div.zoom-button {
 }
 
 /*animate overlay*/
-
 #animate-panel > h6 {
   margin: 0px;
   font-size: 13px;
   font-weight: 700;
 }
 
+#buttonContainer {
+  height: 100%;
+}
 
+#play {
+  height: 50px;
+  width: 50px;
+  border-radius: 0px;
+  float: left;
+  margin-right: 5px;
+}
+
+#play-text {
+
+}
+
+.mdl-textfield {
+  width: 80px;
+  font-size: 12px;
+  margin-bottom: 0px;
+}
+
+br {
+  margin: 0px;
+}
+
+.mdl-button--icon .material-icons {
+  font-size: 50px;
+
+  position: relative;
+  top: 0px;
+  left: 0px;
+  -webkit-transform: translate(0px, 0px);
+  -ms-transform: translate(0px, 0px);
+  transform: translate(0px, 0px);
+  line-height: 24px;
+  width: 24px
+}
+
+#play-icon {
+  font-size: 50px;
+  position: relative;
+  /* top: 0px; */
+  /* left: 0px; */
+  -webkit-transform: translate(0px, -0px);
+  -ms-transform: translate(0px, 0px);
+  transform: translate(0px, 0px);
+  /* line-height: 24px; */
+  /* width: 24px; */
+  /* text-align: center; */
+  float: left;
+}
 
 .animateOverlay h4 {
   margin: auto;
@@ -201,6 +251,20 @@ div.zoom-button {
   background: rgba(255, 255, 255, 0.8);
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
   border-radius: 5px;
+}
+
+.mdl-textfield__input {
+
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, .12);
+  display: block;
+  font-size: 12px;
+  margin: 0;
+  padding: 4px 0;
+  width: 75px;
+  background: 0 0;
+  text-align: left;
+  color: inherit;
 }
 
 .custom .mdl-textfield__input {
@@ -364,7 +428,6 @@ td.custom-row2 {
 }
 
 /*drawer*/
-
 .mdl-layout__drawer {
   width: 300px;
   left: -250px;
@@ -383,6 +446,7 @@ td.custom-row2 {
   padding: 20px;
   color: white;
   border-radius: 10px;
+  -webkit-transform: translateY(80%);
   transform: translateY(80%);
   font-weight: 500;
   font-size: 24px;

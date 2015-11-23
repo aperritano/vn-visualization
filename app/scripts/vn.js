@@ -33,7 +33,6 @@ var buttonOverlay;
 var animateOverlay;
 
 
-
 //crossfilter
 var byDate;
 var countGroup;
@@ -50,7 +49,7 @@ var isPlaying = false;
 var currentDataPoint;
 var animateTimer;
 
-var pBar = document.querySelector('#progressBar');
+//var pBar = document.querySelector('#progressBar');
 
 function getSessionInfo() {
   oboe('https://baboons.firebaseio.com/sessions_info.json')
@@ -117,7 +116,7 @@ function getSessionInfo() {
           var cellDate = rowRef.insertCell(2);
           cellDate.className = 'custom-row2';
 
-          var dateText = document.createTextNode(sess.date);
+          var dateText = document.createTextNode(moment(sess.date).toDate());
           cellDate.appendChild(dateText);
 
           componentHandler.upgradeElement(labelRef);
@@ -158,7 +157,7 @@ function getSessionInfo() {
 
 function fetchSession(value) {
   console.log('fetching session', value);
-  pBar.style.display = 'block';
+  //pBar.style.display = 'block';
 
   var recordProgressText = document.querySelector('#progressText');
   recordProgressText.style.display = 'block';
@@ -194,11 +193,11 @@ function fetchSession(value) {
   oboe('https://baboons.firebaseio.com/sessions/' + value + '/timestamps.json')
     .node('!.*', function (t) {
 
-      if ( _.isUndefined(t) || _.isNull(t) ) {
+      if (_.isUndefined(t) || _.isNull(t)) {
         return oboe.drop;
       }
 
-      if ( _.isUndefined(t.timestamp) || _.isNull(t.timestamp)) {
+      if (_.isUndefined(t.timestamp) || _.isNull(t.timestamp)) {
       } else {
         try {
           if (t.items !== null || t.items !== undefined || t.items[0] !== undefined && t.items[0] !== null) {
@@ -239,7 +238,7 @@ function fetchSession(value) {
     .done(function (finaljson) {
       console.log('done with timestamps, starting timestamps', gpsDataset.length);
       recordProgressText.style.display = 'none';
-      pBar.style.display = 'none';
+      //pBar.style.display = 'none';
       doneTimestamps();
     });
 }
@@ -381,7 +380,7 @@ function drawDataPointOverlay(dataPoint) {
   }
 
   var links = [];
-  if ( !_.isEmpty(currentDataPoint.edges)) {
+  if (!_.isEmpty(currentDataPoint.edges)) {
     currentDataPoint.edges.forEach(function (net) {
 
       var s = currentDataPoint.items.filter(function (d) {
@@ -467,7 +466,17 @@ function drawDataPointOverlay(dataPoint) {
     circles.enter().append('circle')
       .attr('class', 'node')
       .attr('id', function (d) {
-        return d.id;
+
+        var tooltip = document.createElement('div');
+        tooltip.setAttribute('for', 'node-' + d.id);
+        tooltip.className = 'mdl-tooltip mdl-tooltip--large';
+        var toolText = document.createTextNode(d.id + '<br/>' + d3.format('.4g')(d.lat) + ',' + d3.format('.4g')(d.lon));
+        tooltip.appendChild(toolText);
+
+        componentHandler.upgradeElement(tooltip);
+
+
+        return 'node'+d.id;
       })
       .attr('lon', function (d) {
         return d.lon;
@@ -492,26 +501,37 @@ function drawDataPointOverlay(dataPoint) {
 
       })
       .style('fill', function (d, i) {
+
+        if( d.baboon_info.animal_sex === 'm') {
+          return '#1f78b4';
+        } else {
+          return '#fb9a99';
+        }
+
+
         return nodeColorMap(i);
       })
       .style('fill-opacity', 1.0)
       .on('mouseover', function (d) {
 
-        var div = d3.select('#tooltip').append('div')
-          .attr('class', 'tooltip')
-          .style('opacity', 0);
 
-        div.transition()
-          .duration(100)
-          .style('opacity', 1.0);
-        div.html(d.id + '<br/>' + d3.format('.4g')(d.lat) + ',' + d3.format('.4g')(d.lon))
-          .style('left', (d3.event.pageX) + 'px')
-          .style('top', (d3.event.pageY - 28) + 'px');
+
+
+        //var div = d3.select('#tooltip').append('div')
+        //  .attr('class', 'tooltip')
+        //  .style('opacity', 0);
+        //
+        //div.transition()
+        //  .duration(100)
+        //  .style('opacity', 1.0);
+        //div.html(d.id + '<br/>' + d3.format('.4g')(d.lat) + ',' + d3.format('.4g')(d.lon))
+        //  .style('left', (d3.event.pageX) + 'px')
+        //  .style('top', (d3.event.pageY - 28) + 'px');
       })
       .on('mouseout', function (d) {
-        div.transition()
-          .duration(500)
-          .style('opacity', 0);
+        //div.transition()
+        //  .duration(500)
+        //  .style('opacity', 0);
       });
 
     //.transition()
@@ -678,37 +698,39 @@ function initMapLeaflet() {
       var t1 = moment(currentDataPoint.timestamp).format('LTS M/D/YY');
 
       var div = document.getElementById('animate-panel');
-      document.getElementById('current-time').innerHTML = 'Current Time:&nbsp&nbsp' + t1;
+      document.getElementById('current-time').innerHTML = 'Time:&nbsp&nbsp' + t1;
 
       var playButton = document.getElementById('play');
       playButton.onclick = function (e) {
 
         isPlaying = !isPlaying;
-        if (isPlaying) {
-          document.getElementById('play-icon').innerHTML = 'radio_button_checked';
 
+        if (isPlaying) {
+          var timeInterval = document.getElementById('time-step').value;
+
+          var i = parseInt(timeInterval);
+          if (_.isNaN(i) || i === 0) {
+            document.getElementById('play-icon').innerHTML = 'radio_button_checked';
+
+            Toast.defaults.displayDuration = 3000;
+            Toast.error('Input must be a number great than zero.', 'Invalid Time Interval.');
+            document.getElementById('time-step').value = 1;
+          } else {
+            document.getElementById('play-icon').innerHTML = 'radio_button_checked';
+
+
+            console.log('PLAY');
+            playSelection(i);
+          }
         } else {
           document.getElementById('play-icon').innerHTML = 'play_circle_outline';
+          if(! _.isNull(animateTimer) || !_.isUndefined(animateTimer)) {
+            clearInterval(animateTimer);
+            document.getElementById('play-icon').innerHTML = 'play_circle_outline';
+          }
 
         }
 
-
-        //var timeInterval = document.getElementById('interval').value;
-        //
-        //var i = parseInt(timeInterval);
-        //if (_.isNaN(i) || i === 0) {
-        //  document.getElementById('play-icon').innerHTML = 'radio_button_checked';
-        //
-        //  Toast.defaults.displayDuration=3000;
-        //    Toast.error('Input must be a number great than zero.','Invalid Time Interval.');
-        //    document.getElementById('interval').value = 1;
-        //} else {
-        //  document.getElementById('play-icon').innerHTML = 'radio_button_checked';
-        //
-        //
-        //    console.log('PLAY');
-        //    playSelection(i);
-        //}
 
       };
 
@@ -1027,7 +1049,6 @@ function zoomCurrentPoint() {
 function playSelection(seconds) {
   //find the first one with points
 
-  isPlaying = !isPlaying;
 
   if (isPlaying) {
     var ranged = brushFilteredDates.bottom(Infinity);
@@ -1040,36 +1061,34 @@ function playSelection(seconds) {
 
     animateTimer = setInterval(function () {
       if (i >= ranged.length) {
-        document.getElementById('play-icon').innerHTML = 'radio_button_checked';
+        document.getElementById('play-icon').innerHTML = 'play_circle_outline';
 
         isPlaying = false;
         clearInterval(animateTimer);
       }
 
       var d = ranged[i];
-      if (!_.isUndefined(d) && !_.isUndefined(d.items)) {
-        if (d.items !== undefined) {
-          console.log('actual' + d.timestamp);
-          //drawDataPointOverlay(d);
-          if (hasZoomedToFirstPoint === false) {
-            zoomCurrentPoint();
-            hasZoomedToFirstPoint = true;
-          }
 
-          //increase interval
-          i = i + seconds;
-          //t1 = t1.add('i', i);
-          console.log('moment ' + i);
-          isPlaying = true;
+      if (!_.isUndefined(d) && d.count > 0) {
+
+        console.log('actual' + d.timestamp);
+        drawDataPointOverlay(d);
+        if (hasZoomedToFirstPoint === false) {
+          zoomCurrentPoint();
+          hasZoomedToFirstPoint = true;
         }
+
 
       }
 
+      //increase interval
+      i = i + seconds;
+      //t1 = t1.add('i', i);
+      console.log('moment ' + i);
     }, speed);
   } else {
-    clearInterval(animateTimer);
-//         var playButton = document.getElementById('play');
-//         playButton.classList.toggle('active');
+
+
   }
 }
 

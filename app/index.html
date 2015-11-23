@@ -208,21 +208,24 @@ material.purple-indigo.min.css
         <span align="center" id="end-time">End:&nbsp&nbsp&nbsp&nbsp</span>
       </div>
       <div id="animate-panel" style="display: none">
-        <h6 align="center">Animate Range</h6>
+        <h6 align="center">Animate</h6>
         <hr>
-        <div align="center">
+        <div align="left">
+          <div id="buttonContainer">
           <button id="play" class="mdl-button mdl-js-button mdl-button--icon">
             <i id="play-icon" class="material-icons">play_circle_outline</i>
           </button>
-          <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="custom mdl-textfield__input" value="1" maxlength="7" type="text" pattern="-?[0-9]*(\.[0-9]+)?"
-                   id="time-step">
-            <label class="mdl-textfield__label" for="time-step">time step (sec)</label>
-            <span class="mdl-textfield__error">Input is not a number!</span>
+            <div  id="play-text" class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+              <input class="custom mdl-textfield__input" value="1" maxlength="7" type="text" pattern="-?[0-9]*(\.[0-9]+)?"
+                     id="time-step">
+              <label class="mdl-textfield__label" for="time-step" style="margin: 0px; padding: 0px; top: 0px !important;">time step (sec)</label>
+              <!--<span class="mdl-textfield__error">Input is not a number!</span>-->
+            </div>
+            <br>
+            <span id="current-time">Time:  2:59:56 AM 8/1/12</span>
           </div>
-        </div>
 
-        <span id="current-time">Current:&nbsp</span><br>
+        </div>
       </div>
       <div id="zoom-panel" style="display: none">
         <div id="zoom-point" class="zoom-button"><i class="material-icons">explore</i></div>
