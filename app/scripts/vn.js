@@ -1024,11 +1024,42 @@ function updateLabelTimeline(tStart, tEnd) {
 
   //d3.selectAll('.timeline-label').attr('transform', 'translate(2px,0px)');
 
-  d3.select('#grouplabels').append('svg')
-    .attr('width', width + groupLabelMargin.right)
-    .style('margin-left', 5)
-    .style('margin-right', 0)
-    .datum(groupLabels).call(chart);
+  var labelSvg = d3.select('#grouplabels').append('svg')
+                  .attr('width', width + groupLabelMargin.right)
+                  .style('margin-left', 5)
+                  .style('margin-right', 0)
+                  .datum(groupLabels).call(chart);
+
+  var gBrush = labelSvg.append('g');
+
+  var seconds = (eDate - sDate)/1000;
+  var width = (labelSvg.attr("width") - chart.margin().left - chart.margin().right)/seconds;
+
+  gBrush.append('rect')
+    .attr('height', labelSvg.attr("height"))
+    .attr('width', width)
+    .attr('fill', 'black')
+    .attr('opacity', 0.4)
+    .attr('transform', 'translate(' + chart.margin().left + ',' + chart.margin().top + ')')
+    .attr("id", "labelbrush");
+
+}
+
+function updateLabelBrush(tStart, tEnd, dataPoint){
+
+  var sDate = moment(tStart).valueOf();
+  var eDate = moment(tEnd).valueOf();
+  var cDate = moment(dataPoint.timestamp).valueOf();
+
+
+  var svg = d3.select("#grouplabels").select("svg");
+  var rect = svg.select("#labelbrush");
+
+  var seconds = (eDate - sDate)/1000;
+  var width = (svg.attr("width") - margin.left - margin.right)/seconds;
+  var delta = ((cDate - sDate)/1000)*width;
+
+  rect.attr('transform', 'translate(' + (margin.left + delta) + ',' + margin.top + ')');
 
 }
 
@@ -1053,6 +1084,8 @@ function playSelection(seconds) {
   if (isPlaying) {
     var ranged = brushFilteredDates.bottom(Infinity);
     var speed = 175; // animatation speed
+    var sDate = ranged[0].timestamp;
+    var eDate = ranged[ranged.length - 1].timestamp;
 
     var i = 0;
 
@@ -1073,6 +1106,7 @@ function playSelection(seconds) {
 
         console.log('actual' + d.timestamp);
         drawDataPointOverlay(d);
+        updateLabelBrush(sDate, eDate, d);
         if (hasZoomedToFirstPoint === false) {
           zoomCurrentPoint();
           hasZoomedToFirstPoint = true;
