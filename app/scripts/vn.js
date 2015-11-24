@@ -10,7 +10,7 @@ var wWidth = 'innerWidth' in window ? window.innerWidth : document.documentEleme
 
 //var mainOffset = 15;
 
-var margin = {top: 10, left: 20, bottom: 20, right: 20};
+var margin = {top: 50, left: 20, bottom: 20, right: 20};
 
 
 var mapSVG;
@@ -532,7 +532,41 @@ function drawDataPointOverlay(dataPoint) {
         //div.transition()
         //  .duration(500)
         //  .style('opacity', 0);
-      });
+      })
+      .on('click', function(d){
+        var id = d.id;
+        var counter = 0;
+        d3.selectAll('.timeline-label').each(function(d, i){
+
+
+          var txt = d[i].label.split(" ");
+
+          if(txt[1] == id){
+
+            var svg = d3.select("#grouplabels").select("svg");
+            //var rect = svg.select("rect #highlight").remove();
+
+            var itemHeight = 20;
+            var itemMargin = 5;
+
+            var base = margin.top + itemHeight + itemMargin;
+            var lineHeight = itemHeight + itemMargin;
+            var x = base + lineHeight * counter;
+
+            console.log(id + " - " + counter)
+            svg.select('#highlight')
+              .attr('height', itemHeight)
+              .attr('width', svg.attr("width"))
+              .attr('opacity', 0.3)
+              .attr('transform', 'translate(' + margin.left + ',' + x + ')');
+
+          }
+          counter++;
+
+        })
+
+        }
+      );
 
     //.transition()
     //.duration(500);
@@ -1042,6 +1076,11 @@ function updateLabelTimeline(tStart, tEnd) {
     .attr('opacity', 0.4)
     .attr('transform', 'translate(' + chart.margin().left + ',' + chart.margin().top + ')')
     .attr("id", "labelbrush");
+
+  gBrush.append('rect')
+    .attr('fill', 'grey')
+    .attr('opacity', 0.0)
+    .attr("id", "highlight");
 
 }
 
