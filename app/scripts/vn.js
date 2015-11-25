@@ -52,7 +52,7 @@ var animateTimer;
 //var pBar = document.querySelector('#progressBar');
 
 function getSessionInfo() {
-  oboe('https://baboons.firebaseio.com/sessions_info.json')
+  oboe('https://labeldatababoons.firebaseio.com/sessions_info.json')
     .node('!.*', function (sess) {
       if (!_.isUndefined(sess) || !_.isNull(sess)) {
         sessions.push(sess);
@@ -163,7 +163,7 @@ function fetchSession(value) {
   recordProgressText.style.display = 'block';
   recordProgressText.innerHTML = 'Connecting...';
 
-  oboe('https://baboons.firebaseio.com/sessions/' + value + '/dictionary.json')
+  oboe('https://labeldatababoons.firebaseio.com/sessions/' + value + '/dictionary.json')
     .node('!.*', function (dict) {
       if (!_.isUndefined(dict) || !_.isNull(dict)) {
         dictionary.push(dict);
@@ -175,7 +175,7 @@ function fetchSession(value) {
       doneDictionary();
     });
 
-  oboe('https://baboons.firebaseio.com/sessions/' + value + '/session_info.json')
+  oboe('https://labeldatababoons.firebaseio.com/sessions/' + value + '/session_info.json')
     .node('!.*', function (sessionInfo) {
 
       if (!_.isUndefined(sessionInfo) || !_.isNull(sessionInfo)) {
@@ -190,7 +190,7 @@ function fetchSession(value) {
 
   var recordCount = 0;
 
-  oboe('https://baboons.firebaseio.com/sessions/' + value + '/timestamps.json')
+  oboe('https://labeldatababoons.firebaseio.com/sessions/' + value + '/timestamps.json')
     .node('!.*', function (t) {
 
       if (_.isUndefined(t) || _.isNull(t)) {
@@ -934,6 +934,8 @@ function createMainTimeline(flag) {
       var t1 = filter[0];
       var t2 = filter[1];
 
+      console.log(t1)
+
       brushFilteredDates = byDate.filterRange([t1, t2]);
 
       var dataPoint = brushFilteredDates.bottom(1)[0];
@@ -1054,15 +1056,92 @@ function updateLabelTimeline(tStart, tEnd) {
       tooltip.transition()
         .duration(500)
         .style('opacity', 0);
+    })
+    .click(function (d, i, datum) {
+      var txt = datum.label.split(" ");
+      var id = txt[1];
+
+      if (id !== ''){
+
+        var timer = setInterval(function(){
+          var circle = d3.select('#node' + id);
+          circle.transition()
+            .duration(500)
+            .attr("stroke-width", 12)
+            .attr("r", 20)
+            .transition()
+            .duration(500)
+            .attr('stroke-width', 0.5)
+            .attr("r", 6)
+            .ease('sine');
+          clearInterval(timer);
+        },1000);
+
+
+        console.log("CIAOOO")
+      }
+
     });
 
   //d3.selectAll('.timeline-label').attr('transform', 'translate(2px,0px)');
 
   var labelSvg = d3.select('#grouplabels').append('svg')
-                  .attr('width', width + groupLabelMargin.right)
-                  .style('margin-left', 5)
-                  .style('margin-right', 0)
-                  .datum(groupLabels).call(chart);
+    .attr('width', width + groupLabelMargin.right)
+    .style('margin-left', 5)
+    .style('margin-right', 0)
+    .datum(groupLabels).call(chart)
+    .on('click', function(d, i){
+      var x = d3.mouse(this)[0] - margin.left;
+      var y = d3.mouse(this)[1] - margin.top;
+
+      // CHeck if positive
+      if (x < 0 || y < 0)
+        return;
+
+      var ranged = brushFilteredDates.bottom(Infinity);
+      var sDate = moment(ranged[0].timestamp).valueOf();
+      var eDate = moment(ranged[ranged.length - 1].timestamp).valueOf();
+
+      var seconds = (eDate - sDate)/1000;
+      var width = (this.getBBox().width - margin.left - margin.right)/seconds;
+
+      var cSecond = Math.floor(x / width)*1000;
+
+      var cDate = sDate + cSecond;
+      var fDate = moment(cDate);
+
+      for(i = 0; i < ranged.length; i++){
+        if(fDate.isSame(ranged[i].timestamp)){
+          drawDataPointOverlay(ranged[i]);
+          zoomCurrentPoint();
+        }
+      }
+
+      d3.select("#labelbrush")
+        .attr('transform', 'translate(' + (margin.left + (Math.floor(x / width)*width)) + ',' + margin.top + ')');
+
+    })
+    .on('mousemove', function (d, i) {
+
+      var itemHeight = 20;
+      var itemMargin = 5;
+
+      var y = d3.mouse(this)[1] - margin.top - itemHeight - itemMargin;
+
+      var base = margin.top + itemHeight + itemMargin;
+      var lineHeight = itemHeight + itemMargin;
+      var lineNumber = Math.floor(y / lineHeight);
+
+      if (lineNumber < 0)
+        return;
+
+      d3.select('#highlight')
+        .attr('height', itemHeight)
+        .attr('width', this.getBBox().width)
+        .attr('opacity', 0.3)
+        .attr('transform', 'translate(' + margin.left + ',' + (base + lineNumber*itemHeight + lineNumber*itemMargin) + ')');
+
+    });
 
   var gBrush = labelSvg.append('g');
 
@@ -1089,7 +1168,6 @@ function updateLabelBrush(tStart, tEnd, dataPoint){
   var sDate = moment(tStart).valueOf();
   var eDate = moment(tEnd).valueOf();
   var cDate = moment(dataPoint.timestamp).valueOf();
-
 
   var svg = d3.select("#grouplabels").select("svg");
   var rect = svg.select("#labelbrush");
@@ -1198,6 +1276,4 @@ function nodeColorMap(index) {
   return brewer[index];
 
 }
-
-
 
