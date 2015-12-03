@@ -512,28 +512,12 @@ function drawDataPointOverlay(dataPoint) {
         return nodeColorMap(i);
       })
       .style('fill-opacity', 1.0)
-      .on('mouseover', function (d) {
-
-
-
-
-        //var div = d3.select('#tooltip').append('div')
-        //  .attr('class', 'tooltip')
-        //  .style('opacity', 0);
-        //
-        //div.transition()
-        //  .duration(100)
-        //  .style('opacity', 1.0);
-        //div.html(d.id + '<br/>' + d3.format('.4g')(d.lat) + ',' + d3.format('.4g')(d.lon))
-        //  .style('left', (d3.event.pageX) + 'px')
-        //  .style('top', (d3.event.pageY - 28) + 'px');
-      })
       .on('mouseout', function (d) {
         //div.transition()
         //  .duration(500)
         //  .style('opacity', 0);
       })
-      .on('click', function(d){
+      .on('mouseover', function(d){
         var id = d.id;
         var counter = 0;
         d3.selectAll('.timeline-label').each(function(d, i){
@@ -553,7 +537,6 @@ function drawDataPointOverlay(dataPoint) {
             var lineHeight = itemHeight + itemMargin;
             var x = base + lineHeight * counter;
 
-            console.log(id + " - " + counter)
             svg.select('#highlight')
               .attr('height', itemHeight)
               .attr('width', svg.attr("width"))
@@ -565,8 +548,60 @@ function drawDataPointOverlay(dataPoint) {
 
         })
 
-        }
-      );
+      })
+      .on('mouseleave', function (d, i) {
+
+        d3.select('#highlight')
+          .attr('opacity', 0);
+
+      })
+      .on('click', function (d, i) {
+
+        var id = d.id;
+        var counter = 0;
+        d3.selectAll('.timeline-label').each(function(d, i){
+
+
+          var txt = d[i].label.split(" ");
+
+          if(txt[1] == id){
+
+            var svg = d3.select("#grouplabels").select("svg");
+            var opacity = svg.select('#highlight' + id).attr('opacity');
+
+            var itemHeight = 20;
+            var itemMargin = 5;
+
+            var base = margin.top + itemHeight + itemMargin;
+            var lineHeight = itemHeight + itemMargin;
+            var x = base + lineHeight * counter;
+
+            if(opacity > 0) {
+
+              svg.select('#highlight' + id)
+                .attr('height', itemHeight)
+                .attr('width', svg.attr("width"))
+                .attr('opacity', 0)
+                .attr('transform', 'translate(' + margin.left + ',' + x + ')');
+
+            }else{
+
+              svg.select('#highlight' + id)
+                .attr('height', itemHeight)
+                .attr('width', svg.attr("width"))
+                .attr('opacity', 0.3)
+                .attr('transform', 'translate(' + margin.left + ',' + x + ')');
+
+            }
+
+
+
+          }
+          counter++;
+
+        })
+
+      });
 
     //.transition()
     //.duration(500);
@@ -1077,8 +1112,6 @@ function updateLabelTimeline(tStart, tEnd) {
           clearInterval(timer);
         },1000);
 
-
-        console.log("CIAOOO")
       }
 
     });
@@ -1143,11 +1176,31 @@ function updateLabelTimeline(tStart, tEnd) {
         .attr('opacity', 0.3)
         .attr('transform', 'translate(' + margin.left + ',' + (base + lineNumber*itemHeight + lineNumber*itemMargin) + ')');
 
+      var counter = 0;
+      d3.selectAll('.timeline-label').each(function(d, i){
+
+        var txt = d[i].label.split(" ");
+
+        if (counter == lineNumber){
+
+          var id = txt[1];
+
+          d3.selectAll('.node').attr("r", 6);
+          d3.select('#node' + id).attr("r", 15);
+
+        }
+
+        counter++;
+
+      })
+
     })
     .on('mouseleave', function (d, i) {
 
       d3.select('#highlight')
         .attr('opacity', 0);
+
+      d3.selectAll('.node').attr("r", 6);
 
     });
 
@@ -1159,7 +1212,7 @@ function updateLabelTimeline(tStart, tEnd) {
   gBrush.append('rect')
     .attr('height', labelSvg.attr("height"))
     .attr('width', '1px')
-    .attr('fill', 'black')
+    .attr('fill', '#F57F17')
     .attr('opacity', 1)
     .attr('transform', 'translate(' + chart.margin().left + ',' + chart.margin().top + ')')
     .attr("id", "labelbrush");
@@ -1168,6 +1221,15 @@ function updateLabelTimeline(tStart, tEnd) {
     .attr('fill', 'grey')
     .attr('opacity', 0.0)
     .attr("id", "highlight");
+
+  for (j = 0; j < labelsTuple[0].length; j++){
+
+    gBrush.append('rect')
+      .attr('fill', 'grey')
+      .attr('opacity', 0.0)
+      .attr("id", "highlight" + labelsTuple[0][j].class);
+
+  }
 
 }
 
