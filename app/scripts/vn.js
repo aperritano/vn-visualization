@@ -1267,7 +1267,7 @@ function updateLabelTimeline(tStart, tEnd) {
       var seconds = (eDate - sDate)/1000;
       var width = (svgWidth - margin.left - margin.right)/seconds;
 
-      d3.select("#labelbrush")
+      d3.select("#labelbrushFollowing")
         .attr('transform', 'translate(' + (margin.left + (Math.floor(x / width)*width)) + ',' + margin.top + ')');
 
 
@@ -1297,7 +1297,7 @@ function updateLabelTimeline(tStart, tEnd) {
   gBrush.append('rect')
     .attr('height', labelSvg.attr("height"))
     .attr('width', '1px')
-    .attr('fill', '#FF0000')
+    .attr('fill', 'grey')
     .attr('opacity', 1)
     .attr('transform', 'translate(' + chart.margin().left + ',' + chart.margin().top + ')')
     .attr("id", "labelbrushFollowing");
