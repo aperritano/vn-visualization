@@ -172,7 +172,12 @@ function fetchSession(value) {
     })
     .done(function (finaljson) {
       console.log('done with dicts');
+      recordProgressText.innerHTML = 'Dictionary fetched...';
+
+      dictionary.push({ code: 'm', color: '#a6cee3', name:'Male'});
+      dictionary.push({ code: 'f', color: '#fb9a99', name: 'Female'});
       doneDictionary();
+
     });
 
   oboe('https://baboons.firebaseio.com/sessions/' + value + '/session_info.json')
@@ -186,6 +191,8 @@ function fetchSession(value) {
     })
     .done(function (finaljson) {
       console.log('done with sessionInfo');
+      recordProgressText.innerHTML = 'Session Info fetched...';
+
     });
 
   var recordCount = 0;
@@ -232,7 +239,7 @@ function fetchSession(value) {
 
       }
       recordCount++;
-      recordProgressText.innerHTML = 'Retrieving Record ' + recordCount + ' of 21600';
+      recordProgressText.innerHTML = 'Retrieving Record ' + recordCount + ' of 18000';
       return oboe.drop;
     })
     .done(function (finaljson) {
@@ -259,34 +266,18 @@ function doneDictionary() {
     for (var i = 0; i < newDictionary.length; i++) {
 
       var dict = newDictionary[i];
-      if (!_.isNull(dict)) {
+
+      if (!_.isNull(dict) && !_.isUndefined(dict.name)) {
         var rowDictRef = dictBodyRef.insertRow(i);
 
         componentHandler.upgradeElement(rowDictRef);
 
-        var nameCell = rowDictRef.insertCell(0);
-        nameCell.className = 'dict-row';
-        nameCell.style.paddingLeft = '24px';
-        nameCell.style.textAlign = 'left';
-
-        var dictName = document.createTextNode(dict.name);
-        nameCell.appendChild(dictName);
-
-        componentHandler.upgradeElement(nameCell);
-
-        var codeCell = rowDictRef.insertCell(1);
-        codeCell.className = 'dict-row';
-        codeCell.style.paddingLeft = '0px';
-
-
-        var dictCode = document.createTextNode(dict.code);
-        codeCell.appendChild(dictCode);
-
-        componentHandler.upgradeElement(codeCell);
-
-        var colorCell = rowDictRef.insertCell(2);
+        //color
+        var colorCell = rowDictRef.insertCell(0);
         colorCell.className = 'dict-row';
-        colorCell.style.paddingLeft = '0px';
+        colorCell.style.paddingLeft = '24px';
+        colorCell.style.textAlign = 'left';
+
 
         var div = document.createElement('div');
         div.id = 'code-' + dict.code;
@@ -297,10 +288,33 @@ function doneDictionary() {
 
         componentHandler.upgradeElement(colorCell);
 
+        var nameCell = rowDictRef.insertCell(1);
+        nameCell.className = 'dict-row';
+        nameCell.style.paddingLeft = '24px';
+        nameCell.style.textAlign = 'left';
+
+        var dictName = document.createTextNode(dict.name);
+        nameCell.appendChild(dictName);
+
+        componentHandler.upgradeElement(nameCell);
+
+        //var codeCell = rowDictRef.insertCell(1);
+        //codeCell.className = 'dict-row';
+        //codeCell.style.paddingLeft = '0px';
+        //
+        //
+        //var dictCode = document.createTextNode(dict.code);
+        //codeCell.appendChild(dictCode);
+        //
+        //componentHandler.upgradeElement(codeCell);
+
+
+
         var tooltip = document.createElement('div');
         tooltip.setAttribute('for', 'code-' + dict.code);
         tooltip.className = 'mdl-tooltip mdl-tooltip--large';
-        var toolText = document.createTextNode(dict.color);
+        var c = 'code: ' + dict.code + ' color: ' + dict.color;
+        var toolText = document.createTextNode(c);
         tooltip.appendChild(toolText);
         colorCell.appendChild(tooltip);
 
@@ -653,6 +667,8 @@ function initMapLeaflet() {
 
   timeOverlay.addTo(map);
 
+  // Zoom button
+
   var buttonDIV;
 
   buttonOverlay = L.control({position: 'topleft'});
@@ -680,7 +696,30 @@ function initMapLeaflet() {
 
   buttonOverlay.addTo(map);
 
+  // legend
+  var legendDIV;
+
+  var legendOverlay = L.control({position: 'topright'});
+
+  legendOverlay.onAdd = function () {
+    legendDIV = L.DomUtil.create('div', 'legendOverlay');
+    L.DomEvent.disableClickPropagation(legendDIV);
+    legendOverlay.update();
+    return legendDIV;
+  };
+
+  legendOverlay.update = function () {
+    var div = document.getElementById('legend-panel');
+    div.style.display = 'block';
+    legendDIV.appendChild(div);
+  };
+
+  legendOverlay.addTo(map);
+
+
+  //animate
   var animateOverlayDIV;
+
 
   animateOverlay = L.control({position: 'bottomright'});
 
@@ -849,13 +888,15 @@ function createMainTimeline(flag) {
     var combined = dc.compositeChart('#main-timeline');
 
     var stackCharts = dc.lineChart(combined)
-      .ordinalColors([generalColorMap(0), generalColorMap(4), generalColorMap(6)])
+      .ordinalColors([generalColorMap(0), generalColorMap(1), generalColorMap(3)])
       .renderArea(true)
       .group(countGroup)
       //.stack(labelsGroup)
       .stack(netsGroup)
       .elasticX(true)
       .elasticY(true)
+      .legend(dc.legend().x(800).y(10).itemHeight(13).gap(5))
+
       .useRightYAxis(true)
       .on('filtered', brushing);
 
@@ -864,6 +905,9 @@ function createMainTimeline(flag) {
       .height(height)
       .margins(margin)
       .dimension(byDate)
+      .title(function (d) {
+        return 'hello';
+      })
       .brushOn(true)
       .x(d3.time.scale().domain([tStart, tEnd]));
 
@@ -927,6 +971,7 @@ function updateLabelTimeline(tStart, tEnd) {
   var labelsTuple = getLabelsInRange(allDefaultRangeDates);
 
   //do the group timeline
+
 
   var sDate = moment(tStart).valueOf();
   var eDate = moment(tEnd).valueOf();
@@ -1101,7 +1146,7 @@ function updateAnimation() {
 function generalColorMap(index) {
   // var colors = ['Red', 'Purple', 'Deep Purple', 'Ingio', 'Light Blue', 'Cyan', 'Green', 'Teal', 'Lime', 'Yellow', 'Orange', 'Deep Orange', 'Brown', 'Grey', 'Blue Grey'];
 
-  var brewer = ['#1f78b4', '#a6cee3', '#ccebc5', '#33a02c', '#fb8072', '#fb9a99', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#ffff99', '#b15928', '#F8B700'];
+  var brewer = ['#1f78b4', '#b15928', '#ccebc5', '#33a02c', '#fb8072', '#fb9a99', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#ffff99', '#b15928', '#F8B700'];
   //var c = colors[index];
 
   if (index > brewer.length) {

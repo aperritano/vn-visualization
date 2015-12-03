@@ -38,19 +38,27 @@ material.purple-indigo.min.css
 -->
   <link rel="stylesheet" href="https://storage.googleapis.com/code.getmdl.io/1.0.5/material.blue-red.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
 
   <link rel="stylesheet" href="styles/main.css">
   <link rel="stylesheet" href="styles/vn.css">
+  <link rel="stylesheet" href="styles/drawer.css">
+  <link rel="stylesheet" href="styles/maintimeline.css">
+
+  <link rel="stylesheet" href="leaflet/dist/leaflet.css"/>
 
 
-  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css"/>
+  <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.css"/>-->
 
   <!--<link rel="stylesheet" href="../bower_components/dcjs/dc.min.css"/>-->
   <link rel="stylesheet" href="scripts/dcjs/dc.css"/>
 
+  <link rel="stylesheet" href="dc-addons/dist/dc-addons.css"/>
+  <link rel="stylesheet" href="styles/overlay.css"/>
+
 
   <link href="scripts/dcjs/toast.css" rel="stylesheet"/>
+  <link href="styles/tooltip.css" rel="stylesheet"/>
 
   <link href="styles/material-modal.css" rel="stylesheet"/>
 
@@ -99,14 +107,7 @@ material.purple-indigo.min.css
       font-size: 14px;
     }
 
-    .mdl-layout__drawer span.mdl-layout-title {
-      background: #fff;
-      color: #616161;
-      font-size: 14px;
-      text-transform: uppercase;
-      /*height: 50px;*/
-      /*line-height: 4em;*/
-    }
+
 
     .mdl-textfield {
       width: 80px;
@@ -130,42 +131,65 @@ material.purple-indigo.min.css
     </div>
   </header>
   <div id="dict-drawer" class="mdl-layout__drawer">
-    <span class="mdl-layout-title custom-dict-header">Dictionary</span>
-    <div class="dict-table-container">
-    <table id="dict-table" class="mdl-data-table mdl-js-data-table dict-table">
-      <thead>
-      <tr>
-        <th id="name" class="dict-title" style="
-    padding-left: 24px; text-align: left;
-">Name</th>
+    <div class="mdl-tabs__panel" id="members-panel">
+      <span class="mdl-layout-title custom-dict-header">Graph Legend</span>
+      <div class="tl">
+        <table id="tl-table" class="mdl-data-table mdl-js-data-table dict-table">
+          <thead>
+          <tr>
+            <th class="dict-title" style="padding-left: 24px; text-align: left;">Color</th>
+            <th class="dict-title" style="padding-left: 0px;">Description</th>
+          </tr>
+          </thead>
+          <tbody id="tl-body">
 
-        <th id="code" class="dict-title" style="
-    padding-left: 0px;
-">Code</th>
-        <th id="color" class="dict-title" style="
-    padding-left: 0px;
-">Color</th>
-      </tr>
-      </thead>
-      <tbody id="dict-body">
-      <!-- create row programmically -->
+          <!--subject count-->
+          <tr>
+            <td class="tl-row" style="padding-left: 24px; text-align: left;"><div class="tl-subject-count-filler"></div></td>
+            <td class="tl-row" style="padding-left: 24px; text-align: left;">Represents the total number of subjects at a <br>particular timestamp.</td>
+          </tr>
 
-      </tbody>
-    </table>
+          <!--label count-->
+          <tr>
+            <td id="color-label" class="tl-row" style="padding-left: 24px; text-align: left;"><div class="tl-label-count-filler"></div></td>
+            <td class="tl-row" style="padding-left: 24px; text-align: left;">Represents whether or not a label has been <br>applied to a particular timestamp.</td>
+          </tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="mdl-tabs__panel is-active" id="about-panel">
+      <div class="dict-table-container">
+        <span class="mdl-layout-title custom-dict-header">Activity Label Legend</span>
+
+        <table id="dict-table" class="mdl-data-table mdl-js-data-table dict-table">
+          <thead>
+          <tr>
+            <th class="dict-title" style="padding-left: 24px; text-align: left;">Color</th>
+            <th class="dict-title" style="padding-left: 0px;">Description</th>
+          </tr>
+          </thead>
+          <tbody id="dict-body">
+          <!-- create row programmically -->
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
-
-
-
 
 
 
   <main class="mdl-layout__content">
     <div id="progressBar" style="width: 100%; display:none"
          class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>
+
+    <!--progress text-->
     <div  id="progressText" class="center" style="display:none" >
       Retrieving Record 0 of 21600
     </div>
+
+
     <div class="page-content">
       <!-- Content wrapper -->
       <div id="dialog" class="wrapperOutside">
@@ -230,8 +254,25 @@ material.purple-indigo.min.css
       <div id="zoom-panel" style="display: none">
         <div id="zoom-point" class="zoom-button"><i class="material-icons">explore</i></div>
       </div>
+
+
+      <div id="legend-panel" style="display: none">
+        <h6 align="center">Legend</h6>
+        <hr>
+        <div class="parent">
+          <div class="left">Male:&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</div>
+          <div class="right male-filler"></div>
+        </div>
+        <div class="parent">
+          <div class="left">Female:&nbsp&nbsp</div>
+          <div class="right female-filler"></div>
+        </div>
+      </div>
+
+
       <div id="tooltip"></div>
       <div id="map" style="display: none"></div>
+
 
       <div id="main-timeline"></div>
       <div id="grouplabels"></div>
@@ -242,6 +283,16 @@ material.purple-indigo.min.css
 
 <!--tooltips-->
 <!--dictionary-->
+<!--<button onclick="combined.tip.init()">Initialise</button>-->
+<!--<button onclick="combined.tip.destroy()">Destroy</button>-->
+<div class="mdl-tooltip mdl-tooltip--large" for="label-tab">
+  Visual encodings for the label timeline (lower half of the representation).
+</div>
+
+<div class="mdl-tooltip mdl-tooltip--large" for="tl-tab">
+  Visual encodings for the main timeline (center of the representation).
+</div>
+
 <div class="mdl-tooltip mdl-tooltip--large" for="name">
   Label identifier
 </div>
@@ -251,12 +302,29 @@ Each label has an associated code
 <div class="mdl-tooltip mdl-tooltip--large" for="color">
 The visual encoding of the label
 </div>
+
+<div class="mdl-tooltip mdl-tooltip--large" for="tl-color">
+  Each area chart has an associated color.
+</div>
+<div class="mdl-tooltip mdl-tooltip--large" for="tl-description">
+  Description of the chart.
+</div>
+
+<div class="mdl-tooltip mdl-tooltip--large" for="color-subject">
+  #ereafd
+</div>
+<div class="mdl-tooltip mdl-tooltip--large" for="color-label">
+  #hyhdls
+</div>
+
 <!--<div id="labelsIndividuals"></div>-->
 <!--<div id="tooltipLabel"></div>-->
+
 
 <script src="https://cdn.firebase.com/js/client/2.3.2/firebase.js"></script>
 
 <script src="d3/d3.min.js"></script>
+<script src="d3-tip/index.js"></script>
 
 <!--util-->
 <script src="moment/min/moment.min.js"></script>
@@ -276,7 +344,11 @@ The visual encoding of the label
 <script src="scripts/dcjs/d3-timeline.js"></script>
 <script src="scripts/dcjs/dc.js"></script>
 
-<script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+<script src="dc-addons/dist/dc-addons.js"></script>
+
+<script src="leaflet/dist/leaflet.js"></script>
+
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.js"></script>-->
 
 <!--ESRI-->
 <!--<script src="../bower_components/esri-leaflet/dist/esri-leaflet.js"></script>-->
