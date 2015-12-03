@@ -1203,6 +1203,10 @@ function updateLabelTimeline(tStart, tEnd) {
     })
     .on('mousemove', function (d, i) {
 
+      /**
+       * LINES
+       */
+
       var itemHeight = 20;
       var itemMargin = 5;
 
@@ -1239,6 +1243,30 @@ function updateLabelTimeline(tStart, tEnd) {
 
       })
 
+      /**
+       * VERTICAL LINES
+       */
+
+      var x = d3.mouse(this)[0] - margin.left;
+      var y = d3.mouse(this)[1] - margin.top;
+
+      // CHeck if positive
+      if (x < 0 || y < 0)
+        return;
+
+      var ranged = brushFilteredDates.bottom(Infinity);
+      var sDate = moment(ranged[0].timestamp).valueOf();
+      var eDate = moment(ranged[ranged.length - 1].timestamp).valueOf();
+
+      var svgWidth = this.width.animVal.value;
+
+      var seconds = (eDate - sDate)/1000;
+      var width = (svgWidth - margin.left - margin.right)/seconds;
+
+      d3.select("#labelbrush")
+        .attr('transform', 'translate(' + (margin.left + (Math.floor(x / width)*width)) + ',' + margin.top + ')');
+
+
     })
     .on('mouseleave', function (d, i) {
 
@@ -1261,6 +1289,14 @@ function updateLabelTimeline(tStart, tEnd) {
     .attr('opacity', 1)
     .attr('transform', 'translate(' + chart.margin().left + ',' + chart.margin().top + ')')
     .attr("id", "labelbrush");
+
+  gBrush.append('rect')
+    .attr('height', labelSvg.attr("height"))
+    .attr('width', '1px')
+    .attr('fill', '#FF0000')
+    .attr('opacity', 1)
+    .attr('transform', 'translate(' + chart.margin().left + ',' + chart.margin().top + ')')
+    .attr("id", "labelbrushFollowing");
 
   gBrush.append('rect')
     .attr('fill', 'grey')
