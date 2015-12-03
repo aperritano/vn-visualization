@@ -52,7 +52,7 @@ var animateTimer;
 //var pBar = document.querySelector('#progressBar');
 
 function getSessionInfo() {
-  oboe('https://labeldatababoons.firebaseio.com/sessions_info.json')
+  oboe('https://baboons.firebaseio.com/sessions_info.json')
     .node('!.*', function (sess) {
       if (!_.isUndefined(sess) || !_.isNull(sess)) {
         sessions.push(sess);
@@ -163,7 +163,7 @@ function fetchSession(value) {
   recordProgressText.style.display = 'block';
   recordProgressText.innerHTML = 'Connecting...';
 
-  oboe('https://labeldatababoons.firebaseio.com/sessions/' + value + '/dictionary.json')
+  oboe('https://baboons.firebaseio.com/sessions/' + value + '/dictionary.json')
     .node('!.*', function (dict) {
       if (!_.isUndefined(dict) || !_.isNull(dict)) {
         dictionary.push(dict);
@@ -175,7 +175,7 @@ function fetchSession(value) {
       doneDictionary();
     });
 
-  oboe('https://labeldatababoons.firebaseio.com/sessions/' + value + '/session_info.json')
+  oboe('https://baboons.firebaseio.com/sessions/' + value + '/session_info.json')
     .node('!.*', function (sessionInfo) {
 
       if (!_.isUndefined(sessionInfo) || !_.isNull(sessionInfo)) {
@@ -190,7 +190,7 @@ function fetchSession(value) {
 
   var recordCount = 0;
 
-  oboe('https://labeldatababoons.firebaseio.com/sessions/' + value + '/timestamps.json')
+  oboe('https://baboons.firebaseio.com/sessions/' + value + '/timestamps.json')
     .node('!.*', function (t) {
 
       if (_.isUndefined(t) || _.isNull(t)) {
@@ -1102,8 +1102,10 @@ function updateLabelTimeline(tStart, tEnd) {
       var sDate = moment(ranged[0].timestamp).valueOf();
       var eDate = moment(ranged[ranged.length - 1].timestamp).valueOf();
 
+      var svgWidth = this.width.animVal.value;
+
       var seconds = (eDate - sDate)/1000;
-      var width = (this.getBBox().width - margin.left - margin.right)/seconds;
+      var width = (svgWidth - margin.left - margin.right)/seconds;
 
       var cSecond = Math.floor(x / width)*1000;
 
@@ -1141,6 +1143,12 @@ function updateLabelTimeline(tStart, tEnd) {
         .attr('opacity', 0.3)
         .attr('transform', 'translate(' + margin.left + ',' + (base + lineNumber*itemHeight + lineNumber*itemMargin) + ')');
 
+    })
+    .on('mouseleave', function (d, i) {
+
+      d3.select('#highlight')
+        .attr('opacity', 0);
+
     });
 
   var gBrush = labelSvg.append('g');
@@ -1150,9 +1158,9 @@ function updateLabelTimeline(tStart, tEnd) {
 
   gBrush.append('rect')
     .attr('height', labelSvg.attr("height"))
-    .attr('width', width)
+    .attr('width', '1px')
     .attr('fill', 'black')
-    .attr('opacity', 0.4)
+    .attr('opacity', 1)
     .attr('transform', 'translate(' + chart.margin().left + ',' + chart.margin().top + ')')
     .attr("id", "labelbrush");
 
