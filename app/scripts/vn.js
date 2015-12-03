@@ -10,7 +10,7 @@ var wWidth = 'innerWidth' in window ? window.innerWidth : document.documentEleme
 
 //var mainOffset = 15;
 
-var margin = {top: 10, left: 20, bottom: 20, right: 20};
+var margin = {top: 50, left: 20, bottom: 20, right: 20};
 
 
 var mapSVG;
@@ -526,26 +526,95 @@ function drawDataPointOverlay(dataPoint) {
         return nodeColorMap(i);
       })
       .style('fill-opacity', 1.0)
-      .on('mouseover', function (d) {
-
-
-
-
-        //var div = d3.select('#tooltip').append('div')
-        //  .attr('class', 'tooltip')
-        //  .style('opacity', 0);
-        //
-        //div.transition()
-        //  .duration(100)
-        //  .style('opacity', 1.0);
-        //div.html(d.id + '<br/>' + d3.format('.4g')(d.lat) + ',' + d3.format('.4g')(d.lon))
-        //  .style('left', (d3.event.pageX) + 'px')
-        //  .style('top', (d3.event.pageY - 28) + 'px');
-      })
       .on('mouseout', function (d) {
         //div.transition()
         //  .duration(500)
         //  .style('opacity', 0);
+      })
+      .on('mouseover', function(d){
+        var id = d.id;
+        var counter = 0;
+        d3.selectAll('.timeline-label').each(function(d, i){
+
+
+          var txt = d[i].label.split(" ");
+
+          if(txt[1] == id){
+
+            var svg = d3.select("#grouplabels").select("svg");
+            //var rect = svg.select("rect #highlight").remove();
+
+            var itemHeight = 20;
+            var itemMargin = 5;
+
+            var base = margin.top + itemHeight + itemMargin;
+            var lineHeight = itemHeight + itemMargin;
+            var x = base + lineHeight * counter;
+
+            svg.select('#highlight')
+              .attr('height', itemHeight)
+              .attr('width', svg.attr("width"))
+              .attr('opacity', 0.3)
+              .attr('transform', 'translate(' + margin.left + ',' + x + ')');
+
+          }
+          counter++;
+
+        })
+
+      })
+      .on('mouseleave', function (d, i) {
+
+        d3.select('#highlight')
+          .attr('opacity', 0);
+
+      })
+      .on('click', function (d, i) {
+
+        var id = d.id;
+        var counter = 0;
+        d3.selectAll('.timeline-label').each(function(d, i){
+
+
+          var txt = d[i].label.split(" ");
+
+          if(txt[1] == id){
+
+            var svg = d3.select("#grouplabels").select("svg");
+            var opacity = svg.select('#highlight' + id).attr('opacity');
+
+            var itemHeight = 20;
+            var itemMargin = 5;
+
+            var base = margin.top + itemHeight + itemMargin;
+            var lineHeight = itemHeight + itemMargin;
+            var x = base + lineHeight * counter;
+
+            if(opacity > 0) {
+
+              svg.select('#highlight' + id)
+                .attr('height', itemHeight)
+                .attr('width', svg.attr("width"))
+                .attr('opacity', 0)
+                .attr('transform', 'translate(' + margin.left + ',' + x + ')');
+
+            }else{
+
+              svg.select('#highlight' + id)
+                .attr('height', itemHeight)
+                .attr('width', svg.attr("width"))
+                .attr('opacity', 0.3)
+                .attr('transform', 'translate(' + margin.left + ',' + x + ')');
+
+            }
+
+
+
+          }
+          counter++;
+
+        })
+
       });
 
     //.transition()
@@ -944,6 +1013,8 @@ function createMainTimeline(flag) {
       var t1 = filter[0];
       var t2 = filter[1];
 
+      console.log(t1)
+
       brushFilteredDates = byDate.filterRange([t1, t2]);
 
       var dataPoint = brushFilteredDates.bottom(1)[0];
@@ -1065,15 +1136,162 @@ function updateLabelTimeline(tStart, tEnd) {
       tooltip.transition()
         .duration(500)
         .style('opacity', 0);
+    })
+    .click(function (d, i, datum) {
+      var txt = datum.label.split(" ");
+      var id = txt[1];
+
+      if (id !== ''){
+
+        var timer = setInterval(function(){
+          var circle = d3.select('#node' + id);
+          circle.transition()
+            .duration(500)
+            .attr("stroke-width", 12)
+            .attr("r", 20)
+            .transition()
+            .duration(500)
+            .attr('stroke-width', 0.5)
+            .attr("r", 6)
+            .ease('sine');
+          clearInterval(timer);
+        },1000);
+
+      }
+
     });
 
   //d3.selectAll('.timeline-label').attr('transform', 'translate(2px,0px)');
 
-  d3.select('#grouplabels').append('svg')
+  var labelSvg = d3.select('#grouplabels').append('svg')
     .attr('width', width + groupLabelMargin.right)
     .style('margin-left', 5)
     .style('margin-right', 0)
-    .datum(groupLabels).call(chart);
+    .datum(groupLabels).call(chart)
+    .on('click', function(d, i){
+      var x = d3.mouse(this)[0] - margin.left;
+      var y = d3.mouse(this)[1] - margin.top;
+
+      // CHeck if positive
+      if (x < 0 || y < 0)
+        return;
+
+      var ranged = brushFilteredDates.bottom(Infinity);
+      var sDate = moment(ranged[0].timestamp).valueOf();
+      var eDate = moment(ranged[ranged.length - 1].timestamp).valueOf();
+
+      var svgWidth = this.width.animVal.value;
+
+      var seconds = (eDate - sDate)/1000;
+      var width = (svgWidth - margin.left - margin.right)/seconds;
+
+      var cSecond = Math.floor(x / width)*1000;
+
+      var cDate = sDate + cSecond;
+      var fDate = moment(cDate);
+
+      for(i = 0; i < ranged.length; i++){
+        if(fDate.isSame(ranged[i].timestamp)){
+          drawDataPointOverlay(ranged[i]);
+          zoomCurrentPoint();
+        }
+      }
+
+      d3.select("#labelbrush")
+        .attr('transform', 'translate(' + (margin.left + (Math.floor(x / width)*width)) + ',' + margin.top + ')');
+
+    })
+    .on('mousemove', function (d, i) {
+
+      var itemHeight = 20;
+      var itemMargin = 5;
+
+      var y = d3.mouse(this)[1] - margin.top - itemHeight - itemMargin;
+
+      var base = margin.top + itemHeight + itemMargin;
+      var lineHeight = itemHeight + itemMargin;
+      var lineNumber = Math.floor(y / lineHeight);
+
+      if (lineNumber < 0)
+        return;
+
+      d3.select('#highlight')
+        .attr('height', itemHeight)
+        .attr('width', this.getBBox().width)
+        .attr('opacity', 0.3)
+        .attr('transform', 'translate(' + margin.left + ',' + (base + lineNumber*itemHeight + lineNumber*itemMargin) + ')');
+
+      var counter = 0;
+      d3.selectAll('.timeline-label').each(function(d, i){
+
+        var txt = d[i].label.split(" ");
+
+        if (counter == lineNumber){
+
+          var id = txt[1];
+
+          d3.selectAll('.node').attr("r", 6);
+          d3.select('#node' + id).attr("r", 15);
+
+        }
+
+        counter++;
+
+      })
+
+    })
+    .on('mouseleave', function (d, i) {
+
+      d3.select('#highlight')
+        .attr('opacity', 0);
+
+      d3.selectAll('.node').attr("r", 6);
+
+    });
+
+  var gBrush = labelSvg.append('g');
+
+  var seconds = (eDate - sDate)/1000;
+  var width = (labelSvg.attr("width") - chart.margin().left - chart.margin().right)/seconds;
+
+  gBrush.append('rect')
+    .attr('height', labelSvg.attr("height"))
+    .attr('width', '1px')
+    .attr('fill', '#F57F17')
+    .attr('opacity', 1)
+    .attr('transform', 'translate(' + chart.margin().left + ',' + chart.margin().top + ')')
+    .attr("id", "labelbrush");
+
+  gBrush.append('rect')
+    .attr('fill', 'grey')
+    .attr('opacity', 0.0)
+    .attr("id", "highlight");
+
+  for (j = 0; j < labelsTuple[0].length; j++){
+
+    gBrush.append('rect')
+      .attr('fill', 'grey')
+      .attr('opacity', 0.0)
+      .attr("id", "highlight" + labelsTuple[0][j].class);
+
+  }
+
+}
+
+function updateLabelBrush(tStart, tEnd, dataPoint){
+
+  var sDate = moment(tStart).valueOf();
+  var eDate = moment(tEnd).valueOf();
+  var cDate = moment(dataPoint.timestamp).valueOf();
+
+  var svg = d3.select("#grouplabels").select("svg");
+  var rect = svg.select("#labelbrush");
+
+  var seconds = (eDate - sDate)/1000;
+  var width = (svg.attr("width") - margin.left - margin.right)/seconds;
+  var delta = ((cDate - sDate)/1000)*width;
+
+  rect.attr('transform', 'translate(' + (margin.left + delta) + ',' + margin.top + ')');
 
 }
 
@@ -1098,6 +1316,8 @@ function playSelection(seconds) {
   if (isPlaying) {
     var ranged = brushFilteredDates.bottom(Infinity);
     var speed = 175; // animatation speed
+    var sDate = ranged[0].timestamp;
+    var eDate = ranged[ranged.length - 1].timestamp;
 
     var i = 0;
 
@@ -1118,6 +1338,7 @@ function playSelection(seconds) {
 
         console.log('actual' + d.timestamp);
         drawDataPointOverlay(d);
+        updateLabelBrush(sDate, eDate, d);
         if (hasZoomedToFirstPoint === false) {
           zoomCurrentPoint();
           hasZoomedToFirstPoint = true;
@@ -1170,6 +1391,4 @@ function nodeColorMap(index) {
   return brewer[index];
 
 }
-
-
 
