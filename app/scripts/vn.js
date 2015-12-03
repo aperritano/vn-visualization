@@ -52,7 +52,8 @@ var animateTimer;
 //var pBar = document.querySelector('#progressBar');
 
 function getSessionInfo() {
-  oboe('https://baboons.firebaseio.com/sessions_info.json')
+  //oboe('https://baboons.firebaseio.com/sessions_info.json')
+  oboe('https://labeldatababoons.firebaseio.com/sessions_info.json')
     .node('!.*', function (sess) {
       if (!_.isUndefined(sess) || !_.isNull(sess)) {
         sessions.push(sess);
@@ -163,7 +164,8 @@ function fetchSession(value) {
   recordProgressText.style.display = 'block';
   recordProgressText.innerHTML = 'Connecting...';
 
-  oboe('https://baboons.firebaseio.com/sessions/' + value + '/dictionary.json')
+  //oboe('https://baboons.firebaseio.com/sessions/' + value + '/dictionary.json')
+  oboe('https://labeldatababoons.firebaseio.com/sessions/' + value + '/dictionary.json')
     .node('!.*', function (dict) {
       if (!_.isUndefined(dict) || !_.isNull(dict)) {
         dictionary.push(dict);
@@ -180,7 +182,8 @@ function fetchSession(value) {
 
     });
 
-  oboe('https://baboons.firebaseio.com/sessions/' + value + '/session_info.json')
+  //oboe('https://baboons.firebaseio.com/sessions/' + value + '/session_info.json')
+  oboe('https://labeldatababoons.firebaseio.com/sessions/' + value + '/session_info.json')
     .node('!.*', function (sessionInfo) {
 
       if (!_.isUndefined(sessionInfo) || !_.isNull(sessionInfo)) {
@@ -197,7 +200,8 @@ function fetchSession(value) {
 
   var recordCount = 0;
 
-  oboe('https://baboons.firebaseio.com/sessions/' + value + '/timestamps.json')
+  //oboe('https://baboons.firebaseio.com/sessions/' + value + '/timestamps.json')
+  oboe('https://labeldatababoons.firebaseio.com/sessions/' + value + '/timestamps.json')
     .node('!.*', function (t) {
 
       if (_.isUndefined(t) || _.isNull(t)) {
