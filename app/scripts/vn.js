@@ -613,6 +613,16 @@ function drawDataPointOverlay(dataPoint) {
             }
 
 
+            var circle = d3.select('#node' + id);
+            circle.transition()
+              .duration(100)
+              .attr("stroke-width", 12)
+              .attr("r", 15)
+              .transition()
+              .duration(100)
+              .attr('stroke-width', 0.5)
+              .attr("r", 6)
+              .ease('sine');
 
           }
           counter++;
