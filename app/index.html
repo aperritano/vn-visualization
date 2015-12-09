@@ -1,11 +1,10 @@
-<!DOCTYPE html>
-<meta charset="utf-8">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="description" content="A front-end template that helps you build fast, modern mobile web apps.">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visualizing Networks</title>
+  <title>Visualizing Animal Networks</title>
 
   <!-- Disable tap highlight on IE -->
   <meta name="msapplication-tap-highlight" content="no">
@@ -13,22 +12,13 @@
   <!-- Web Application Manifest -->
   <link rel="manifest" href="manifest.json">
 
-  <!-- Add to homescreen for Chrome on Android -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="application-name" content="Web Starter Kit">
-  <link rel="icon" sizes="192x192" href="images/touch/chrome-touch-icon-192x192.png">
-
   <!-- Add to homescreen for Safari on iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Web Starter Kit">
   <link rel="apple-touch-icon" href="images/touch/apple-touch-icon.png">
 
-  <!-- Tile icon for Win8 (144x144 + tile color) -->
-  <meta name="msapplication-TileImage" content="images/touch/ms-touch-icon-144x144-precomposed.png">
-  <meta name="msapplication-TileColor" content="#2F3BA2">
 
-  <meta name="theme-color" content="#2F3BA2">
   <!-- Page styles:
 You can choose other color schemes from the CDN, more info here http://www.getmdl.io/customize/index.html
 Format: material.color1-color2.min.css, some examples:
@@ -36,176 +26,173 @@ material.red-teal.min.css
 material.blue-orange.min.css
 material.purple-indigo.min.css
 -->
-  <link rel="stylesheet" href="https://storage.googleapis.com/code.getmdl.io/1.0.5/material.blue-red.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
 
-  <link rel="stylesheet" href="styles/main.css">
-  <link rel="stylesheet" href="styles/vn.css">
-  <link rel="stylesheet" href="styles/drawer.css">
-  <link rel="stylesheet" href="styles/maintimeline.css">
 
+  <!--<link rel="stylesheet" href="../bower_components/dcjs/dc.min.css"/>-->
+
+
+  <link href="styles/tooltip.css" rel="stylesheet"/>
+
+  <link rel="stylesheet" href="material-design-lite/material.min.css">
+  <link rel="stylesheet" href="styles/base-layout.css">
+  <link rel="stylesheet" href="scripts/dcjs/dc.css"/>
   <link rel="stylesheet" href="leaflet/dist/leaflet.css"/>
 
 
-  <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.css"/>-->
+  <link rel="stylesheet" href="styles/material-modal.css">
 
-  <!--<link rel="stylesheet" href="../bower_components/dcjs/dc.min.css"/>-->
-  <link rel="stylesheet" href="scripts/dcjs/dc.css"/>
-
-  <link rel="stylesheet" href="dc-addons/dist/dc-addons.css"/>
+  <link rel="stylesheet" href="styles/vn.css">
   <link rel="stylesheet" href="styles/overlay.css"/>
+  <link rel="stylesheet" href="styles/drawer.css">
+  <link rel="stylesheet" href="styles/maintimeline.css">
 
 
-  <link href="scripts/dcjs/toast.css" rel="stylesheet"/>
-  <link href="styles/tooltip.css" rel="stylesheet"/>
+  <!--<link rel="stylesheet" href="dc-addons/dist/dc-addons.css"/>-->
 
-  <link href="styles/material-modal.css" rel="stylesheet"/>
+
+  <!--<link href="scripts/dcjs/toast.css" rel="stylesheet"/>-->
 
 
   <style>
 
-    header.custom-header {
-      background: #ffffff;
-      height: 15px;
-      /*//min-height: 50px;*/
-      box-shadow: none;
-    }
 
-    .mdl-layout__header--transparent.mdl-layout__header--transparent {
-      background-color: transparent;
-      box-shadow: none;
-    }
-
-    .mdl-layout__header-row span.mdl-layout-title {
-      color: #616161;
-      text-transform: uppercase;
-      /*height: 15px;*/
-      /*line-height: .3em;*/
-
-    }
-
-    .mdl-layout__drawer-button {
-
-      /*height: 30px;*/
-      /*line-height: 1.5em;*/
-    }
-
-    .custom-header .material-icons {
-      /*color: #616161;*/
-      color: white;
-      min-height: 15px;
-    }
-
-    .custom-header a.mdl-navigation__link {
-      color: #616161;
-      font-weight: 700;
-      font-size: 14px;
-    }
-
-    .custom-header .mdl-layout__title, .mdl-layout-title {
-      font-size: 14px;
-    }
-
-
-
-    .mdl-textfield {
-      width: 80px;
-      font-size: 12px;
-    }
+    /*.mdl-textfield {*/
+    /*width: 80px;*/
+    /*font-size: 12px;*/
+    /*}*/
 
   </style>
 
 </head>
-<body id="main-body">
-<span id="browser-sync-binding"></span>
-<!-- Always shows a header, even in smaller screens. -->
-<div class=" mdl-layout mdl-js-layout mdl-layout--fixed-header">
-  <header class="custom-header mdl-layout__header">
+
+<body>
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+  <div class="vn-header mdl-layout__header mdl-layout__header--waterfall">
     <div class="mdl-layout__header-row">
-      <!-- Title -->
-      <span class="custom-header mdl-layout-title">Visualizing Animal Networks</span>
-      <!-- Add spacer, to align navigation to the right -->
-      <div class="mdl-layout-spacer"></div>
-      <!-- Navigation. We hide it in small screens. -->
+          <span id="session-title" class="vn-title mdl-layout-title mdl-color-text--black">
+            Visualizing Animal Networks
+          </span>
+      <!-- Add spacer, to align navigation to the right in desktop -->
+      <!--<div class="vn-header-spacer mdl-layout-spacer"></div>-->
     </div>
-  </header>
-  <div id="dict-drawer" class="mdl-layout__drawer">
-    <div class="mdl-tabs__panel" id="members-panel">
-      <span class="mdl-layout-title custom-dict-header">Graph Legend</span>
-      <div class="tl">
-        <table id="tl-table" class="mdl-data-table mdl-js-data-table dict-table">
+  </div>
+
+  <!--drawer-->
+
+
+  <div class="vn-drawer mdl-layout__drawer">
+    <span class="mdl-layout-title mdl-color--grey-700 mdl-color-text--white">LEGEND</span>
+    <div class="mdl-grid">
+      <div class="mdl-cell mdl-cell--12-col">
+        <table id="tl-table" class="dict-table">
           <thead>
           <tr>
-            <th class="dict-title" style="padding-left: 24px; text-align: left;">Color</th>
-            <th class="dict-title" style="padding-left: 0px;">Description</th>
+            <th>COLOR</th>
+            <th>DESCRIPTION</span></th>
           </tr>
           </thead>
           <tbody id="tl-body">
 
           <!--subject count-->
           <tr>
-            <td class="tl-row" style="padding-left: 24px; text-align: left;"><div class="tl-subject-count-filler"></div></td>
-            <td class="tl-row" style="padding-left: 24px; text-align: left;">Represents the total number of subjects at a <br>particular timestamp.</td>
+            <td>
+              <div class="tl-subject-count-filler"></div>
+            </td>
+            <td>Network edge count area chart.</td>
           </tr>
 
           <!--label count-->
           <tr>
-            <td id="color-label" class="tl-row" style="padding-left: 24px; text-align: left;"><div class="tl-label-count-filler"></div></td>
-            <td class="tl-row" style="padding-left: 24px; text-align: left;">Represents whether or not a label has been <br>applied to a particular timestamp.</td>
+            <td>
+              <div class="tl-label-count-filler"></div>
+            </td>
+            <td>Subject count area chart.</td>
           </tr>
-
           </tbody>
         </table>
       </div>
     </div>
-    <div class="mdl-tabs__panel is-active" id="about-panel">
-      <div class="dict-table-container">
-        <span class="mdl-layout-title custom-dict-header">Activity Label Legend</span>
 
-        <table id="dict-table" class="mdl-data-table mdl-js-data-table dict-table">
-          <thead>
-          <tr>
-            <th class="dict-title" style="padding-left: 24px; text-align: left;">Color</th>
-            <th class="dict-title" style="padding-left: 0px;">Description</th>
-          </tr>
-          </thead>
-          <tbody id="dict-body">
-          <!-- create row programmically -->
-          </tbody>
-        </table>
-      </div>
-    </div>
   </div>
 
 
-
-  <main class="mdl-layout__content">
-    <div id="progressBar" style="width: 100%; display:none"
-         class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>
-
-    <!--progress text-->
-    <div  id="progressText" class="center" style="display:none" >
-      Retrieving Record 0 of 21600
+  <div id="main-body" class="mdl-layout__content mdl-color--grey-700">
+    <div id="vn-progress-section" class="vn-section" style="display: none">
+      <div id="progressText" class="center" style="display:block">
+        Retrieving Record 0 of 21600
+      </div>
     </div>
+    <div id="vn-main-section" class="vn-section mdl-color--white" style="display: none">
+      <div id="map"></div>
+      <br>
+      <div class="activity-label-title"><span>Timeline Counts</span>
+        <hr class="underline">
+      </div>
+      <div id="main-timeline"></div>
+      <br>
+      <div class="activity-label-title"><span>Activity Labels</span>
+        <hr class="underline">
+      </div>
+      <div class="spacer5"></div>
+      <div id="grouplabels"></div>
+      <div id="tooltipLabel"></div>
+      <div id="animate-panel" style="display: none">
+        <h6 align="center">Selected Time Range</h6>
+        <hr>
+        <span align="center" id="start-time">Start:&nbsp</span><br>
+        <span align="center" id="end-time">End:&nbsp&nbsp&nbsp&nbsp</span>
+        <div class="spacer10"></div>
 
+        <h6 align="center">Animate Range</h6>
+        <hr>
+        <div id="buttonContainer">
+          <button id="play" class="mdl-button mdl-js-button mdl-button--icon">
+            <i id="play-icon" class="material-icons">play_circle_outline</i>
+          </button>
+          <div id="play-text" class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <input class="custom mdl-textfield__input" value="1" maxlength="7" type="text" pattern="-?[0-9]*(\.[0-9]+)?"
+                   id="time-step">
+            <label class="mdl-textfield__label" for="time-step" style="margin: 0px; padding: 0px; top: 0px !important;">time
+              step (sec)</label>
+            <!--<span class="mdl-textfield__error">Input is not a number!</span>-->
+          </div>
+          <div class="spacer5"></div>
+          <span id="current-time" class="mdl-typography--caption">Time:  2:59:56 AM 8/1/12</span>
+        </div>
 
-    <div class="page-content">
-      <!-- Content wrapper -->
+      </div>
+
+      <div id="legend-panel" style="display: none">
+        <h6 align="center">Legend</h6>
+        <hr>
+        <div class="parent">
+          <div class="left">Male:&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</div>
+          <div class="right circle-filler mdl-color--blue-500"></div>
+        </div>
+        <div class="parent">
+          <div class="left">Female:&nbsp&nbsp</div>
+          <div class="right circle-filler mdl-color--pink-300"></div>
+        </div>
+      </div>
+    </div>
+    <div class="vn-dialog-section" style="display: block">
       <div id="dialog" class="wrapperOutside">
         <div class="wrapperInside">
           <!-- Dialog -->
           <div class="dialogContainer">
             <!-- Dialog title and body -->
             <div class="dialogContent">
-              <div class="dialogContentTitle">Select Visualization Session</div>
+              <div class="dialogContentTitle">Visualization Sessions</div>
               <div class="dialogContentBody">
-                <table id="sessions-table" class="mdl-data-table mdl-js-data-table">
+                <table id="sessions-table" class="">
                   <thead>
                   <tr>
-                    <th class="custom-title" style="padding-left: 30px">Session Name</th>
-                    <th class="custom-title2">Author</th>
-                    <th class="custom-title2">Creation Date</th>
+                    <th class="custom-title">Session Name</th>
+                    <th class="custom-title">Author</th>
+                    <th class="custom-title">Creation Date</th>
                   </tr>
                   </thead>
                   <tbody id="sessions-body">
@@ -223,116 +210,29 @@ material.purple-indigo.min.css
           </div>
         </div>
       </div>
-
-      <!-- Your content goes here -->
-      <div id="control-panel" style="display: none">
-        <h6 align="center">Brush Range</h6>
-        <hr>
-        <span align="center" id="start-time">Start:&nbsp</span><br>
-        <span align="center" id="end-time">End:&nbsp&nbsp&nbsp&nbsp</span>
-      </div>
-      <div id="animate-panel" style="display: none">
-        <h6 align="center">Animate</h6>
-        <hr>
-        <div align="left">
-          <div id="buttonContainer">
-          <button id="play" class="mdl-button mdl-js-button mdl-button--icon">
-            <i id="play-icon" class="material-icons">play_circle_outline</i>
-          </button>
-            <div  id="play-text" class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-              <input class="custom mdl-textfield__input" value="1" maxlength="7" type="text" pattern="-?[0-9]*(\.[0-9]+)?"
-                     id="time-step">
-              <label class="mdl-textfield__label" for="time-step" style="margin: 0px; padding: 0px; top: 0px !important;">time step (sec)</label>
-              <!--<span class="mdl-textfield__error">Input is not a number!</span>-->
-            </div>
-            <br>
-            <span id="current-time">Time:  2:59:56 AM 8/1/12</span>
-          </div>
-
-        </div>
-      </div>
-      <div id="zoom-panel" style="display: none">
-        <div id="zoom-point" class="zoom-button"><i class="material-icons">explore</i></div>
-      </div>
-
-
-      <div id="legend-panel" style="display: none">
-        <h6 align="center">Legend</h6>
-        <hr>
-        <div class="parent">
-          <div class="left">Male:&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</div>
-          <div class="right male-filler"></div>
-        </div>
-        <div class="parent">
-          <div class="left">Female:&nbsp&nbsp</div>
-          <div class="right female-filler"></div>
-        </div>
-      </div>
-
-
-      <div id="tooltip"></div>
-      <div id="map" style="display: none"></div>
-
-
-      <div id="main-timeline"></div>
-      <div id="grouplabels"></div>
-      <div id="tooltipLabel"></div>
     </div>
-  </main>
+  </div>
 </div>
-
-<!--tooltips-->
-<!--dictionary-->
-<!--<button onclick="combined.tip.init()">Initialise</button>-->
-<!--<button onclick="combined.tip.destroy()">Destroy</button>-->
-<div class="mdl-tooltip mdl-tooltip--large" for="label-tab">
-  Visual encodings for the label timeline (lower half of the representation).
-</div>
-
-<div class="mdl-tooltip mdl-tooltip--large" for="tl-tab">
-  Visual encodings for the main timeline (center of the representation).
-</div>
-
-<div class="mdl-tooltip mdl-tooltip--large" for="name">
-  Label identifier
-</div>
-<div class="mdl-tooltip mdl-tooltip--large" for="code">
-Each label has an associated code
-</div>
-<div class="mdl-tooltip mdl-tooltip--large" for="color">
-The visual encoding of the label
-</div>
-
-<div class="mdl-tooltip mdl-tooltip--large" for="tl-color">
-  Each area chart has an associated color.
-</div>
-<div class="mdl-tooltip mdl-tooltip--large" for="tl-description">
-  Description of the chart.
-</div>
-
-<div class="mdl-tooltip mdl-tooltip--large" for="color-subject">
-  #ereafd
-</div>
-<div class="mdl-tooltip mdl-tooltip--large" for="color-label">
-  #hyhdls
-</div>
-
-<!--<div id="labelsIndividuals"></div>-->
-<!--<div id="tooltipLabel"></div>-->
-
-
 <script src="https://cdn.firebase.com/js/client/2.3.2/firebase.js"></script>
 
+<script src="material-design-lite/material.min.js"></script>
+
+<!--map-->
+<script src="leaflet/dist/leaflet.js"></script>
+
+<!--d3-->
 <script src="d3/d3.min.js"></script>
+<script src="crossfilter/crossfilter.min.js"></script>
+<script src="scripts/dcjs/dc.js"></script>
+<script src="scripts/dcjs/d3-timeline.js"></script>
 <script src="d3-tip/index.js"></script>
+<script src="topojson/topojson.js"></script>
 
 <!--util-->
 <script src="moment/min/moment.min.js"></script>
 
 <script src="async/dist/async.js"></script>
-<script src="topojson/topojson.js"></script>
 
-<script src="crossfilter/crossfilter.min.js"></script>
 <script src="underscore/underscore-min.js"></script>
 
 <script src="progressbar.js/dist/progressbar.min.js"></script>
@@ -340,36 +240,11 @@ The visual encoding of the label
 
 <script src='oboe/dist/oboe-browser.min.js'></script>
 
-<script src="scripts/dcjs/toast.min.js"></script>
-<script src="scripts/dcjs/d3-timeline.js"></script>
-<script src="scripts/dcjs/dc.js"></script>
-
-<script src="dc-addons/dist/dc-addons.js"></script>
-
-<script src="leaflet/dist/leaflet.js"></script>
-
-<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.js"></script>-->
-
-<!--ESRI-->
-<!--<script src="../bower_components/esri-leaflet/dist/esri-leaflet.js"></script>-->
-<!--<script src="../bower_components/esri-leaflet/dist/builds/map-service/esri-leaflet-map-service.js"></script>-->
-<!--<script src="../bower_components/esri-leaflet/dist/builds/basemaps/esri-leaflet-basemaps.js"></script>-->
-<!--<script src="../bower_components/esri-leaflet/dist/builds/core/esri-leaflet-core.js"></script>-->
-<!--<script src="../bower_components/esri-leaflet/dist/builds/image-service/esri-leaflet-image-service.js"></script>-->
-
-
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-
 
 <script src="scripts/material-modal.js"></script>
 
-<script src="https://storage.googleapis.com/code.getmdl.io/1.0.5/material.min.js"></script>
-<!-- build:js(app/) ../../scripts/main.min.js -->
-<script src="scripts/main.js"></script>
 <script src="scripts/vn.js"></script>
 <script src="scripts/label.js"></script>
-<!-- endbuild -->
-
 
 </body>
 </html>

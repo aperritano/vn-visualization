@@ -31,7 +31,7 @@ table {
 .wrapperOutside {
   display: table;
   width: 100vw;
-  height: 100vh; }
+  height: 75vh; }
 
 .wrapperInside {
   display: table-cell;
@@ -44,7 +44,7 @@ dialog window, and content.
 */
 .dialogContainer {
   /* Form */
-  width: 500px;
+  width: 600px;
   height: auto;
   /*
   Drop Shadow

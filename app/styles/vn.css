@@ -36,11 +36,28 @@
 }
 
 #map {
-  border: 1px solid;
-  stroke: #939393;
-  fill-opacity: .125;
+  /*border: 1px solid;*/
+  /*stroke: #939393;*/
+  width: 100%;
+  margin-left: 0px;
+  margin-right: 0px;
+  margin-top: 0px;
+  margin-bottom: 5px;
+
+  /*fill-opacity: .125;*/
   /*shape-rendering: crispEdges;*/
 }
+
+#main-timeline {
+  background: white;
+  margin-top: 0px;
+  margin-bottom: 5px;
+}
+
+br {
+  margin-bottom: 10px;
+}
+
 
 /*node css*/
 /*.node {*/
@@ -137,18 +154,26 @@ div.blocks {
   width: 100px;
 }
 
-/** progress box **/
-.center {
-  margin: 0 auto;
-  text-align: center;
-  width: 500px;
-  background: black;
-  padding: 20px;
-  color: white;
-  border-radius: 10px;
-  -webkit-transform: translateY(80%);
-  transform: translateY(80%);
-  font-weight: 500;
-  font-size: 24px;
+/* activity label title */
+.activity-label-title {
+  font-weight: 700;
+  font-family: "Roboto";
+  font-size: 14px;
+  background: white;
+}
+
+.spacer5 {
+  height: 5px;
+}
+
+.spacer10 {
+  height: 10px;
+}
+
+hr.underline {
+  border-top: 1px solid #8c8b8b;
+  padding: 0px;
+  margin: 0px;
+  width: 100%;
 }
 

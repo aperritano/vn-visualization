@@ -23,10 +23,6 @@
   margin-bottom: 0px;
 }
 
-br {
-  margin: 0px;
-}
-
 .mdl-button--icon .material-icons {
   font-size: 50px;
 
@@ -123,7 +119,7 @@ div.interval-text {
   /*margin: 0 0 5px;*/
   font-size: 10px;
   font-family: "Roboto";
-  color: #939393;
+  color: #000000;
 }
 
 hr {
@@ -134,7 +130,7 @@ hr {
   margin: 0px 0px 5px 0px;
 }
 
-#control-panel > h6 {
+h6 {
   margin: 0px;
   font-size: 13px;
   font-weight: 700;
@@ -172,26 +168,14 @@ div.button-container {
   vertical-align:middle;
 }
 
-.male-filler {
+.circle-filler {
   width: 20px;
   height: 20px;
-  background: #a6cee3;
   -moz-border-radius: 50%;
   -webkit-border-radius: 50%;
   border-radius: 50%;
-  border: 2px solid #7d7d7d;
-  display: table-cell;
-}
-
-.female-filler {
-  width: 20px;
-  height: 20px;
-  background: #fb9a99;
-  -moz-border-radius: 50%;
-  -webkit-border-radius: 50%;
-  border-radius: 50%;
-  border: 2px solid #7d7d7d;
-  display: table-cell;
+  border: 2px solid #000000;
+  /*display: table-cell;*/
 }
 
 .legendOverlay {
