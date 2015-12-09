@@ -122,7 +122,7 @@
             var cellDate = rowRef.insertCell(2);
             cellDate.className = 'custom-row2';
 
-            var dateText = document.createTextNode(moment(sess.date).toDate());
+            var dateText = document.createTextNode(moment(sess.timestamp).format('MMMM Do YYYY, h:mm:ss a'));
             cellDate.appendChild(dateText);
 
             componentHandler.upgradeElement(labelRef);
@@ -492,7 +492,6 @@
       var circles = mapContainer.selectAll('circle').data(targets);
 
       circles.enter().append('circle')
-        .attr('class', 'node')
         .attr('id', function (d) {
 
           var tooltip = document.createElement('div');
@@ -502,6 +501,26 @@
           tooltip.appendChild(toolText);
 
           componentHandler.upgradeElement(tooltip);
+
+          if (d.baboon_info.animal_sex === 'm') {
+            d3.select(this).attr('class','male-circle');
+          } else {
+            d3.select(this).attr('class','female-circle');
+          }
+
+          if( !_.isUndefined(d.individual_label)) {
+
+            console.log('the color is', d.individual_label);
+
+            var entry = dictionary[d.individual_label.code];
+            d3.select(this).attr('fill',entry.color);
+          } else {
+            d3.select(this).attr('fill','black');
+          }
+
+
+
+
 
 
           return 'node' + d.id;
@@ -513,33 +532,6 @@
           return d.lat;
         })
         .attr('r', 6)
-        .style('stroke-width', function (d) {
-          if (_.isEmpty(d.labels)) {
-            return 2;
-          } else {
-            return 4;
-          }
-        })
-        .style('stroke', function (d, i) {
-          if (_.isEmpty(d.labels)) {
-            return nodeColorMap(i);
-          } else {
-            return d.labels.color;
-          }
-
-        })
-        .style('fill', function (d, i) {
-
-          if (d.baboon_info.animal_sex === 'm') {
-            return '#1f78b4';
-          } else {
-            return '#fb9a99';
-          }
-
-
-          return nodeColorMap(i);
-        })
-        .style('fill-opacity', 1.0)
         .on('mouseout', function (d) {
           // div.transition()
           //   .duration(500)

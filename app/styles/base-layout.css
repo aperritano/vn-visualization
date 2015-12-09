@@ -133,6 +133,10 @@ td {
   padding: 5px;
 }
 
+th {
+  text-align: left;
+}
+
 .custom-dict-header {
   text-align: center;
   padding-left: 0px;
@@ -230,7 +234,7 @@ th.custom-title {
   vertical-align: bottom;
   text-overflow: ellipsis;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 24px;
   letter-spacing: 0;
   height: 48px;
@@ -249,7 +253,7 @@ th.custom-title2 {
   line-height: 24px;
   letter-spacing: 0;
   height: 48px;
-  font-size: 12px;
+  font-size: 14px;
   box-sizing: border-box;
 }
 
@@ -279,7 +283,7 @@ td.custom-row2 {
   line-height: 24px;
   letter-spacing: 0;
   height: 48px;
-  font-size: 12px;
+  font-size: 14px;
   box-sizing: border-box;
 }
 
