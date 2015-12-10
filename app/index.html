@@ -34,7 +34,6 @@ material.purple-indigo.min.css
   <!--<link rel="stylesheet" href="../bower_components/dcjs/dc.min.css"/>-->
 
 
-  <link href="styles/tooltip.css" rel="stylesheet"/>
 
   <link rel="stylesheet" href="material-design-lite/material.min.css">
   <link rel="stylesheet" href="styles/base-layout.css">
@@ -47,6 +46,7 @@ material.purple-indigo.min.css
   <link rel="stylesheet" href="styles/vn.css">
   <link rel="stylesheet" href="styles/overlay.css"/>
   <link rel="stylesheet" href="styles/drawer.css">
+  <link href="styles/tooltip.css" rel="stylesheet"/>
   <link rel="stylesheet" href="styles/maintimeline.css">
 
 
@@ -79,7 +79,7 @@ material.purple-indigo.min.css
           <thead>
           <tr>
             <th>COLOR</th>
-            <th>DESCRIPTION</span></th>
+            <th>DESCRIPTION</th>
           </tr>
           </thead>
           <tbody id="tl-body">
@@ -165,8 +165,30 @@ material.purple-indigo.min.css
           <div class="right circle-filler mdl-color--pink-300"></div>
         </div>
       </div>
+      <div id="tooltip-panel" style="display: none">
+        <div align="center"><span id="tt-title" class="mdl-color-text--white mdl-typography--body-2 mdl-typography--body-2-force-preferred-font">Subject</span></td></div>
+        <hr class="underline mdl-color--white">
+        <table class="tt-table" >
+          <tr class="tt-td">
+            <td class="tt-td"><span id="tt-label-text" class="mdl-color-text--white mdl-typography--body-2 mdl-typography--body-2-force-preferred-font">Sleeping</span></td>
+            <td class="tt-td"><div id="tt-label-color" class="tooltip-filler"></div></td>
+          </tr>
+          <tr class="tt-td">
+            <td class="tt-td"><span class="mdl-color-text--white mdl-typography--body-2 mdl-typography--body-2-force-preferred-font">Sex:</span></td>
+            <td class="tt-td"><div id="tt-sex" class="tooltip-filler"></div></td>
+          </tr>
+          <tr>
+            <td class="tt-td"><span class="mdl-color-text--white mdl-typography--text-capitalize mdl-typography--body-2-force-preferred-font">Mass:</span></td>
+            <td class="tt-td"><span id="tt-mass-text" class="mdl-color-text--white mdl-typography--body-2-force-preferred-font"></span></td>
+          </tr>
+          <tr>
+            <td class="tt-td"><span class="mdl-color-text--white mdl-typography--text-capitalize mdl-typography--body-2-force-preferred-font">Stage:</span></td>
+            <td class="tt-td"><span id="tt-stage-text" class="mdl-color-text--white mdl-typography--text-capitalize mdl-typography--body-2-force-preferred-font"></span></td>
+          </tr>
+        </table>
+      </div>
     </div>
-    <div class="vn-dialog-section" style="display: block">
+    <div id="dialog-body" class="vn-dialog-section" style="display: block">
       <div id="dialog" class="wrapperOutside">
         <div class="wrapperInside">
           <!-- Dialog -->
@@ -178,9 +200,9 @@ material.purple-indigo.min.css
                 <table id="sessions-table">
                   <thead>
                   <tr>
-                    <th class="custom-title">Session Name</th>
-                    <th class="custom-title">Author</th>
-                    <th class="custom-title">Creation Date</th>
+                    <th class="dialog-header mdl-typography--subhead">Session Name</th>
+                    <th class="dialog-header mdl-typography--subhead">Author</th>
+                    <th class="dialog-header mdl-typography--subhead">Creation Date</th>
                   </tr>
                   </thead>
                   <tbody id="sessions-body">
@@ -213,7 +235,7 @@ material.purple-indigo.min.css
 <script src="crossfilter/crossfilter.min.js"></script>
 <script src="scripts/dcjs/dc.js"></script>
 <script src="scripts/dcjs/d3-timeline.js"></script>
-<script src="d3-tip/index.js"></script>
+<script src="scripts/dcjs/tooltip.js"></script>
 <script src="topojson/topojson.js"></script>
 
 <!--util-->

@@ -1,7 +1,7 @@
 .d3-tip {
   line-height: 1;
   font-weight: bold;
-  padding: 12px;
+  padding: 5px;
   background: rgba(0, 0, 0, 0.8);
   color: #fff;
   border-radius: 2px;
@@ -53,3 +53,29 @@
   top: 50%;
   left: 100%;
 }
+
+.tooltip-filler {
+  width: 90%;
+  height: 20px;
+  border: 2px solid #000000;
+}
+
+.tt-table {
+  /*padding: 2px;*/
+  border-collapse:collapse;
+  border-spacing:0;
+  margin: 2px;
+  /*margin: 2px 2px 2px 2px;*/
+}
+
+td.tt-td {
+  /*padding: 2px;*/
+  border-collapse:collapse;
+  border-spacing:0;
+  padding: 1px;
+  margin: 1px;
+  /*margin: 2px 2px 2px 2px;*/
+}
+
+
+

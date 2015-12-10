@@ -79,7 +79,7 @@
             var sess = sessions[i];
             var rowRef = tableBodyRef.insertRow(i);
             var cellOption = rowRef.insertCell(0);
-            cellOption.className = 'custom-row';
+            cellOption.className = 'dialog-row mdl-typography--subhead';
 
             //  option button
             var labelRef = document.createElement('label');
@@ -106,7 +106,7 @@
             labelRef.appendChild(inputRef);
 
             var spanRef = document.createElement('span');
-            spanRef.className = 'mdl-radio__label';
+            spanRef.className = 'mdl-typography--subhead';
             spanRef.innerHTML = ' Session ' + (i + 1);
 
             labelRef.appendChild(spanRef);
@@ -117,12 +117,12 @@
 
 
             var cellAuthor = rowRef.insertCell(1);
-            cellAuthor.className = 'custom-row2';
+            cellAuthor.className = 'dialog-row mdl-typography--subhead';
             var authorText = document.createTextNode(sess.name);
             cellAuthor.appendChild(authorText);
 
             var cellDate = rowRef.insertCell(2);
-            cellDate.className = 'custom-row2';
+            cellDate.className = 'dialog-row mdl-typography--subhead';
 
             var dateText = document.createTextNode(moment(sess.timestamp).format('MMMM Do YYYY, h:mm:ss a'));
             cellDate.appendChild(dateText);
@@ -141,7 +141,7 @@
             modalSelectButton.onclick = function () {
               document.getElementById(selectButton).style.backgroundColor = 'rgba(99,99,99,0.2)';
               document.getElementById('main-body').className = 'mdl-layout__content mdl-color--white';
-              document.getElementById('dialog').style.display = 'none';
+              document.getElementById('dialog-body').style.display = 'none';
               // which was checked
 
               var inputs = document.getElementsByTagName("input");
@@ -185,8 +185,8 @@
         console.log('done with dicts');
         recordProgressText.innerHTML = 'Dictionary fetched...';
 
-        dictionary.push({code: 'm', color: '#a6cee3', name: 'Male'});
-        dictionary.push({code: 'f', color: '#fb9a99', name: 'Female'});
+        dictionary.push({code: 'm', color: '#64b5f6', name: 'Male'});
+        dictionary.push({code: 'f', color: '#f06292', name: 'Female'});
         doneDictionary();
 
 
@@ -209,9 +209,9 @@
     var recordCount = 0;
 
 
-    // oboe('https://baboons.firebaseio.com/sessions/' + value + '/timestamps.json')
-    //?orderBy=%22$key%22&limitToFirst=500
-    oboe('https://baboons.firebaseio.com/sessions/'+value +'/timestamps.json')
+     //oboe('https://baboons.firebaseio.com/sessions/' + value + '/timestamps.json')
+
+    oboe('https://baboons.firebaseio.com/sessions/'+value +'/timestamps.json?orderBy=%22$key%22&limitToFirst=500')
       .node('!.*', function (t) {
 
         if (_.isUndefined(t) || _.isNull(t)) {
@@ -497,16 +497,27 @@
 
       var circles = mapContainer.selectAll('circle').data(targets);
 
+
+      var tip = d3.tip()
+        .attr('class', 'd3-tip')
+        .direction('e')
+        .html(function(d) {
+
+
+
+
+
+          var ttDiv = createTooltip(d);
+
+          return ttDiv.html();
+        });
+
+      mapSVG.call(tip);
+
+      var CIRCLE_R = 8;
+
       circles.enter().append('circle')
         .attr('id', function (d) {
-
-          var tooltip = document.createElement('div');
-          tooltip.setAttribute('for', 'node-' + d.id);
-          tooltip.className = 'mdl-tooltip mdl-tooltip--large';
-          var toolText = document.createTextNode(d.id + '<br/>' + d3.format('.4g')(d.lat) + ',' + d3.format('.4g')(d.lon));
-          tooltip.appendChild(toolText);
-
-          componentHandler.upgradeElement(tooltip);
 
           if (d.baboon_info.animal_sex === 'm') {
             d3.select(this).attr('class','male-circle');
@@ -537,13 +548,15 @@
         .attr('lat', function (d) {
           return d.lat;
         })
-        .attr('r', 6)
+        .attr('r', CIRCLE_R)
         .on('mouseout', function (d) {
+          tip.hide();
           // div.transition()
           //   .duration(500)
           //   .style('opacity', 0);
         })
         .on('mouseover', function (d) {
+          tip.show(d);
           var id = d.id;
           var counter = 0;
           d3.selectAll('.timeline-label').each(function (d, i) {
@@ -629,7 +642,7 @@
                 .transition()
                 .duration(100)
                 .attr('stroke-width', 0.5)
-                .attr("r", 6)
+                .attr("r", CIRCLE_R)
                 .ease('sine');
 
             }
@@ -670,6 +683,45 @@
 
   }
 
+  function createTooltip(d) {
+    var tooltipDiv = d3.selectAll('#tooltip-panel');
+
+
+    if( !_.isUndefined(d.baboon_info) ) {
+
+
+      tooltipDiv.select('#tt-title').text('S' + d.baboon_info.animal_code);
+
+
+      if( !_.isUndefined(d.individual_label)) {
+        var entry = dictionary[d.individual_label.code-1];
+        tooltipDiv.select('#tt-label-text').text(entry.label + ':');
+        tooltipDiv.select('#tt-label-color').attr('fill',entry.color);
+      } else {
+        tooltipDiv.select('#tt-label-color').style('display','none');
+        tooltipDiv.select('#tt-label-text').style('display','none');
+      }
+
+        if (d.baboon_info.animal_sex === 'm') {
+          tooltipDiv.select('#tt-sex').classed({'mdl-color--blue-300': true, 'mdl-color--pink-300': false});
+        } else {
+          tooltipDiv.select('#tt-sex').classed({'mdl-color--blue-300': false, 'mdl-color--pink-300': true});
+        }
+
+      if( !_.isUndefined(d.baboon_info.animal_mass)) {
+        tooltipDiv.select('#tt-mass-text').text(d.baboon_info.animal_mass + ' g');
+      }
+
+      if( !_.isUndefined(d.baboon_info.life_stage)) {
+        tooltipDiv.select('#tt-stage-text').text(d.baboon_info.life_stage);
+      }
+
+
+
+    }
+
+    return tooltipDiv;
+  }
 
   /**
    * Init the leaflet portion

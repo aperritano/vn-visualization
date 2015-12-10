@@ -179,14 +179,14 @@ hr.underline {
 
 .male-circle{
   stroke: #64b5f6;
-  stroke-width: 4px;
+  stroke-width: 2px;
   fill-opacity: 1.0;
 
 }
 
 .female-circle {
   stroke: #f06292;
-  stroke-width: 4px;
+  stroke-width: 2px;
   fill-opacity: 1.0;
 }
 
