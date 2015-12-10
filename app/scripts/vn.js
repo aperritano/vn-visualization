@@ -1187,6 +1187,10 @@
         var x = d3.mouse(this)[0] - groupLabelMargin.left;
         var y = d3.mouse(this)[1] - groupLabelMargin.top;
 
+        /**
+         * Timestamp to show.
+         */
+
         //  CHeck if positive
         if (x < 0 || y < 0)
           return;
@@ -1214,6 +1218,71 @@
 
         d3.select("#labelbrush")
           .attr('transform', 'translate(' + (groupLabelMargin.left + (Math.floor(x / width) * width)) + ',' + groupLabelMargin.top + ')');
+
+        /**
+         * Selection.
+         */
+
+          var itemHeight = 20;
+          var itemMargin = 5;
+          var lineHeight = itemHeight + itemMargin;
+          y = y - itemHeight - itemMargin;
+
+          var counter = 0;
+
+          d3.selectAll('.timeline-label').each(function(d, i){
+
+            var txt = d[i].label.split(" ");
+
+            //console.log(y, lineHeight*counter);
+            if(y >= lineHeight*counter && y <= lineHeight*(counter+1)) {
+
+              var id = txt[1];
+
+              var svg = d3.select("#grouplabels").select("svg");
+              var opacity = svg.select('#highlight' + id).attr('opacity');
+
+              var base = groupLabelMargin.top + itemHeight + itemMargin;
+              var x = base + lineHeight * counter;
+
+              if(opacity > 0) {
+
+                console.log(id);
+
+                svg.select('#highlight' + id)
+                  .attr('height', itemHeight)
+                  .attr('width', svg.attr("width"))
+                  .attr('opacity', 0)
+                  .attr('transform', 'translate(' + groupLabelMargin.left + ',' + x + ')');
+
+              }else{
+
+                console.log('NO', id);
+
+                svg.select('#highlight' + id)
+                  .attr('height', itemHeight)
+                  .attr('width', svg.attr("width"))
+                  .attr('opacity', 0.3)
+                  .attr('transform', 'translate(' + groupLabelMargin.left + ',' + x + ')');
+
+              }
+
+              var circle = d3.select('#node' + id);
+              circle.transition()
+                .duration(100)
+                .attr("stroke-width", 12)
+                .attr("r", 6)
+                .transition()
+                .duration(100)
+                .attr('stroke-width', 0.5)
+                .attr("r", 15)
+                .ease('sine');
+
+            }
+
+            counter++;
+
+          });
 
       })
       .on('mousemove', function (d, i) {
