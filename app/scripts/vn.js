@@ -17,6 +17,8 @@
 // var mainOffset = 15;
 
   var margin = {top: 50, left: 20, bottom: 20, right: 20};
+  var groupLabelMargin = {top: 35, left: 25, bottom: 0, right: 0};
+
 
 
   var mapSVG;
@@ -166,6 +168,7 @@
 
     // pBar.style.display = 'block';
 
+
     document.querySelector('#vn-progress-section').style.display = 'block';
 
     var recordProgressText = document.querySelector('#progressText');
@@ -186,6 +189,7 @@
         dictionary.push({code: 'f', color: '#fb9a99', name: 'Female'});
         doneDictionary();
 
+
       });
 
     oboe('https://baboons.firebaseio.com/sessions/' + value + '/session_info.json')
@@ -204,8 +208,10 @@
 
     var recordCount = 0;
 
+
     // oboe('https://baboons.firebaseio.com/sessions/' + value + '/timestamps.json')
-    oboe('https://baboons.firebaseio.com/sessions/'+value +'/timestamps.json?orderBy=%22$key%22&limitToFirst=500')
+    //?orderBy=%22$key%22&limitToFirst=500
+    oboe('https://baboons.firebaseio.com/sessions/'+value +'/timestamps.json')
       .node('!.*', function (t) {
 
         if (_.isUndefined(t) || _.isNull(t)) {
@@ -512,7 +518,7 @@
 
             console.log('the color is', d.individual_label);
 
-            var entry = dictionary[d.individual_label.code];
+            var entry = dictionary[d.individual_label.code-1];
             d3.select(this).attr('fill',entry.color);
           } else {
             d3.select(this).attr('fill','black');
@@ -553,7 +559,7 @@
               var itemHeight = 20;
               var itemMargin = 5;
 
-              var base = margin.top + itemHeight + itemMargin;
+              var base = groupLabelMargin.top + itemHeight + itemMargin;
               var lineHeight = itemHeight + itemMargin;
               var x = base + lineHeight * counter;
 
@@ -561,30 +567,30 @@
                 .attr('height', itemHeight)
                 .attr('width', svg.attr("width"))
                 .attr('opacity', 0.3)
-                .attr('transform', 'translate(' + margin.left + ',' + x + ')');
+                .attr('transform', 'translate(' + groupLabelMargin.left + ',' + x + ')');
 
             }
             counter++;
 
-          })
+          });
 
         })
-        .on('mouseleave', function (d, i) {
+      .on('mouseleave', function (d, i) {
 
-          d3.select('#highlight')
-            .attr('opacity', 0);
+        d3.select('#highlight')
+          .attr('opacity', 0);
 
-        })
+      })
         .on('click', function (d, i) {
 
           var id = d.id;
           var counter = 0;
-          d3.selectAll('.timeline-label').each(function (d, i) {
+          d3.selectAll('.timeline-label').each(function(d, i){
 
 
             var txt = d[i].label.split(" ");
 
-            if (txt[1] == id) {
+            if(txt[1] == id){
 
               var svg = d3.select("#grouplabels").select("svg");
               var opacity = svg.select('#highlight' + id).attr('opacity');
@@ -592,33 +598,44 @@
               var itemHeight = 20;
               var itemMargin = 5;
 
-              var base = margin.top + itemHeight + itemMargin;
+              var base = groupLabelMargin.top + itemHeight + itemMargin;
               var lineHeight = itemHeight + itemMargin;
               var x = base + lineHeight * counter;
 
-              if (opacity > 0) {
+              if(opacity > 0) {
 
                 svg.select('#highlight' + id)
                   .attr('height', itemHeight)
                   .attr('width', svg.attr("width"))
                   .attr('opacity', 0)
-                  .attr('transform', 'translate(' + margin.left + ',' + x + ')');
+                  .attr('transform', 'translate(' + groupLabelMargin.left + ',' + x + ')');
 
-              } else {
+              }else{
 
                 svg.select('#highlight' + id)
                   .attr('height', itemHeight)
                   .attr('width', svg.attr("width"))
                   .attr('opacity', 0.3)
-                  .attr('transform', 'translate(' + margin.left + ',' + x + ')');
+                  .attr('transform', 'translate(' + groupLabelMargin.left + ',' + x + ')');
 
               }
 
 
+              var circle = d3.select('#node' + id);
+              circle.transition()
+                .duration(100)
+                .attr("stroke-width", 12)
+                .attr("r", 15)
+                .transition()
+                .duration(100)
+                .attr('stroke-width', 0.5)
+                .attr("r", 6)
+                .ease('sine');
+
             }
             counter++;
 
-          })
+          });
 
         });
 
@@ -1091,7 +1108,6 @@
 
     var width = wWidth - outMargin.left - outMargin.right;
 
-    var groupLabelMargin = {top: 35, left: 25, bottom: 0, right: 0};
 
 
     var tooltip = d3.select('#tooltipLabel').append('div').attr('class', 'tooltipLabel').style('opacity', 0);
@@ -1168,8 +1184,8 @@
       //.style('margin-right', 5)
       .datum(groupLabels).call(chart)
       .on('click', function (d, i) {
-        var x = d3.mouse(this)[0] - margin.left;
-        var y = d3.mouse(this)[1] - margin.top;
+        var x = d3.mouse(this)[0] - groupLabelMargin.left;
+        var y = d3.mouse(this)[1] - groupLabelMargin.top;
 
         //  CHeck if positive
         if (x < 0 || y < 0)
@@ -1182,7 +1198,7 @@
         var svgWidth = this.width.animVal.value;
 
         var seconds = (eDate - sDate) / 1000;
-        var width = (svgWidth - margin.left - margin.right) / seconds;
+        var width = (svgWidth - groupLabelMargin.left - groupLabelMargin.right) / seconds;
 
         var cSecond = Math.floor(x / width) * 1000;
 
@@ -1197,17 +1213,21 @@
         }
 
         d3.select("#labelbrush")
-          .attr('transform', 'translate(' + (margin.left + (Math.floor(x / width) * width)) + ',' + margin.top + ')');
+          .attr('transform', 'translate(' + (groupLabelMargin.left + (Math.floor(x / width) * width)) + ',' + groupLabelMargin.top + ')');
 
       })
       .on('mousemove', function (d, i) {
 
+        /**
+         * LINES
+         */
+
         var itemHeight = 20;
         var itemMargin = 5;
 
-        var y = d3.mouse(this)[1] - margin.top - itemHeight - itemMargin;
+        var y = d3.mouse(this)[1] - groupLabelMargin.top - itemHeight - itemMargin;
 
-        var base = margin.top + itemHeight + itemMargin;
+        var base = groupLabelMargin.top + itemHeight + itemMargin;
         var lineHeight = itemHeight + itemMargin;
         var lineNumber = Math.floor(y / lineHeight);
 
@@ -1218,7 +1238,7 @@
           .attr('height', itemHeight)
           .attr('width', this.getBBox().width)
           .attr('opacity', 0.3)
-          .attr('transform', 'translate(' + margin.left + ',' + (base + lineNumber * itemHeight + lineNumber * itemMargin) + ')');
+          .attr('transform', 'translate(' + groupLabelMargin.left + ',' + (base + lineNumber * itemHeight + lineNumber * itemMargin) + ')');
 
         var counter = 0;
         d3.selectAll('.timeline-label').each(function (d, i) {
@@ -1229,22 +1249,51 @@
 
             var id = txt[1];
 
-            d3.selectAll('.node').attr("r", 6);
+            d3.selectAll('.male-circle').attr("r", 6);
+            d3.selectAll('.female-circle').attr("r", 6);
+
+
             d3.select('#node' + id).attr("r", 15);
 
           }
 
           counter++;
 
-        })
+        });
 
-      })
+      /**
+       * VERTICAL LINES
+       */
+
+      var x = d3.mouse(this)[0] - groupLabelMargin.left;
+      var y = d3.mouse(this)[1] - groupLabelMargin.top;
+
+      // CHeck if positive
+      if (x < 0 || y < 0)
+        return;
+
+      var ranged = brushFilteredDates.bottom(Infinity);
+      var sDate = moment(ranged[0].timestamp).valueOf();
+      var eDate = moment(ranged[ranged.length - 1].timestamp).valueOf();
+
+      var svgWidth = this.width.animVal.value;
+
+      var seconds = (eDate - sDate)/1000;
+      var width = (svgWidth - groupLabelMargin.left - groupLabelMargin.right)/seconds;
+
+      d3.select("#labelbrushFollowing")
+        .attr('transform', 'translate(' + (groupLabelMargin.left + (Math.floor(x / width)*width)) + ',' + groupLabelMargin.top + ')');
+
+
+    })
       .on('mouseleave', function (d, i) {
 
         d3.select('#highlight')
           .attr('opacity', 0);
 
-        d3.selectAll('.node').attr("r", 6);
+        d3.selectAll('.male-circle').attr("r", 6);
+        d3.selectAll('.female-circle').attr("r", 6);
+
 
       });
 
@@ -1253,16 +1302,24 @@
     var seconds = (eDate - sDate) / 1000;
     var width = (labelSvg.attr("width") - chart.margin().left - chart.margin().right) / seconds;
 
+  gBrush.append('rect')
+    .attr('height', labelSvg.attr("height"))
+    .attr('width', '1px')
+    .attr('fill', '#FFCDD2')
+    .attr('opacity', 1)
+    .attr('transform', 'translate(' + chart.margin().left + ',' + chart.margin().top + ')')
+    .attr("id", "labelbrushFollowing");
+
     gBrush.append('rect')
       .attr('height', labelSvg.attr("height"))
       .attr('width', '1px')
-      .attr('fill', '#F57F17')
+      .attr('fill', 'grey')
       .attr('opacity', 1)
       .attr('transform', 'translate(' + chart.margin().left + ',' + chart.margin().top + ')')
       .attr("id", "labelbrush");
 
     gBrush.append('rect')
-      .attr('fill', 'grey')
+      .attr('fill', '#FFCDD2')
       .attr('opacity', 0.0)
       .attr("id", "highlight");
 
@@ -1287,10 +1344,10 @@
     var rect = svg.select("#labelbrush");
 
     var seconds = (eDate - sDate) / 1000;
-    var width = (svg.attr("width") - margin.left - margin.right) / seconds;
+    var width = (svg.attr("width") - groupLabelMargin.left - groupLabelMargin.right) / seconds;
     var delta = ((cDate - sDate) / 1000) * width;
 
-    rect.attr('transform', 'translate(' + (margin.left + delta) + ',' + margin.top + ')');
+    rect.attr('transform', 'translate(' + (groupLabelMargin.left + delta) + ',' + groupLabelMargin.top + ')');
 
   }
 
